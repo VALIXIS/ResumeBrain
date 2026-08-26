@@ -1,0 +1,324 @@
+/* 
+   Resume Brain Privacy Policy Webpage Stylesheet
+   Designed to match the premium dark theme of Resume Brain application by VALIXIS
+*/
+
+:root {
+    --bg-color: #0A0E1A;
+    --surface-color: #13192B;
+    --surface-light: #1E293B;
+    --border-color: #334155;
+    
+    --primary-color: #6366F1; /* Indigo */
+    --primary-dark: #4F46E5;
+    --secondary-color: #3B82F6; /* Royal Blue */
+    --accent-purple: #8B5CF6;
+    --accent-teal: #14B8A6;
+    --accent-red: #EF4444;
+    
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+    
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --border-radius: 12px;
+    --border-radius-sm: 6px;
+    --transition: all 0.2s ease-in-out;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    font-size: 16px;
+    padding: 0;
+}
+
+.container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+/* Header */
+header {
+    border-bottom: 1px solid var(--border-color);
+    background-color: rgba(10, 14, 26, 0.8);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 72px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+}
+
+.brand-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: var(--border-radius-sm);
+    color: #ffffff;
+}
+
+.brand-name {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+}
+
+.brand-sub {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    margin-top: -2px;
+}
+
+.header-meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Main Layout */
+main {
+    padding: 48px 0 80px 0;
+}
+
+.policy-card {
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 40px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.title-area {
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 24px;
+}
+
+.title-area h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.effective-date {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* Highlighting Feature Cards */
+.guarantee-box {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(59, 130, 246, 0.1));
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: var(--border-radius);
+    padding: 24px;
+    margin: 32px 0;
+    display: flex;
+    gap: 16px;
+}
+
+.guarantee-icon {
+    font-size: 2rem;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+}
+
+.guarantee-text h4 {
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    font-size: 1.05rem;
+}
+
+.guarantee-text p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+/* Typography & Content styling */
+section {
+    margin-bottom: 36px;
+}
+
+h2 {
+    color: var(--text-primary);
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+h2::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 18px;
+    background-color: var(--primary-color);
+    border-radius: 2px;
+}
+
+h3 {
+    color: var(--text-primary);
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 20px 0 10px 0;
+}
+
+p {
+    margin-bottom: 16px;
+}
+
+ul {
+    margin-bottom: 20px;
+    padding-left: 20px;
+}
+
+li {
+    margin-bottom: 8px;
+}
+
+strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+code {
+    background-color: var(--surface-light);
+    border: 1px solid var(--border-color);
+    padding: 2px 6px;
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+a:hover {
+    color: var(--secondary-color);
+    text-decoration: underline;
+}
+
+.section-divider {
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 32px 0;
+}
+
+/* Footer */
+footer {
+    background-color: var(--surface-color);
+    border-top: 1px solid var(--border-color);
+    padding: 48px 0;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.footer-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    text-decoration: none;
+}
+
+.footer-logo-text {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.footer-logo-sub {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.footer-nav {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+.footer-nav a {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+
+.footer-nav a:hover {
+    color: var(--text-primary);
+}
+
+.copyright {
+    margin-top: 16px;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .policy-card {
+        padding: 24px;
+    }
+    
+    .title-area h1 {
+        font-size: 1.8rem;
+    }
+    
+    header {
+        position: static;
+    }
+    
+    .header-inner {
+        flex-direction: column;
+        height: auto;
+        padding: 16px 0;
+        gap: 8px;
+        text-align: center;
+    }
+    
+    .guarantee-box {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .guarantee-icon {
+        font-size: 1.5rem;
+    }
+}
