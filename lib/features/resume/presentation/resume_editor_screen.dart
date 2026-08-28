@@ -10,6 +10,7 @@ import '../../../core/widgets/custom_text_field.dart';
 import '../../../data/models/resume_models.dart';
 import '../../pdf/presentation/resume_preview_screen.dart';
 import '../../templates/presentation/template_selector_screen.dart';
+import 'section_editor_tab.dart';
 
 class ResumeEditorScreen extends ConsumerStatefulWidget {
   const ResumeEditorScreen({super.key});
@@ -35,7 +36,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> with Si
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this);
+    _tabController = TabController(length: 7, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadCurrentResumeData();
     });
@@ -132,6 +133,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> with Si
             Tab(text: 'Education'),
             Tab(text: 'Skills'),
             Tab(text: 'Projects'),
+            Tab(text: 'Sections'),
           ],
         ),
       ),
@@ -144,6 +146,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> with Si
           _buildEducationTab(resume),
           _buildSkillsTab(resume),
           _buildProjectsTab(resume),
+          const SectionEditorTab(),
         ],
       ),
       bottomNavigationBar: Container(

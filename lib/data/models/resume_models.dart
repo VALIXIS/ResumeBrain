@@ -289,6 +289,8 @@ class Certification {
   final String name;
   final String issuingOrganization;
   final String issueDate;
+  final String expiryDate;
+  final String credentialId;
   final String credentialUrl;
 
   Certification({
@@ -296,6 +298,8 @@ class Certification {
     this.name = '',
     this.issuingOrganization = '',
     this.issueDate = '',
+    this.expiryDate = '',
+    this.credentialId = '',
     this.credentialUrl = '',
   }) : id = id ?? const Uuid().v4();
 
@@ -303,6 +307,8 @@ class Certification {
     String? name,
     String? issuingOrganization,
     String? issueDate,
+    String? expiryDate,
+    String? credentialId,
     String? credentialUrl,
   }) {
     return Certification(
@@ -310,6 +316,8 @@ class Certification {
       name: name ?? this.name,
       issuingOrganization: issuingOrganization ?? this.issuingOrganization,
       issueDate: issueDate ?? this.issueDate,
+      expiryDate: expiryDate ?? this.expiryDate,
+      credentialId: credentialId ?? this.credentialId,
       credentialUrl: credentialUrl ?? this.credentialUrl,
     );
   }
@@ -319,6 +327,8 @@ class Certification {
         'name': name,
         'issuingOrganization': issuingOrganization,
         'issueDate': issueDate,
+        'expiryDate': expiryDate,
+        'credentialId': credentialId,
         'credentialUrl': credentialUrl,
       };
 
@@ -327,6 +337,8 @@ class Certification {
         name: map['name'] ?? '',
         issuingOrganization: map['issuingOrganization'] ?? '',
         issueDate: map['issueDate'] ?? '',
+        expiryDate: map['expiryDate'] ?? '',
+        credentialId: map['credentialId'] ?? '',
         credentialUrl: map['credentialUrl'] ?? '',
       );
 }
@@ -334,7 +346,7 @@ class Certification {
 class Language {
   final String id;
   final String name;
-  final String proficiency; // e.g. Native, Fluent, Conversational
+  final String proficiency; // e.g. Native, Fluent, Conversational, Beginner
 
   Language({
     String? id,
@@ -360,6 +372,43 @@ class Language {
         id: map['id'],
         name: map['name'] ?? '',
         proficiency: map['proficiency'] ?? 'Fluent',
+      );
+}
+
+/// Model representing a user-defined custom section in the resume.
+class CustomSection {
+  final String id;
+  final String title;
+  final List<String> items;
+
+  CustomSection({
+    String? id,
+    this.title = '',
+    List<String>? items,
+  })  : id = id ?? const Uuid().v4(),
+        items = items ?? [];
+
+  CustomSection copyWith({
+    String? title,
+    List<String>? items,
+  }) {
+    return CustomSection(
+      id: id,
+      title: title ?? this.title,
+      items: items ?? this.items,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'title': title,
+        'items': items,
+      };
+
+  factory CustomSection.fromMap(Map<String, dynamic> map) => CustomSection(
+        id: map['id'],
+        title: map['title'] ?? '',
+        items: map['items'] != null ? List<String>.from(map['items']) : [],
       );
 }
 
@@ -410,6 +459,7 @@ class Resume {
   final List<Skill> skills;
   final List<Certification> certifications;
   final List<Language> languages;
+  final List<CustomSection> customSections;
   final List<SocialLink> socialLinks;
 
   Resume({
@@ -426,6 +476,7 @@ class Resume {
     List<Skill>? skills,
     List<Certification>? certifications,
     List<Language>? languages,
+    List<CustomSection>? customSections,
     List<SocialLink>? socialLinks,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now(),
@@ -438,6 +489,7 @@ class Resume {
         skills = skills ?? [],
         certifications = certifications ?? [],
         languages = languages ?? [],
+        customSections = customSections ?? [],
         socialLinks = socialLinks ?? [];
 
   Resume copyWith({
@@ -452,6 +504,7 @@ class Resume {
     List<Skill>? skills,
     List<Certification>? certifications,
     List<Language>? languages,
+    List<CustomSection>? customSections,
     List<SocialLink>? socialLinks,
   }) {
     return Resume(
@@ -468,6 +521,7 @@ class Resume {
       skills: skills ?? this.skills,
       certifications: certifications ?? this.certifications,
       languages: languages ?? this.languages,
+      customSections: customSections ?? this.customSections,
       socialLinks: socialLinks ?? this.socialLinks,
     );
   }
@@ -486,6 +540,7 @@ class Resume {
         'skills': skills.map((e) => e.toMap()).toList(),
         'certifications': certifications.map((e) => e.toMap()).toList(),
         'languages': languages.map((e) => e.toMap()).toList(),
+        'customSections': customSections.map((e) => e.toMap()).toList(),
         'socialLinks': socialLinks.map((e) => e.toMap()).toList(),
       };
 
@@ -518,6 +573,9 @@ class Resume {
             : [],
         languages: map['languages'] != null
             ? (map['languages'] as List).map((e) => Language.fromMap(Map<String, dynamic>.from(e))).toList()
+            : [],
+        customSections: map['customSections'] != null
+            ? (map['customSections'] as List).map((e) => CustomSection.fromMap(Map<String, dynamic>.from(e))).toList()
             : [],
         socialLinks: map['socialLinks'] != null
             ? (map['socialLinks'] as List).map((e) => SocialLink.fromMap(Map<String, dynamic>.from(e))).toList()
