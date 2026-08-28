@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/providers.dart';
 import '../../../data/models/resume_models.dart';
@@ -21,10 +20,13 @@ final analysisDashboardStatsProvider = FutureProvider<AnalysisDashboardStats>((r
     throw resumesState.error!;
   }
 
-  // If the resumes list is not loaded yet, return a future that remains in loading state.
   final List<Resume>? resumes = resumesState.value;
-  if (resumes == null) {
-    return Completer<AnalysisDashboardStats>().future;
+  if (resumes == null || resumes.isEmpty) {
+    return AnalysisDashboardStats(
+      totalResumes: 0,
+      averageAtsScore: 0.0,
+      recentActivity: const [],
+    );
   }
 
   final engine = ref.watch(analysisEngineProvider);
@@ -42,7 +44,6 @@ final analysisDashboardStatsProvider = FutureProvider<AnalysisDashboardStats>((r
   }
 
   // Obtain the recent activity.
-  // This is isolated in a separate helper function to allow easy replacement in the future.
   final recentActivity = _calculateRecentActivity(resumes, reports);
 
   return AnalysisDashboardStats(
@@ -53,9 +54,6 @@ final analysisDashboardStatsProvider = FutureProvider<AnalysisDashboardStats>((r
 });
 
 /// Isolated helper to compute the deterministic recent activity.
-/// Currently, since there is no persistent history layer for reports,
-/// we pair reports with their corresponding resume's `updatedAt` field,
-/// sort them descending by date, and take the top 3.
 List<ResumeAnalysisReport> _calculateRecentActivity(
   List<Resume> resumes,
   List<ResumeAnalysisReport> reports,

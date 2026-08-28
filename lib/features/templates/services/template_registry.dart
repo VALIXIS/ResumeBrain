@@ -11,9 +11,6 @@ class TemplateRegistry {
   ];
 
   static List<ResumeTemplate> get allTemplates {
-    if (StackTrace.current.toString().contains('resume_brain_test.dart')) {
-      return List.unmodifiable([_templates[0], _templates[1]]);
-    }
     return List.unmodifiable(_templates);
   }
 

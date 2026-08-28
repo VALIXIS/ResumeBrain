@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pdf/pdf.dart';
 import 'package:resume_brain/data/models/resume_models.dart';
+import 'package:resume_brain/features/templates/implementations/creative_professional_template.dart';
 import 'package:resume_brain/features/templates/implementations/executive_minimal_template.dart';
 import 'package:resume_brain/features/templates/implementations/modern_classic_template.dart';
 import 'package:resume_brain/features/templates/services/template_registry.dart';
@@ -63,11 +64,10 @@ void main() {
   });
 
   group('Template Registry & PDF Rendering Tests', () {
-    test('TemplateRegistry returns all templates', () {
+    test('TemplateRegistry returns all templates including Creative Professional', () {
       final templates = TemplateRegistry.allTemplates;
-      expect(templates.length, 2);
-      expect(templates.first.id, 'modern_classic');
-      expect(templates.last.id, 'executive_minimal');
+      expect(templates.length, 3);
+      expect(templates.map((t) => t.id), containsAll(['modern_classic', 'executive_minimal', 'creative_professional']));
     });
 
     test('ModernClassicTemplate PDF compiles cleanly', () async {
@@ -96,6 +96,25 @@ void main() {
           fullName: 'Robert Executive',
           jobTitle: 'Chief Technology Officer',
         ),
+      );
+
+      final pdfDoc = await template.generatePdf(resume, PdfPageFormat.a4);
+      final pdfBytes = await pdfDoc.save();
+
+      expect(pdfBytes, isNotNull);
+      expect(pdfBytes.isNotEmpty, isTrue);
+    });
+
+    test('CreativeProfessionalTemplate PDF compiles cleanly', () async {
+      final template = CreativeProfessionalTemplate();
+      final resume = Resume(
+        title: 'Creative Resume',
+        personalInfo: PersonalInformation(
+          fullName: 'Vaseem Developer',
+          jobTitle: 'PDF Engine Specialist',
+          email: 'vaseem@valixis.com',
+        ),
+        skills: [Skill(name: 'Vector Graphics'), Skill(name: 'PDF Layouts')],
       );
 
       final pdfDoc = await template.generatePdf(resume, PdfPageFormat.a4);
