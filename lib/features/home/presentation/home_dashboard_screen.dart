@@ -15,6 +15,8 @@ import '../../ai/presentation/coming_soon_screen.dart';
 import '../../pdf/presentation/resume_preview_screen.dart';
 import '../../resume/presentation/resume_editor_screen.dart';
 
+import '../../../core/widgets/theme_toggle_widget.dart';
+
 class HomeDashboardScreen extends ConsumerWidget {
   const HomeDashboardScreen({super.key});
 
@@ -47,6 +49,10 @@ class HomeDashboardScreen extends ConsumerWidget {
             ),
           ],
         ),
+        actions: const [
+          ThemeToggleWidget(),
+          SizedBox(width: 8),
+        ],
       ),
       body: resumesAsync.when(
         loading: () => const LoadingStateWidget(message: 'Loading your career workspace...'),
