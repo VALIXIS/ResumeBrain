@@ -7,6 +7,8 @@ import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/custom_text_field.dart';
 import '../controllers/job_matching_controller.dart';
 
+import 'job_match_results_screen.dart';
+
 class JobDescriptionInputScreen extends ConsumerStatefulWidget {
   final VoidCallback? onSuccess;
 
@@ -44,7 +46,15 @@ class _JobDescriptionInputScreenState extends ConsumerState<JobDescriptionInputS
       
       final state = ref.read(jobMatchingControllerProvider);
       if (state.error == null && mounted) {
-        widget.onSuccess?.call();
+        if (widget.onSuccess != null) {
+          widget.onSuccess!.call();
+        } else {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const JobMatchResultsScreen(),
+            ),
+          );
+        }
       }
     }
   }
