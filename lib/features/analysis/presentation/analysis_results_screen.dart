@@ -11,12 +11,15 @@ import '../../../core/widgets/state_widgets.dart';
 import '../../../data/models/resume_models.dart';
 import '../models/resume_analysis_report.dart';
 import '../providers/analysis_provider.dart';
+import '../services/feedback_categorizer.dart';
+import '../widgets/feedback_accordion_card.dart';
 import 'widgets/score_meter.dart';
 import 'widgets/section_grade_badge.dart';
 import 'widgets/suggestion_chip.dart';
 
 /// AnalysisResultsScreen displays complete ATS and structural analysis for a resume,
-/// including a circular score gauge, section grade badges, and actionable suggestion chips.
+/// including a circular score gauge, section grade badges, categorized feedback accordions,
+/// and actionable suggestion chips.
 class AnalysisResultsScreen extends ConsumerStatefulWidget {
   final Resume? targetResume;
 
@@ -122,6 +125,7 @@ class _AnalysisResultsScreenState extends ConsumerState<AnalysisResultsScreen> {
     ResumeAnalysisReport report,
   ) {
     final categories = report.categoryScores.entries.toList();
+    final categorizedFeedback = FeedbackCategorizer.categorize(report);
 
     return SingleChildScrollView(
       padding: AppSpacing.screenPadding,
@@ -176,7 +180,39 @@ class _AnalysisResultsScreenState extends ConsumerState<AnalysisResultsScreen> {
 
           const SizedBox(height: AppSpacing.xl),
 
-          // 4. Actionable Suggestions
+          // 4. Categorized Feedback Accordions (Formatting, Content Quality, Keywords)
+          Row(
+            children: [
+              const Icon(
+                Icons.tune_rounded,
+                color: AppColors.accentTeal,
+                size: 22,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                'Categorized Feedback',
+                style: AppTypography.titleLarge,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: categorizedFeedback.length,
+            separatorBuilder: (c, i) => const SizedBox(height: AppSpacing.sm),
+            itemBuilder: (context, index) {
+              final category = categorizedFeedback[index];
+              return FeedbackAccordionCard(
+                feedback: category,
+                initialExpanded: false, // Default collapsed per Day 4 requirements
+              );
+            },
+          ),
+
+          const SizedBox(height: AppSpacing.xl),
+
+          // 5. Actionable Suggestions
           Row(
             children: [
               const Icon(
