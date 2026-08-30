@@ -6,15 +6,17 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/custom_card.dart';
-import '../../../core/widgets/custom_text_field.dart';
 import '../../../data/models/resume_models.dart';
 import '../widgets/certification_editor_dialog.dart';
+import '../widgets/custom_section_editor_dialog.dart';
 import '../widgets/language_editor_dialog.dart';
+import '../widgets/reorderable_section_card.dart';
 
-/// SectionEditorTab provides the editor UI for supplementary resume sections:
-/// - Certifications & Licenses (Full CRUD with validation)
-/// - Languages & Proficiency (Full CRUD with validation)
-/// - Custom User-Defined Sections
+/// SectionEditorTab provides the editor UI for supplementary resume sections
+/// with drag-and-drop reordering using Flutter's [ReorderableListView]:
+/// - Certifications & Licenses (Full CRUD & Reorderable)
+/// - Languages & Proficiency (Full CRUD & Reorderable)
+/// - Custom User-Defined Sections (Full CRUD & Reorderable)
 class SectionEditorTab extends ConsumerWidget {
   const SectionEditorTab({super.key});
 
@@ -36,6 +38,8 @@ class SectionEditorTab extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildReorderTipsCard(),
+          const SizedBox(height: AppSpacing.lg),
           _buildCertificationsSection(context, ref, resume),
           const SizedBox(height: AppSpacing.xxl),
           _buildLanguagesSection(context, ref, resume),
@@ -47,8 +51,51 @@ class SectionEditorTab extends ConsumerWidget {
     );
   }
 
+  /// Informative banner highlighting drag-and-drop capability.
+  Widget _buildReorderTipsCard() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.surfaceBorder),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.swap_vert_circle_outlined,
+            color: AppColors.primary,
+            size: 24,
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Drag-and-Drop Reordering Active',
+                  style: AppTypography.titleMedium.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Grab the drag handle (⋮⋮) on any item to reorder it upward or downward. Changes save automatically.',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ---------------------------------------------------------------------------
-  // Certifications Section CRUD
+  // Certifications Section (Reorderable)
   // ---------------------------------------------------------------------------
   Widget _buildCertificationsSection(
     BuildContext context,
@@ -80,6 +127,24 @@ class SectionEditorTab extends ConsumerWidget {
                   'Certifications & Licenses',
                   style: AppTypography.titleLarge,
                 ),
+                if (resume.certifications.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${resume.certifications.length}',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
             AppButton(
@@ -130,120 +195,99 @@ class SectionEditorTab extends ConsumerWidget {
             ),
           )
         else
-          ListView.separated(
+          ReorderableListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
+            buildDefaultDragHandles: false,
             itemCount: resume.certifications.length,
-            separatorBuilder: (c, i) => const SizedBox(height: AppSpacing.sm),
+            // ignore: deprecated_member_use
+            onReorder: (oldIndex, newIndex) {
+              // Flutter ReorderableListView downward index adjustment
+              if (oldIndex < newIndex) {
+                newIndex -= 1;
+              }
+              final list = List<Certification>.from(resume.certifications);
+              final item = list.removeAt(oldIndex);
+              list.insert(newIndex, item);
+              ref.read(currentResumeProvider.notifier).updateResume(
+                    (r) => r.copyWith(certifications: list),
+                  );
+            },
             itemBuilder: (context, index) {
               final cert = resume.certifications[index];
-              return AppCard(
-                child: Row(
+              return ReorderableSectionCard(
+                key: ValueKey('cert_${cert.id}'),
+                index: index,
+                leading: Container(
+                  margin: const EdgeInsets.only(top: 2),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.workspace_premium_outlined,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                ),
+                title: cert.name,
+                subtitle: cert.issuingOrganization.isNotEmpty
+                    ? '${cert.issuingOrganization}${cert.issueDate.isNotEmpty ? " • ${cert.issueDate}" : ""}${cert.expiryDate.isNotEmpty ? " (Expires: ${cert.expiryDate})" : ""}'
+                    : (cert.issueDate.isNotEmpty ? cert.issueDate : 'No organization specified'),
+                extraContent: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 2),
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.workspace_premium_outlined,
-                        color: AppColors.primary,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(cert.name, style: AppTypography.titleMedium),
-                          const SizedBox(height: 2),
-                          Text(
-                            cert.issuingOrganization.isNotEmpty
-                                ? '${cert.issuingOrganization}${cert.issueDate.isNotEmpty ? " • ${cert.issueDate}" : ""}${cert.expiryDate.isNotEmpty ? " (Expires: ${cert.expiryDate})" : ""}'
-                                : (cert.issueDate.isNotEmpty ? cert.issueDate : 'No organization specified'),
-                            style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          if (cert.credentialId.isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.tag,
-                                  size: 13,
-                                  color: AppColors.textMuted,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'ID: ${cert.credentialId}',
-                                  style: AppTypography.bodySmall.copyWith(
-                                    color: AppColors.textMuted,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
+                    if (cert.credentialId.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.tag, size: 13, color: AppColors.textMuted),
+                            const SizedBox(width: 4),
+                            Text(
+                              'ID: ${cert.credentialId}',
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.textMuted,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
-                          if (cert.credentialUrl.isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.link,
-                                  size: 13,
+                        ),
+                      ),
+                    if (cert.credentialUrl.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.link, size: 13, color: AppColors.secondary),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                cert.credentialUrl,
+                                style: AppTypography.bodySmall.copyWith(
                                   color: AppColors.secondary,
+                                  fontSize: 12,
+                                  decoration: TextDecoration.underline,
                                 ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    cert.credentialUrl,
-                                    style: AppTypography.bodySmall.copyWith(
-                                      color: AppColors.secondary,
-                                      fontSize: 12,
-                                      decoration: TextDecoration.underline,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
-                        ],
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.edit_outlined,
-                        color: AppColors.textMuted,
-                        size: 20,
-                      ),
-                      tooltip: 'Edit Certification',
-                      onPressed: () => _openCertificationDialog(
-                        context,
-                        ref,
-                        certification: cert,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.delete_outline,
-                        color: AppColors.accentRed,
-                        size: 20,
-                      ),
-                      tooltip: 'Delete Certification',
-                      onPressed: () => _confirmDeleteCertification(
-                        context,
-                        ref,
-                        cert,
-                      ),
-                    ),
                   ],
+                ),
+                onEdit: () => _openCertificationDialog(
+                  context,
+                  ref,
+                  certification: cert,
+                ),
+                onDelete: () => _confirmDeleteCertification(
+                  context,
+                  ref,
+                  cert,
                 ),
               );
             },
@@ -318,7 +362,7 @@ class SectionEditorTab extends ConsumerWidget {
   }
 
   // ---------------------------------------------------------------------------
-  // Languages Section CRUD
+  // Languages Section (Reorderable)
   // ---------------------------------------------------------------------------
   Widget _buildLanguagesSection(
     BuildContext context,
@@ -347,6 +391,24 @@ class SectionEditorTab extends ConsumerWidget {
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Text('Languages', style: AppTypography.titleLarge),
+                if (resume.languages.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${resume.languages.length}',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.secondary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
             AppButton(
@@ -394,85 +456,69 @@ class SectionEditorTab extends ConsumerWidget {
             ),
           )
         else
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: resume.languages.map((lang) {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
+          ReorderableListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            buildDefaultDragHandles: false,
+            itemCount: resume.languages.length,
+            // ignore: deprecated_member_use
+            onReorder: (oldIndex, newIndex) {
+              if (oldIndex < newIndex) {
+                newIndex -= 1;
+              }
+              final list = List<Language>.from(resume.languages);
+              final item = list.removeAt(oldIndex);
+              list.insert(newIndex, item);
+              ref.read(currentResumeProvider.notifier).updateResume(
+                    (r) => r.copyWith(languages: list),
+                  );
+            },
+            itemBuilder: (context, index) {
+              final lang = resume.languages[index];
+              return ReorderableSectionCard(
+                key: ValueKey('lang_${lang.id}'),
+                index: index,
+                leading: Container(
+                  margin: const EdgeInsets.only(top: 2),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.translate,
+                    color: AppColors.secondary,
+                    size: 18,
+                  ),
                 ),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceLight,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.surfaceBorder),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      lang.name,
-                      style: AppTypography.labelLarge.copyWith(
-                        color: AppColors.textPrimary,
+                title: lang.name,
+                subtitle: 'Proficiency Level: ${lang.proficiency}',
+                tags: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      lang.proficiency,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.secondary,
                         fontWeight: FontWeight.w600,
+                        fontSize: 11,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.secondary.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        lang.proficiency,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.secondary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: () => _openLanguageDialog(
-                        context,
-                        ref,
-                        resume,
-                        language: lang,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      child: const Padding(
-                        padding: EdgeInsets.all(2),
-                        child: Icon(
-                          Icons.edit_outlined,
-                          size: 15,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    InkWell(
-                      onTap: () => _confirmDeleteLanguage(context, ref, lang),
-                      borderRadius: BorderRadius.circular(12),
-                      child: const Padding(
-                        padding: EdgeInsets.all(2),
-                        child: Icon(
-                          Icons.close,
-                          size: 15,
-                          color: AppColors.accentRed,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
+                ],
+                onEdit: () => _openLanguageDialog(
+                  context,
+                  ref,
+                  resume,
+                  language: lang,
                 ),
+                onDelete: () => _confirmDeleteLanguage(context, ref, lang),
               );
-            }).toList(),
+            },
           ),
       ],
     );
@@ -546,7 +592,7 @@ class SectionEditorTab extends ConsumerWidget {
   }
 
   // ---------------------------------------------------------------------------
-  // Custom Sections
+  // Custom Sections (Reorderable)
   // ---------------------------------------------------------------------------
   Widget _buildCustomSections(
     BuildContext context,
@@ -575,6 +621,24 @@ class SectionEditorTab extends ConsumerWidget {
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Text('Custom Sections', style: AppTypography.titleLarge),
+                if (resume.customSections.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.accentPurple.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${resume.customSections.length}',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.accentPurple,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
             AppButton(
@@ -622,87 +686,86 @@ class SectionEditorTab extends ConsumerWidget {
             ),
           )
         else
-          ListView.separated(
+          ReorderableListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
+            buildDefaultDragHandles: false,
             itemCount: resume.customSections.length,
-            separatorBuilder: (c, i) => const SizedBox(height: AppSpacing.md),
+            // ignore: deprecated_member_use
+            onReorder: (oldIndex, newIndex) {
+              if (oldIndex < newIndex) {
+                newIndex -= 1;
+              }
+              final list = List<CustomSection>.from(resume.customSections);
+              final item = list.removeAt(oldIndex);
+              list.insert(newIndex, item);
+              ref.read(currentResumeProvider.notifier).updateResume(
+                    (r) => r.copyWith(customSections: list),
+                  );
+            },
             itemBuilder: (context, index) {
               final section = resume.customSections[index];
-              return AppCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            section.title.isNotEmpty ? section.title : 'Untitled Section',
-                            style: AppTypography.titleMedium.copyWith(
-                              color: AppColors.accentPurple,
+              return ReorderableSectionCard(
+                key: ValueKey('custom_${section.id}'),
+                index: index,
+                leading: Container(
+                  margin: const EdgeInsets.only(top: 2),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentPurple.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.folder_special_outlined,
+                    color: AppColors.accentPurple,
+                    size: 20,
+                  ),
+                ),
+                title: section.title.isNotEmpty ? section.title : 'Untitled Section',
+                subtitle: '${section.items.length} ${section.items.length == 1 ? "entry" : "entries"}',
+                extraContent: section.items.isNotEmpty
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: section.items.map(
+                          (bullet) => Padding(
+                            padding: const EdgeInsets.only(bottom: 3),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  '• ',
+                                  style: TextStyle(
+                                    color: AppColors.accentPurple,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    bullet,
+                                    style: AppTypography.bodyMedium,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.edit_outlined,
-                            color: AppColors.textMuted,
-                            size: 20,
-                          ),
-                          tooltip: 'Edit Section',
-                          onPressed: () => _showCustomSectionDialog(
-                            context,
-                            ref,
-                            section: section,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.delete_outline,
-                            color: AppColors.accentRed,
-                            size: 20,
-                          ),
-                          tooltip: 'Delete Section',
-                          onPressed: () => _deleteCustomSection(ref, section.id),
-                        ),
-                      ],
-                    ),
-                    if (section.items.isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.xs),
-                      ...section.items.map(
-                        (bullet) => Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                '• ',
-                                style: TextStyle(
-                                  color: AppColors.accentPurple,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  bullet,
-                                  style: AppTypography.bodyMedium,
-                                ),
-                              ),
-                            ],
-                          ),
+                        ).toList(),
+                      )
+                    : Text(
+                        'No bullet points added yet.',
+                        style: AppTypography.bodySmall.copyWith(
+                          fontStyle: FontStyle.italic,
+                          color: AppColors.textMuted,
                         ),
                       ),
-                    ] else
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Text(
-                          'No bullet points added yet.',
-                          style: AppTypography.bodySmall.copyWith(
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                  ],
+                onEdit: () => _showCustomSectionDialog(
+                  context,
+                  ref,
+                  section: section,
+                ),
+                onDelete: () => _confirmDeleteCustomSection(
+                  context,
+                  ref,
+                  section,
                 ),
               );
             },
@@ -716,66 +779,10 @@ class SectionEditorTab extends ConsumerWidget {
     WidgetRef ref, {
     CustomSection? section,
   }) {
-    final titleCtrl = TextEditingController(text: section?.title ?? '');
-    final itemsCtrl = TextEditingController(
-      text: section != null ? section.items.join('\n') : '',
-    );
-
-    showDialog(
+    CustomSectionEditorDialog.show(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text(
-          section == null ? 'Add Custom Section' : 'Edit Custom Section',
-          style: AppTypography.titleLarge,
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppTextField(
-                label: 'Section Title',
-                hint: 'e.g. Publications, Awards, Volunteering',
-                controller: titleCtrl,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppTextField(
-                label: 'Bullet Points / Entries (one per line)',
-                hint: 'Enter each bullet point or item on a new line...',
-                maxLines: 5,
-                controller: itemsCtrl,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textMuted)),
-          ),
-          AppButton(
-            text: 'Save',
-            isFullWidth: false,
-            onPressed: () {
-              if (titleCtrl.text.trim().isNotEmpty) {
-                final bulletList = itemsCtrl.text
-                    .split('\n')
-                    .map((s) => s.trim())
-                    .where((s) => s.isNotEmpty)
-                    .toList();
-
-                final customSec = CustomSection(
-                  id: section?.id,
-                  title: titleCtrl.text.trim(),
-                  items: bulletList,
-                );
-                _saveCustomSection(ref, customSec);
-              }
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
+      section: section,
+      onSave: (sec) => _saveCustomSection(ref, sec),
     );
   }
 
@@ -790,6 +797,38 @@ class SectionEditorTab extends ConsumerWidget {
       }
       return resume.copyWith(customSections: list);
     });
+  }
+
+  void _confirmDeleteCustomSection(
+    BuildContext context,
+    WidgetRef ref,
+    CustomSection section,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Delete Custom Section'),
+        content: Text(
+          'Are you sure you want to delete "${section.title}"? This action cannot be undone.',
+          style: AppTypography.bodyMedium,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textMuted)),
+          ),
+          AppButton(
+            text: 'Delete',
+            isFullWidth: false,
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _deleteCustomSection(ref, section.id);
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   void _deleteCustomSection(WidgetRef ref, String id) {
