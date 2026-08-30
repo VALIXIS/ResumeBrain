@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/providers.dart';
+import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_provider.dart';
 import 'features/home/presentation/home_dashboard_screen.dart';
 
 void main() async {
@@ -20,15 +22,25 @@ void main() async {
   );
 }
 
-class ResumeBrainApp extends StatelessWidget {
+class ResumeBrainApp extends ConsumerWidget {
   const ResumeBrainApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+
+    // Synchronize AppColors.isDarkMode with the platform brightness when set to system theme.
+    if (themeMode == ThemeMode.system) {
+      final brightness = MediaQuery.platformBrightnessOf(context);
+      AppColors.isDarkMode = brightness == Brightness.dark;
+    }
+
     return MaterialApp(
       title: 'Resume Brain',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
       home: const HomeDashboardScreen(),
     );
   }

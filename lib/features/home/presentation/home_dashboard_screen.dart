@@ -15,6 +15,11 @@ import '../../ai/presentation/coming_soon_screen.dart';
 import '../../pdf/presentation/resume_preview_screen.dart';
 import '../../resume/presentation/resume_editor_screen.dart';
 
+import '../../../core/widgets/theme_toggle_widget.dart';
+import '../../../core/widgets/smooth_page_route.dart';
+import '../../../core/widgets/app_shimmer.dart';
+import '../../../core/widgets/shimmer_placeholders.dart';
+
 class HomeDashboardScreen extends ConsumerWidget {
   const HomeDashboardScreen({super.key});
 
@@ -47,9 +52,13 @@ class HomeDashboardScreen extends ConsumerWidget {
             ),
           ],
         ),
+        actions: const [
+          ThemeToggleWidget(),
+          SizedBox(width: 8),
+        ],
       ),
       body: resumesAsync.when(
-        loading: () => const LoadingStateWidget(message: 'Loading your career workspace...'),
+        loading: () => _buildLoadingShimmer(),
         error: (err, stack) => ErrorStateWidget(
           errorMessage: err.toString(),
           onRetry: () => ref.read(resumesListProvider.notifier).loadResumes(),
@@ -169,7 +178,7 @@ class HomeDashboardScreen extends ConsumerWidget {
         ref.read(currentResumeProvider.notifier).setResume(resume);
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const ResumeEditorScreen()),
+          SmoothPageRoute(page: const ResumeEditorScreen()),
         );
       },
       child: Column(
@@ -206,13 +215,13 @@ class HomeDashboardScreen extends ConsumerWidget {
                     ref.read(currentResumeProvider.notifier).setResume(resume);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ResumeEditorScreen()),
+                      SmoothPageRoute(page: const ResumeEditorScreen()),
                     );
                   } else if (value == 'preview') {
                     ref.read(currentResumeProvider.notifier).setResume(resume);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ResumePreviewScreen()),
+                      SmoothPageRoute(page: const ResumePreviewScreen()),
                     );
                   } else if (value == 'delete') {
                     _confirmDelete(context, ref, resume);
@@ -273,8 +282,8 @@ class HomeDashboardScreen extends ConsumerWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => ComingSoonScreen(featureTitle: title),
+          SmoothPageRoute(
+            page: ComingSoonScreen(featureTitle: title),
           ),
         );
       },
@@ -321,6 +330,76 @@ class HomeDashboardScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildLoadingShimmer() {
+    return SingleChildScrollView(
+      padding: AppSpacing.screenPadding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppCard(
+            color: AppColors.surface,
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1.5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.auto_awesome, color: AppColors.accentPurple, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'VALIXIS CAREER ENGINE',
+                      style: AppTypography.labelSmall.copyWith(color: AppColors.accentPurple),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  'Build ATS-Ready Resumes in Minutes',
+                  style: AppTypography.displayMedium.copyWith(fontSize: 20),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Create, format, and export high-impact professional resumes optimized for recruiters.',
+                  style: AppTypography.bodyMedium,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                const AppButton(
+                  text: 'Create New Resume',
+                  icon: Icons.add_rounded,
+                  variant: AppButtonVariant.primary,
+                  onPressed: null,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('My Resumes', style: AppTypography.titleLarge),
+              const AppShimmer(width: 50, height: 14),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          const ListRowShimmer(),
+          const SizedBox(height: AppSpacing.md),
+          const ListRowShimmer(),
+          const SizedBox(height: AppSpacing.xl),
+          Text('Resume Intelligence Suite', style: AppTypography.titleLarge),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Next-generation career tools powered by AI.',
+            style: AppTypography.bodySmall,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          const DashboardCardShimmer(),
+          const SizedBox(height: AppSpacing.md),
+          const DashboardCardShimmer(),
+        ],
+      ),
+    );
+  }
+
   void _createNewResume(BuildContext context, WidgetRef ref) {
     final newResume = Resume(
       title: 'New Resume ${DateFormat('MMM d').format(DateTime.now())}',
@@ -330,7 +409,7 @@ class HomeDashboardScreen extends ConsumerWidget {
 
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const ResumeEditorScreen()),
+      SmoothPageRoute(page: const ResumeEditorScreen()),
     );
   }
 

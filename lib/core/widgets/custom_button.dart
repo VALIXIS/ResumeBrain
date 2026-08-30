@@ -3,6 +3,8 @@ import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_typography.dart';
 
+import 'tap_scale_widget.dart';
+
 enum AppButtonVariant { primary, secondary, outline, text, ai }
 
 class AppButton extends StatelessWidget {
@@ -94,6 +96,11 @@ class AppButton extends StatelessWidget {
           child: child,
         ),
       ),
+    );
+
+    buttonWidget = TapScaleWidget(
+      onTap: isLoading ? null : onPressed,
+      child: buttonWidget,
     );
 
     return isFullWidth ? SizedBox(width: double.infinity, child: buttonWidget) : buttonWidget;

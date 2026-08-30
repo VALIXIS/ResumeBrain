@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 
+import 'tap_scale_widget.dart';
+
 class AppCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -31,13 +33,16 @@ class AppCard extends StatelessWidget {
     );
 
     if (onTap != null) {
-      return Material(
-        color: Colors.transparent,
-        borderRadius: AppRadius.borderLg,
-        child: InkWell(
-          onTap: onTap,
+      return TapScaleWidget(
+        onTap: onTap,
+        child: Material(
+          color: Colors.transparent,
           borderRadius: AppRadius.borderLg,
-          child: content,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: AppRadius.borderLg,
+            child: content,
+          ),
         ),
       );
     }
