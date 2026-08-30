@@ -10,8 +10,25 @@ final analysisEngineProvider = Provider<AnalysisEngine>((ref) {
   return MockAnalysisEngine();
 });
 
+/// FutureProvider exposing analysis for a single specific [Resume].
+final singleResumeAnalysisProvider =
+    FutureProvider.family<ResumeAnalysisReport, Resume>((ref, resume) async {
+  final engine = ref.watch(analysisEngineProvider);
+  return engine.analyze(resume);
+});
+
+/// FutureProvider exposing analysis for the current active resume in [currentResumeProvider].
+final currentResumeAnalysisProvider =
+    FutureProvider<ResumeAnalysisReport?>((ref) async {
+  final resume = ref.watch(currentResumeProvider);
+  if (resume == null) return null;
+  final engine = ref.watch(analysisEngineProvider);
+  return engine.analyze(resume);
+});
+
 /// FutureProvider exposing the aggregated [AnalysisDashboardStats] for the dashboard.
-final analysisDashboardStatsProvider = FutureProvider<AnalysisDashboardStats>((ref) async {
+final analysisDashboardStatsProvider =
+    FutureProvider<AnalysisDashboardStats>((ref) async {
   // Watch the resumes list provider state.
   final resumesState = ref.watch(resumesListProvider);
 
@@ -32,14 +49,16 @@ final analysisDashboardStatsProvider = FutureProvider<AnalysisDashboardStats>((r
   final engine = ref.watch(analysisEngineProvider);
 
   // Generate analysis reports for all resumes.
-  final reports = await Future.wait(resumes.map((resume) => engine.analyze(resume)));
+  final reports =
+      await Future.wait(resumes.map((resume) => engine.analyze(resume)));
 
   // Calculate statistics.
   final totalResumes = resumes.length;
-  
+
   double averageAtsScore = 0.0;
   if (reports.isNotEmpty) {
-    final totalScore = reports.fold<int>(0, (sum, report) => sum + report.overallScore);
+    final totalScore =
+        reports.fold<int>(0, (sum, report) => sum + report.overallScore);
     averageAtsScore = (totalScore / reports.length).clamp(0.0, 100.0);
   }
 
@@ -63,7 +82,8 @@ List<ResumeAnalysisReport> _calculateRecentActivity(
   final pairedReports = <MapEntry<DateTime, ResumeAnalysisReport>>[];
   for (final report in reports) {
     final index = resumes.indexWhere((r) => r.id == report.resumeId);
-    final timestamp = index != -1 ? resumes[index].updatedAt : report.timestamp;
+    final timestamp =
+        index != -1 ? resumes[index].updatedAt : report.timestamp;
     pairedReports.add(MapEntry(
       timestamp,
       report.copyWith(timestamp: timestamp),
