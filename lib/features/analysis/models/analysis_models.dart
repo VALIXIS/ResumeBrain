@@ -96,6 +96,71 @@ class SectionGrade {
       );
 }
 
+/// Categorized feedback breakdown (Formatting, Content Quality, Keywords).
+class CategoryFeedback {
+  final String title;
+  final double? score; // 0 to 100
+  final String? status; // e.g. 'Strong', 'Moderate', 'Needs Work'
+  final List<String> strengths;
+  final List<String> weaknesses;
+  final List<AnalysisSuggestion> recommendations;
+
+  const CategoryFeedback({
+    required this.title,
+    this.score,
+    this.status,
+    this.strengths = const [],
+    this.weaknesses = const [],
+    this.recommendations = const [],
+  });
+
+  CategoryFeedback copyWith({
+    String? title,
+    double? score,
+    String? status,
+    List<String>? strengths,
+    List<String>? weaknesses,
+    List<AnalysisSuggestion>? recommendations,
+  }) {
+    return CategoryFeedback(
+      title: title ?? this.title,
+      score: score ?? this.score,
+      status: status ?? this.status,
+      strengths: strengths ?? this.strengths,
+      weaknesses: weaknesses ?? this.weaknesses,
+      recommendations: recommendations ?? this.recommendations,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'title': title,
+        'score': score,
+        'status': status,
+        'strengths': strengths,
+        'weaknesses': weaknesses,
+        'recommendations': recommendations.map((r) => r.toMap()).toList(),
+      };
+
+  factory CategoryFeedback.fromMap(Map<String, dynamic> map) =>
+      CategoryFeedback(
+        title: map['title'] ?? '',
+        score: (map['score'] as num?)?.toDouble(),
+        status: map['status'],
+        strengths: map['strengths'] != null
+            ? List<String>.from(map['strengths'])
+            : [],
+        weaknesses: map['weaknesses'] != null
+            ? List<String>.from(map['weaknesses'])
+            : [],
+        recommendations: map['recommendations'] != null
+            ? (map['recommendations'] as List)
+                .map((r) =>
+                    AnalysisSuggestion.fromMap(Map<String, dynamic>.from(r)))
+                .toList()
+            : [],
+      );
+}
+
 /// Complete ATS and structure analysis report for a resume.
 class ResumeAnalysisReport {
   final String id;
@@ -103,6 +168,7 @@ class ResumeAnalysisReport {
   final double overallScore; // 0 to 100
   final String summary;
   final List<SectionGrade> sectionGrades;
+  final List<CategoryFeedback> categorizedFeedback;
   final List<AnalysisSuggestion> suggestions;
   final DateTime createdAt;
 
@@ -112,6 +178,7 @@ class ResumeAnalysisReport {
     required this.overallScore,
     this.summary = '',
     this.sectionGrades = const [],
+    this.categorizedFeedback = const [],
     this.suggestions = const [],
     DateTime? createdAt,
   })  : id = id ?? const Uuid().v4(),
@@ -122,6 +189,7 @@ class ResumeAnalysisReport {
     double? overallScore,
     String? summary,
     List<SectionGrade>? sectionGrades,
+    List<CategoryFeedback>? categorizedFeedback,
     List<AnalysisSuggestion>? suggestions,
     DateTime? createdAt,
   }) {
@@ -131,6 +199,7 @@ class ResumeAnalysisReport {
       overallScore: overallScore ?? this.overallScore,
       summary: summary ?? this.summary,
       sectionGrades: sectionGrades ?? this.sectionGrades,
+      categorizedFeedback: categorizedFeedback ?? this.categorizedFeedback,
       suggestions: suggestions ?? this.suggestions,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -142,6 +211,8 @@ class ResumeAnalysisReport {
         'overallScore': overallScore,
         'summary': summary,
         'sectionGrades': sectionGrades.map((g) => g.toMap()).toList(),
+        'categorizedFeedback':
+            categorizedFeedback.map((c) => c.toMap()).toList(),
         'suggestions': suggestions.map((s) => s.toMap()).toList(),
         'createdAt': createdAt.toIso8601String(),
       };
@@ -155,6 +226,12 @@ class ResumeAnalysisReport {
         sectionGrades: map['sectionGrades'] != null
             ? (map['sectionGrades'] as List)
                 .map((g) => SectionGrade.fromMap(Map<String, dynamic>.from(g)))
+                .toList()
+            : [],
+        categorizedFeedback: map['categorizedFeedback'] != null
+            ? (map['categorizedFeedback'] as List)
+                .map((c) =>
+                    CategoryFeedback.fromMap(Map<String, dynamic>.from(c)))
                 .toList()
             : [],
         suggestions: map['suggestions'] != null

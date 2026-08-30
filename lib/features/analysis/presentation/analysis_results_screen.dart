@@ -11,12 +11,14 @@ import '../../../core/widgets/state_widgets.dart';
 import '../../../data/models/resume_models.dart';
 import '../models/analysis_models.dart';
 import '../providers/analysis_providers.dart';
+import '../widgets/feedback_accordion.dart';
 import 'widgets/score_meter.dart';
 import 'widgets/section_grade_badge.dart';
 import 'widgets/suggestion_chip.dart';
 
 /// AnalysisResultsScreen displays complete ATS and structural analysis for a resume,
-/// including a circular score gauge, section grade badges, and actionable suggestion chips.
+/// including a circular score gauge, section grade badges, categorized feedback accordions,
+/// and actionable suggestion chips.
 class AnalysisResultsScreen extends ConsumerStatefulWidget {
   final Resume? targetResume;
 
@@ -115,15 +117,15 @@ class _AnalysisResultsScreenState extends ConsumerState<AnalysisResultsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Resume Info Header Card
+          // 1. Resume Info Header Card
           _buildResumeOverviewCard(resume),
           const SizedBox(height: AppSpacing.md),
 
-          // Overall ATS Score Meter Card
+          // 2. Overall ATS Score Meter Card
           _buildScoreOverviewCard(report),
           const SizedBox(height: AppSpacing.xl),
 
-          // Section Breakdown
+          // 3. Section Breakdown
           Row(
             children: [
               const Icon(
@@ -157,7 +159,45 @@ class _AnalysisResultsScreenState extends ConsumerState<AnalysisResultsScreen> {
 
           const SizedBox(height: AppSpacing.xl),
 
-          // Actionable Suggestions
+          // 4. Categorized Feedback Accordions (Formatting, Content Quality, Keywords)
+          Row(
+            children: [
+              const Icon(
+                Icons.tune_rounded,
+                color: AppColors.accentTeal,
+                size: 22,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                'Categorized Feedback',
+                style: AppTypography.titleLarge,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          if (report.categorizedFeedback.isEmpty)
+            Text(
+              'No categorized feedback available.',
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.textMuted),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: report.categorizedFeedback.length,
+              separatorBuilder: (c, i) => const SizedBox(height: AppSpacing.md),
+              itemBuilder: (context, index) {
+                final category = report.categorizedFeedback[index];
+                return FeedbackAccordionCard(
+                  feedback: category,
+                  initialExpanded: index == 0, // Expand first by default
+                );
+              },
+            ),
+
+          const SizedBox(height: AppSpacing.xl),
+
+          // 5. Actionable Suggestions
           Row(
             children: [
               const Icon(
