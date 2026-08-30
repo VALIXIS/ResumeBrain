@@ -4,6 +4,7 @@ import 'package:resume_brain/data/models/resume_models.dart';
 import 'package:resume_brain/features/templates/implementations/creative_professional_template.dart';
 import 'package:resume_brain/features/templates/implementations/executive_minimal_template.dart';
 import 'package:resume_brain/features/templates/implementations/modern_classic_template.dart';
+import 'package:resume_brain/features/templates/implementations/tech_specialist_template.dart';
 import 'package:resume_brain/features/templates/services/template_registry.dart';
 
 void main() {
@@ -64,11 +65,22 @@ void main() {
   });
 
   group('Template Registry & PDF Rendering Tests', () {
-    test('TemplateRegistry returns all templates including Creative Professional', () {
-      final templates = TemplateRegistry.allTemplates;
-      expect(templates.length, 3);
-      expect(templates.map((t) => t.id), containsAll(['modern_classic', 'executive_minimal', 'creative_professional']));
-    });
+    test(
+      'TemplateRegistry returns all templates including Tech Specialist',
+      () {
+        final templates = TemplateRegistry.allTemplates;
+        expect(templates.length, 4);
+        expect(
+          templates.map((t) => t.id),
+          containsAll([
+            'modern_classic',
+            'executive_minimal',
+            'creative_professional',
+            'tech_specialist',
+          ]),
+        );
+      },
+    );
 
     test('ModernClassicTemplate PDF compiles cleanly', () async {
       final template = ModernClassicTemplate();
@@ -114,7 +126,10 @@ void main() {
           jobTitle: 'PDF Engine Specialist',
           email: 'vaseem@valixis.com',
         ),
-        skills: [Skill(name: 'Vector Graphics'), Skill(name: 'PDF Layouts')],
+        skills: [
+          Skill(name: 'Vector Graphics'),
+          Skill(name: 'PDF Layouts'),
+        ],
       );
 
       final pdfDoc = await template.generatePdf(resume, PdfPageFormat.a4);
@@ -123,5 +138,125 @@ void main() {
       expect(pdfBytes, isNotNull);
       expect(pdfBytes.isNotEmpty, isTrue);
     });
+
+    test(
+      'TechSpecialistTemplate PDF compiles cleanly with comprehensive tech resume',
+      () async {
+        final template = TechSpecialistTemplate();
+        final resume = Resume(
+          title: 'Senior Tech Specialist Resume',
+          templateId: 'tech_specialist',
+          personalInfo: PersonalInformation(
+            fullName: 'Alex Vance',
+            jobTitle: 'Principal Cloud Systems Engineer',
+            email: 'alex.vance@valixis.com',
+            phone: '+1 (555) 019-2834',
+            location: 'San Francisco, CA',
+            website: 'https://alexvance.dev',
+          ),
+          socialLinks: [
+            SocialLink(platform: 'GitHub', url: 'github.com/alexvance'),
+            SocialLink(platform: 'LinkedIn', url: 'linkedin.com/in/alexvance'),
+          ],
+          summary: ProfessionalSummary(
+            summaryText:
+                'Senior Cloud Engineer with 8+ years designing high-throughput microservices, Kubernetes clusters, and automated CI/CD pipelines.',
+          ),
+          skills: [
+            Skill(name: 'Go', level: 'Expert'),
+            Skill(name: 'Python', level: 'Expert'),
+            Skill(name: 'Rust', level: 'Intermediate'),
+            Skill(name: 'Flutter & Dart', level: 'Advanced'),
+            Skill(name: 'Docker & Kubernetes', level: 'Expert'),
+            Skill(name: 'AWS / GCP Cloud Architecture', level: 'Expert'),
+            Skill(name: 'PostgreSQL & Redis', level: 'Advanced'),
+            Skill(name: 'Terraform & Ansible', level: 'Expert'),
+          ],
+          experiences: [
+            Experience(
+              company: 'Valixis Systems',
+              position: 'Lead Systems Architect',
+              location: 'San Francisco, CA',
+              startDate: '2022',
+              endDate: 'Present',
+              isCurrent: true,
+              description:
+                  'Architected distributed cloud engine scaling to 5M daily active users with 99.99% availability. Reduced infrastructure latency by 45%.',
+            ),
+            Experience(
+              company: 'TechCorp Solutions',
+              position: 'Senior DevOps Engineer',
+              location: 'Austin, TX',
+              startDate: '2019',
+              endDate: '2022',
+              isCurrent: false,
+              description:
+                  'Built automated deployment pipelines using GitHub Actions and Kubernetes, decreasing deployment failure rate by 60%.',
+            ),
+          ],
+          projects: [
+            Project(
+              name: 'Resume Brain PDF Engine',
+              role: 'Lead Developer',
+              link: 'github.com/valixis/resumebrain',
+              description:
+                  'High-performance PDF generation layout engine supporting multi-page pagination and custom ATS resume themes.',
+              technologies: 'Flutter, Dart, PDF Engine, SQLite, Riverpod',
+            ),
+            Project(
+              name: 'KubeWatch Micro-Monitor',
+              role: 'Creator & Maintainer',
+              link: 'github.com/alexvance/kubewatch',
+              description:
+                  'Open-source cluster resource monitor with real-time alert routing.',
+              technologies: 'Go, Kubernetes API, Prometheus, Grafana, Docker',
+            ),
+          ],
+          educationList: [
+            Education(
+              institution: 'University of California, Berkeley',
+              degree: 'Bachelor of Science',
+              fieldOfStudy: 'Computer Science',
+              location: 'Berkeley, CA',
+              startDate: '2015',
+              endDate: '2019',
+              gpa: '3.88',
+            ),
+          ],
+          certifications: [
+            Certification(
+              name: 'AWS Certified Solutions Architect - Professional',
+              issuingOrganization: 'Amazon Web Services',
+              issueDate: '2024',
+            ),
+            Certification(
+              name: 'Certified Kubernetes Administrator (CKA)',
+              issuingOrganization: 'Linux Foundation',
+              issueDate: '2023',
+            ),
+          ],
+          languages: [
+            Language(name: 'English', proficiency: 'Native'),
+            Language(name: 'German', proficiency: 'Conversational'),
+          ],
+          customSections: [
+            CustomSection(
+              title: 'Open Source Contributions',
+              items: [
+                'Contributor to CNCF Kubernetes ecosystem repositories',
+                'Speaker at Cloud Native Summit 2025 on Microservice Resilience',
+              ],
+            ),
+          ],
+        );
+
+        final pdfDoc = await template.generatePdf(resume, PdfPageFormat.a4);
+        final pdfBytes = await pdfDoc.save();
+
+        expect(pdfBytes, isNotNull);
+        expect(pdfBytes.isNotEmpty, isTrue);
+        expect(pdfBytes.length, greaterThan(1000));
+      },
+    );
   });
 }
