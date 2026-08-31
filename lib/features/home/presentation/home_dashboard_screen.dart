@@ -19,6 +19,7 @@ import '../../../core/widgets/theme_toggle_widget.dart';
 import '../../../core/widgets/smooth_page_route.dart';
 import '../../../core/widgets/app_shimmer.dart';
 import '../../../core/widgets/shimmer_placeholders.dart';
+import '../../../core/widgets/responsive_layout.dart';
 
 class HomeDashboardScreen extends ConsumerWidget {
   const HomeDashboardScreen({super.key});
@@ -63,110 +64,167 @@ class HomeDashboardScreen extends ConsumerWidget {
           errorMessage: err.toString(),
           onRetry: () => ref.read(resumesListProvider.notifier).loadResumes(),
         ),
-        data: (resumes) => SingleChildScrollView(
-          padding: AppSpacing.screenPadding,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        data: (resumes) => ResponsiveLayout(
+          mobile: _buildMobileLayout(context, ref, resumes),
+          tablet: _buildTabletDesktopLayout(context, ref, resumes, gap: AppSpacing.lg),
+          desktop: _buildTabletDesktopLayout(context, ref, resumes, gap: AppSpacing.xl),
+        ),
+      ),
+    );
+  }
+
+  // Layout Builders
+  Widget _buildMobileLayout(BuildContext context, WidgetRef ref, List<Resume> resumes) {
+    return SingleChildScrollView(
+      padding: AppSpacing.screenPadding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeroCard(context, ref),
+          const SizedBox(height: AppSpacing.xl),
+          _buildResumesSection(context, ref, resumes),
+          const SizedBox(height: AppSpacing.xl),
+          _buildAiSuiteSection(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabletDesktopLayout(
+    BuildContext context,
+    WidgetRef ref,
+    List<Resume> resumes, {
+    required double gap,
+  }) {
+    return SingleChildScrollView(
+      padding: AppSpacing.screenPadding,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Primary Pane (Left)
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeroCard(context, ref),
+                const SizedBox(height: AppSpacing.xl),
+                _buildResumesSection(context, ref, resumes),
+              ],
+            ),
+          ),
+          SizedBox(width: gap),
+          // Secondary Pane (Right)
+          Expanded(
+            flex: 2,
+            child: _buildAiSuiteSection(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Component Helpers
+  Widget _buildHeroCard(BuildContext context, WidgetRef ref) {
+    return AppCard(
+      color: AppColors.surface,
+      border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1.5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              // Hero Banner / Create CTA Card
-              AppCard(
-                color: AppColors.surface,
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1.5),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.auto_awesome, color: AppColors.accentPurple, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          'VALIXIS CAREER ENGINE',
-                          style: AppTypography.labelSmall.copyWith(color: AppColors.accentPurple),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      'Build ATS-Ready Resumes in Minutes',
-                      style: AppTypography.displayMedium.copyWith(fontSize: 20),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      'Create, format, and export high-impact professional resumes optimized for recruiters.',
-                      style: AppTypography.bodyMedium,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    AppButton(
-                      text: 'Create New Resume',
-                      icon: Icons.add_rounded,
-                      variant: AppButtonVariant.primary,
-                      onPressed: () => _createNewResume(context, ref),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: AppSpacing.xl),
-
-              // Recent / Saved Resumes Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('My Resumes', style: AppTypography.titleLarge),
-                  Text('${resumes.length} saved', style: AppTypography.bodySmall),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-
-              if (resumes.isEmpty)
-                EmptyStateWidget(
-                  title: 'No Resumes Yet',
-                  description: 'Create your first resume to kickstart your career journey with Resume Brain.',
-                  actionText: 'Create Resume Now',
-                  onAction: () => _createNewResume(context, ref),
-                )
-              else
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: resumes.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
-                  itemBuilder: (context, index) {
-                    final resume = resumes[index];
-                    return _buildResumeCard(context, ref, resume);
-                  },
-                ),
-
-              const SizedBox(height: AppSpacing.xl),
-
-              // Future AI Expansion Modules (Disabled / Coming Soon)
-              Text('Resume Intelligence Suite', style: AppTypography.titleLarge),
-              const SizedBox(height: AppSpacing.xs),
+              const Icon(Icons.auto_awesome, color: AppColors.accentPurple, size: 20),
+              const SizedBox(width: 8),
               Text(
-                'Next-generation career tools powered by AI.',
-                style: AppTypography.bodySmall,
-              ),
-              const SizedBox(height: AppSpacing.md),
-
-              _buildComingSoonFeatureCard(
-                context,
-                title: 'AI Resume Analysis & ATS Score',
-                description: 'Get deep feedback, keyword checks, and structural score.',
-                icon: Icons.analytics_outlined,
-                accentColor: AppColors.accentTeal,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              _buildComingSoonFeatureCard(
-                context,
-                title: 'Job Match & Resume Tailoring',
-                description: 'Match your resume against job postings and auto-tailor bullet points.',
-                icon: Icons.work_outline_rounded,
-                accentColor: AppColors.accentPurple,
+                'VALIXIS CAREER ENGINE',
+                style: AppTypography.labelSmall.copyWith(color: AppColors.accentPurple),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Build ATS-Ready Resumes in Minutes',
+            style: AppTypography.displayMedium.copyWith(fontSize: 20),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Create, format, and export high-impact professional resumes optimized for recruiters.',
+            style: AppTypography.bodyMedium,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          AppButton(
+            text: 'Create New Resume',
+            icon: Icons.add_rounded,
+            variant: AppButtonVariant.primary,
+            onPressed: () => _createNewResume(context, ref),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildResumesSection(BuildContext context, WidgetRef ref, List<Resume> resumes) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('My Resumes', style: AppTypography.titleLarge),
+            Text('${resumes.length} saved', style: AppTypography.bodySmall),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        if (resumes.isEmpty)
+          EmptyStateWidget(
+            title: 'No Resumes Yet',
+            description: 'Create your first resume to kickstart your career journey with Resume Brain.',
+            actionText: 'Create Resume Now',
+            onAction: () => _createNewResume(context, ref),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: resumes.length,
+            separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
+            itemBuilder: (context, index) {
+              final resume = resumes[index];
+              return _buildResumeCard(context, ref, resume);
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildAiSuiteSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Resume Intelligence Suite', style: AppTypography.titleLarge),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'Next-generation career tools powered by AI.',
+          style: AppTypography.bodySmall,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _buildComingSoonFeatureCard(
+          context,
+          title: 'AI Resume Analysis & ATS Score',
+          description: 'Get deep feedback, keyword checks, and structural score.',
+          icon: Icons.analytics_outlined,
+          accentColor: AppColors.accentTeal,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _buildComingSoonFeatureCard(
+          context,
+          title: 'Job Match & Resume Tailoring',
+          description: 'Match your resume against job postings and auto-tailor bullet points.',
+          icon: Icons.work_outline_rounded,
+          accentColor: AppColors.accentPurple,
+        ),
+      ],
     );
   }
 
@@ -330,73 +388,131 @@ class HomeDashboardScreen extends ConsumerWidget {
     );
   }
 
+  // Shimmer loading helper
   Widget _buildLoadingShimmer() {
+    return ResponsiveLayout(
+      mobile: _buildMobileShimmer(),
+      tablet: _buildTabletDesktopShimmer(gap: AppSpacing.lg),
+      desktop: _buildTabletDesktopShimmer(gap: AppSpacing.xl),
+    );
+  }
+
+  Widget _buildMobileShimmer() {
     return SingleChildScrollView(
       padding: AppSpacing.screenPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppCard(
-            color: AppColors.surface,
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1.5),
+          _buildHeroShimmer(),
+          const SizedBox(height: AppSpacing.xl),
+          _buildResumesShimmer(),
+          const SizedBox(height: AppSpacing.xl),
+          _buildAiSuiteShimmer(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabletDesktopShimmer({required double gap}) {
+    return SingleChildScrollView(
+      padding: AppSpacing.screenPadding,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.auto_awesome, color: AppColors.accentPurple, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'VALIXIS CAREER ENGINE',
-                      style: AppTypography.labelSmall.copyWith(color: AppColors.accentPurple),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  'Build ATS-Ready Resumes in Minutes',
-                  style: AppTypography.displayMedium.copyWith(fontSize: 20),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  'Create, format, and export high-impact professional resumes optimized for recruiters.',
-                  style: AppTypography.bodyMedium,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                const AppButton(
-                  text: 'Create New Resume',
-                  icon: Icons.add_rounded,
-                  variant: AppButtonVariant.primary,
-                  onPressed: null,
-                ),
+                _buildHeroShimmer(),
+                const SizedBox(height: AppSpacing.xl),
+                _buildResumesShimmer(),
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.xl),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('My Resumes', style: AppTypography.titleLarge),
-              const AppShimmer(width: 50, height: 14),
-            ],
+          SizedBox(width: gap),
+          Expanded(
+            flex: 2,
+            child: _buildAiSuiteShimmer(),
           ),
-          const SizedBox(height: AppSpacing.md),
-          const ListRowShimmer(),
-          const SizedBox(height: AppSpacing.md),
-          const ListRowShimmer(),
-          const SizedBox(height: AppSpacing.xl),
-          Text('Resume Intelligence Suite', style: AppTypography.titleLarge),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            'Next-generation career tools powered by AI.',
-            style: AppTypography.bodySmall,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          const DashboardCardShimmer(),
-          const SizedBox(height: AppSpacing.md),
-          const DashboardCardShimmer(),
         ],
       ),
+    );
+  }
+
+  Widget _buildHeroShimmer() {
+    return AppCard(
+      color: AppColors.surface,
+      border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1.5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome, color: AppColors.accentPurple, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'VALIXIS CAREER ENGINE',
+                style: AppTypography.labelSmall.copyWith(color: AppColors.accentPurple),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Build ATS-Ready Resumes in Minutes',
+            style: AppTypography.displayMedium.copyWith(fontSize: 20),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Create, format, and export high-impact professional resumes optimized for recruiters.',
+            style: AppTypography.bodyMedium,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          const AppButton(
+            text: 'Create New Resume',
+            icon: Icons.add_rounded,
+            variant: AppButtonVariant.primary,
+            onPressed: null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResumesShimmer() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('My Resumes', style: AppTypography.titleLarge),
+            const AppShimmer(width: 50, height: 14),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        const ListRowShimmer(),
+        const SizedBox(height: AppSpacing.md),
+        const ListRowShimmer(),
+      ],
+    );
+  }
+
+  Widget _buildAiSuiteShimmer() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Resume Intelligence Suite', style: AppTypography.titleLarge),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'Next-generation career tools powered by AI.',
+          style: AppTypography.bodySmall,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        const DashboardCardShimmer(),
+        const SizedBox(height: AppSpacing.md),
+        const DashboardCardShimmer(),
+      ],
     );
   }
 
