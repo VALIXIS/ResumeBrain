@@ -225,4 +225,53 @@ class ResumeValidators {
 
     return DateTime.tryParse(trimmed);
   }
+
+  /// Validates a custom section title, with optional duplicate check against existing section titles.
+  static String? validateSectionTitle(
+    String? value, {
+    List<String> existingTitles = const [],
+    String? currentTitle,
+    int minLength = 2,
+    int maxLength = 80,
+  }) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Section title is required';
+    }
+    final trimmed = value.trim();
+    if (trimmed.length < minLength) {
+      return 'Section title must be at least $minLength characters';
+    }
+    if (trimmed.length > maxLength) {
+      return 'Section title cannot exceed $maxLength characters';
+    }
+    final currentNormalized = currentTitle?.trim().toLowerCase();
+    final isDuplicate = existingTitles.any((title) {
+      final normalized = title.trim().toLowerCase();
+      if (currentNormalized != null && normalized == currentNormalized) {
+        return false;
+      }
+      return normalized == trimmed.toLowerCase();
+    });
+    if (isDuplicate) {
+      return 'A section with this title already exists';
+    }
+    return null;
+  }
+
+  /// Validates a single bullet point item.
+  static String? validateBulletPoint(
+    String? value, {
+    int maxLength = 500,
+    bool isRequired = false,
+  }) {
+    if (value == null || value.trim().isEmpty) {
+      if (isRequired) return 'Bullet point cannot be empty';
+      return null;
+    }
+    final trimmed = value.trim();
+    if (trimmed.length > maxLength) {
+      return 'Bullet point cannot exceed $maxLength characters';
+    }
+    return null;
+  }
 }

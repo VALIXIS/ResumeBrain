@@ -108,45 +108,51 @@ class SectionEditorTab extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.verified_outlined,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  'Certifications & Licenses',
-                  style: AppTypography.titleLarge,
-                ),
-                if (resume.certifications.isNotEmpty) ...[
-                  const SizedBox(width: 8),
+            Expanded(
+              child: Row(
+                children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
                     ),
+                    child: const Icon(
+                      Icons.verified_outlined,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Flexible(
                     child: Text(
-                      '${resume.certifications.length}',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
+                      'Certifications & Licenses',
+                      style: AppTypography.titleLarge,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (resume.certifications.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${resume.certifications.length}',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
+            const SizedBox(width: 8),
             AppButton(
               text: 'Add Certification',
               icon: Icons.add,
@@ -375,42 +381,51 @@ class SectionEditorTab extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppColors.secondary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.language_outlined,
-                    color: AppColors.secondary,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Text('Languages', style: AppTypography.titleLarge),
-                if (resume.languages.isNotEmpty) ...[
-                  const SizedBox(width: 8),
+            Expanded(
+              child: Row(
+                children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: AppColors.secondary.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.secondary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
                     ),
+                    child: const Icon(
+                      Icons.language_outlined,
+                      color: AppColors.secondary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Flexible(
                     child: Text(
-                      '${resume.languages.length}',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.secondary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
+                      'Languages',
+                      style: AppTypography.titleLarge,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (resume.languages.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.secondary.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${resume.languages.length}',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.secondary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
+            const SizedBox(width: 8),
             AppButton(
               text: 'Add Language',
               icon: Icons.add,
@@ -592,62 +607,133 @@ class SectionEditorTab extends ConsumerWidget {
   }
 
   // ---------------------------------------------------------------------------
-  // Custom Sections (Reorderable)
+  // Custom Sections (Reorderable with Dynamic Bullet Engine)
   // ---------------------------------------------------------------------------
   Widget _buildCustomSections(
     BuildContext context,
     WidgetRef ref,
     Resume resume,
   ) {
+    final existingTitles = resume.customSections.map((s) => s.title).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppColors.accentPurple.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.dashboard_customize_outlined,
-                    color: AppColors.accentPurple,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Text('Custom Sections', style: AppTypography.titleLarge),
-                if (resume.customSections.isNotEmpty) ...[
-                  const SizedBox(width: 8),
+            Expanded(
+              child: Row(
+                children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: AppColors.accentPurple.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.accentPurple.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
                     ),
+                    child: const Icon(
+                      Icons.dashboard_customize_outlined,
+                      color: AppColors.accentPurple,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Flexible(
                     child: Text(
-                      '${resume.customSections.length}',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.accentPurple,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
+                      'Custom Sections',
+                      style: AppTypography.titleLarge,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (resume.customSections.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.accentPurple.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${resume.customSections.length}',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.accentPurple,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
+            const SizedBox(width: 8),
             AppButton(
               text: 'Add Section',
               icon: Icons.add,
               isFullWidth: false,
-              onPressed: () => _showCustomSectionDialog(context, ref),
+              onPressed: () => _showCustomSectionDialog(
+                context,
+                ref,
+                existingTitles: existingTitles,
+              ),
             ),
           ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+
+        // Quick Preset Suggestions Bar
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              Text(
+                'Quick Presets: ',
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 4),
+              ActionChip(
+                avatar: const Icon(Icons.menu_book_outlined, size: 14, color: AppColors.accentPurple),
+                label: const Text('Publications'),
+                labelStyle: AppTypography.bodySmall.copyWith(fontSize: 12),
+                backgroundColor: AppColors.surfaceLight,
+                onPressed: () => _showCustomSectionDialog(
+                  context,
+                  ref,
+                  existingTitles: existingTitles,
+                  initialPresetTitle: 'Publications & Research',
+                ),
+              ),
+              const SizedBox(width: 6),
+              ActionChip(
+                avatar: const Icon(Icons.volunteer_activism_outlined, size: 14, color: AppColors.accentPurple),
+                label: const Text('Volunteer'),
+                labelStyle: AppTypography.bodySmall.copyWith(fontSize: 12),
+                backgroundColor: AppColors.surfaceLight,
+                onPressed: () => _showCustomSectionDialog(
+                  context,
+                  ref,
+                  existingTitles: existingTitles,
+                  initialPresetTitle: 'Volunteer Experience',
+                ),
+              ),
+              const SizedBox(width: 6),
+              ActionChip(
+                avatar: const Icon(Icons.emoji_events_outlined, size: 14, color: AppColors.accentPurple),
+                label: const Text('Awards'),
+                labelStyle: AppTypography.bodySmall.copyWith(fontSize: 12),
+                backgroundColor: AppColors.surfaceLight,
+                onPressed: () => _showCustomSectionDialog(
+                  context,
+                  ref,
+                  existingTitles: existingTitles,
+                  initialPresetTitle: 'Awards & Honors',
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
         if (resume.customSections.isEmpty)
@@ -668,7 +754,7 @@ class SectionEditorTab extends ConsumerWidget {
                       Text('No custom sections added', style: AppTypography.titleMedium),
                       const SizedBox(height: 2),
                       Text(
-                        'Add custom sections such as Publications, Awards & Honors, Volunteering, or Interests.',
+                        'Add custom sections such as Publications, Awards & Honors, Volunteering, or user-defined topics with bullet points.',
                         style: AppTypography.bodySmall,
                       ),
                     ],
@@ -680,7 +766,11 @@ class SectionEditorTab extends ConsumerWidget {
                   icon: Icons.add,
                   isFullWidth: false,
                   variant: AppButtonVariant.secondary,
-                  onPressed: () => _showCustomSectionDialog(context, ref),
+                  onPressed: () => _showCustomSectionDialog(
+                    context,
+                    ref,
+                    existingTitles: existingTitles,
+                  ),
                 ),
               ],
             ),
@@ -728,7 +818,7 @@ class SectionEditorTab extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: section.items.map(
                           (bullet) => Padding(
-                            padding: const EdgeInsets.only(bottom: 3),
+                            padding: const EdgeInsets.only(bottom: 4),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -761,6 +851,7 @@ class SectionEditorTab extends ConsumerWidget {
                   context,
                   ref,
                   section: section,
+                  existingTitles: existingTitles,
                 ),
                 onDelete: () => _confirmDeleteCustomSection(
                   context,
@@ -778,10 +869,14 @@ class SectionEditorTab extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref, {
     CustomSection? section,
+    List<String> existingTitles = const [],
+    String? initialPresetTitle,
   }) {
     CustomSectionEditorDialog.show(
       context: context,
       section: section,
+      existingTitles: existingTitles,
+      initialPresetTitle: initialPresetTitle,
       onSave: (sec) => _saveCustomSection(ref, sec),
     );
   }
