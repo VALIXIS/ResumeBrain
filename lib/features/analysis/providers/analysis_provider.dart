@@ -3,18 +3,30 @@ import '../../../app/providers.dart';
 import '../../../data/models/resume_models.dart';
 import '../models/analysis_dashboard_stats.dart';
 import '../models/resume_analysis_report.dart';
+import '../services/ai_analysis_adapter.dart';
 import '../services/analysis_engine.dart';
 
-/// Provider exposing the [AnalysisEngine] instance.
+/// Provider exposing the deterministic [AnalysisEngine] fallback instance.
 final analysisEngineProvider = Provider<AnalysisEngine>((ref) {
   return MockAnalysisEngine();
+});
+
+/// Provider exposing the [AiAnalysisAdapter] connecting the [AIService] contract
+/// to the analysis layer with safe deterministic mock fallback handling.
+final aiAnalysisAdapterProvider = Provider<AiAnalysisAdapter>((ref) {
+  final aiService = ref.watch(aiServiceProvider);
+  final fallbackEngine = ref.watch(analysisEngineProvider);
+  return AiAnalysisAdapter(
+    aiService: aiService,
+    fallbackEngine: fallbackEngine,
+  );
 });
 
 /// FutureProvider exposing analysis for a single specific [Resume].
 final singleResumeAnalysisProvider =
     FutureProvider.family<ResumeAnalysisReport, Resume>((ref, resume) async {
-  final engine = ref.watch(analysisEngineProvider);
-  return engine.analyze(resume);
+  final adapter = ref.watch(aiAnalysisAdapterProvider);
+  return adapter.analyze(resume);
 });
 
 /// FutureProvider exposing analysis for the current active resume in [currentResumeProvider].
@@ -22,8 +34,8 @@ final currentResumeAnalysisProvider =
     FutureProvider<ResumeAnalysisReport?>((ref) async {
   final resume = ref.watch(currentResumeProvider);
   if (resume == null) return null;
-  final engine = ref.watch(analysisEngineProvider);
-  return engine.analyze(resume);
+  final adapter = ref.watch(aiAnalysisAdapterProvider);
+  return adapter.analyze(resume);
 });
 
 /// FutureProvider exposing the aggregated [AnalysisDashboardStats] for the dashboard.
@@ -46,11 +58,11 @@ final analysisDashboardStatsProvider =
     );
   }
 
-  final engine = ref.watch(analysisEngineProvider);
+  final adapter = ref.watch(aiAnalysisAdapterProvider);
 
   // Generate analysis reports for all resumes.
   final reports =
-      await Future.wait(resumes.map((resume) => engine.analyze(resume)));
+      await Future.wait(resumes.map((resume) => adapter.analyze(resume)));
 
   // Calculate statistics.
   final totalResumes = resumes.length;
