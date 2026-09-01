@@ -1,5 +1,4 @@
 import '../../../data/models/resume_models.dart';
-import 'ai_service.dart';
 
 /// Elite AI Prompt Engine for Resume Brain (VALIXIS Intelligence Core).
 /// Implements Google XYZ Formula, Tier-1 Tech Recruiter heuristics,
@@ -74,15 +73,15 @@ INSTRUCTIONS:
     buffer.writeln('\n=== CANDIDATE RESUME DATA ===');
     buffer.writeln('Job Title / Target Role: ${resume.personalInfo.jobTitle}');
     buffer.writeln('Full Name: ${resume.personalInfo.fullName}');
-    buffer.writeln('Email: ${resume.personalInfo.email} | Phone: ${resume.personalInfo.phoneNumber}');
+    buffer.writeln('Email: ${resume.personalInfo.email} | Phone: ${resume.personalInfo.phone}');
     buffer.writeln('Location: ${resume.personalInfo.location} | Website/GitHub: ${resume.personalInfo.website}');
     buffer.writeln('\nProfessional Summary:\n${resume.summary.summaryText}');
 
     buffer.writeln('\nWork Experiences (${resume.experiences.length}):');
     for (final exp in resume.experiences) {
       buffer.writeln('- Position: ${exp.position} at ${exp.company} (${exp.startDate} - ${exp.isCurrent ? "Present" : exp.endDate})');
-      for (final b in exp.bulletPoints) {
-        buffer.writeln('  * $b');
+      if (exp.description.isNotEmpty) {
+        buffer.writeln('  * ${exp.description}');
       }
     }
 
@@ -101,10 +100,7 @@ INSTRUCTIONS:
 
     buffer.writeln('\nProjects (${resume.projects.length}):');
     for (final p in resume.projects) {
-      buffer.writeln('- ${p.title}: ${p.description} (Tech: ${p.technologies.join(", ")})');
-      for (final b in p.bulletPoints) {
-        buffer.writeln('  * $b');
-      }
+      buffer.writeln('- ${p.name}: ${p.description} (Tech: ${p.technologies})');
     }
 
     buffer.writeln('''
@@ -136,7 +132,7 @@ In "missingKeywords", list high-demand industry skills missing from this profile
     buffer.writeln('Skills: ${resume.skills.map((s) => s.name).join(", ")}');
     buffer.writeln('Experience Highlights:');
     for (final exp in resume.experiences) {
-      buffer.writeln('- ${exp.position} @ ${exp.company}: ${exp.bulletPoints.join(" ")}');
+      buffer.writeln('- ${exp.position} @ ${exp.company}: ${exp.description}');
     }
 
     buffer.writeln('''
@@ -165,10 +161,7 @@ In "missingKeywords", list high-demand industry skills missing from this profile
     buffer.writeln('Current Summary: ${resume.summary.summaryText}');
     buffer.writeln('Experiences:');
     for (final exp in resume.experiences) {
-      buffer.writeln('- ${exp.position} @ ${exp.company}:');
-      for (final b in exp.bulletPoints) {
-        buffer.writeln('  * $b');
-      }
+      buffer.writeln('- ${exp.position} @ ${exp.company}: ${exp.description}');
     }
 
     buffer.writeln('''

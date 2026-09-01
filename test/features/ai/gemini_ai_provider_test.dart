@@ -58,7 +58,7 @@ void main() {
         personalInfo: PersonalInformation(
           fullName: 'John Doe',
           email: 'john@example.com',
-          phoneNumber: '+1234567890',
+          phone: '+1234567890',
           location: 'San Francisco, CA',
           website: 'https://johndoe.dev',
           jobTitle: 'Senior Flutter Engineer',
@@ -75,7 +75,7 @@ void main() {
             startDate: '2022',
             endDate: 'Present',
             isCurrent: true,
-            bulletPoints: ['Engineered high-performance Flutter mobile application.'],
+            description: 'Engineered high-performance Flutter mobile application.',
           )
         ],
         educationList: [
@@ -89,8 +89,8 @@ void main() {
           )
         ],
         skills: [
-          Skill(id: 's1', name: 'Flutter', category: 'Mobile'),
-          Skill(id: 's2', name: 'Dart', category: 'Language'),
+          Skill(id: 's1', name: 'Flutter', level: 'Expert'),
+          Skill(id: 's2', name: 'Dart', level: 'Expert'),
         ],
       );
 
