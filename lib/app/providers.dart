@@ -4,13 +4,23 @@ import '../data/repositories/resume_repository.dart';
 import '../features/ai/services/ai_service.dart';
 import '../features/pdf/services/pdf_service.dart';
 
+import '../features/ai/services/hybrid_ai_provider.dart';
+
 // Services & Repositories
 final resumeRepositoryProvider = Provider<ResumeRepository>((ref) {
   return HiveResumeRepository();
 });
 
 final aiServiceProvider = Provider<AIService>((ref) {
-  return ResumeBrainAIService(provider: MockAIProvider());
+  const geminiKey = String.fromEnvironment('GEMINI_API_KEY');
+  const groqKey = String.fromEnvironment('GROQ_API_KEY');
+
+  return ResumeBrainAIService(
+    provider: HybridAIProvider(
+      geminiApiKey: geminiKey,
+      groqApiKey: groqKey,
+    ),
+  );
 });
 
 final pdfServiceProvider = Provider<PdfService>((ref) {

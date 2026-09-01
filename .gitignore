@@ -43,3 +43,5 @@ app.*.map.json
 **/android/key.properties
 *.jks
 *.keystore
+api_keys.json
+.env
