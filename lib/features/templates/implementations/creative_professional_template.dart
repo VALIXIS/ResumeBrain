@@ -38,6 +38,16 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
       pw.MultiPage(
         pageFormat: pageFormat,
         margin: const pw.EdgeInsets.all(32),
+        footer: (pw.Context context) {
+          return pw.Container(
+            alignment: pw.Alignment.centerRight,
+            margin: const pw.EdgeInsets.only(top: 10),
+            child: pw.Text(
+              'Page ${context.pageNumber} of ${context.pagesCount}',
+              style: pw.TextStyle(fontSize: 8.5, color: mutedTextColor),
+            ),
+          );
+        },
         build: (pw.Context context) {
           return [
             pw.Partitions(

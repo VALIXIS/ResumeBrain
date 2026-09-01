@@ -1,3 +1,4 @@
+import '../implementations/academic_cv_template.dart';
 import '../implementations/creative_professional_template.dart';
 import '../implementations/executive_minimal_template.dart';
 import '../implementations/modern_classic_template.dart';
@@ -10,6 +11,7 @@ class TemplateRegistry {
     ExecutiveMinimalTemplate(),
     CreativeProfessionalTemplate(),
     TechSpecialistTemplate(),
+    AcademicCvTemplate(),
   ];
 
   static List<ResumeTemplate> get allTemplates {

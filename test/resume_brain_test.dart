@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pdf/pdf.dart';
 import 'package:resume_brain/data/models/resume_models.dart';
+import 'package:resume_brain/features/templates/implementations/academic_cv_template.dart';
 import 'package:resume_brain/features/templates/implementations/creative_professional_template.dart';
 import 'package:resume_brain/features/templates/implementations/executive_minimal_template.dart';
 import 'package:resume_brain/features/templates/implementations/modern_classic_template.dart';
@@ -66,10 +67,10 @@ void main() {
 
   group('Template Registry & PDF Rendering Tests', () {
     test(
-      'TemplateRegistry returns all templates including Tech Specialist',
+      'TemplateRegistry returns all templates including Academic CV',
       () {
         final templates = TemplateRegistry.allTemplates;
-        expect(templates.length, 4);
+        expect(templates.length, 5);
         expect(
           templates.map((t) => t.id),
           containsAll([
@@ -77,6 +78,7 @@ void main() {
             'executive_minimal',
             'creative_professional',
             'tech_specialist',
+            'academic_cv',
           ]),
         );
       },
@@ -245,6 +247,93 @@ void main() {
               items: [
                 'Contributor to CNCF Kubernetes ecosystem repositories',
                 'Speaker at Cloud Native Summit 2025 on Microservice Resilience',
+              ],
+            ),
+          ],
+        );
+
+        final pdfDoc = await template.generatePdf(resume, PdfPageFormat.a4);
+        final pdfBytes = await pdfDoc.save();
+
+        expect(pdfBytes, isNotNull);
+        expect(pdfBytes.isNotEmpty, isTrue);
+        expect(pdfBytes.length, greaterThan(1000));
+      },
+    );
+
+    test(
+      'AcademicCvTemplate PDF compiles cleanly with multi-page academic CV',
+      () async {
+        final template = AcademicCvTemplate();
+        final resume = Resume(
+          title: 'Academic CV Resume',
+          templateId: 'academic_cv',
+          personalInfo: PersonalInformation(
+            fullName: 'Dr. Evelyn Reed',
+            jobTitle: 'Associate Professor of Computer Science',
+            email: 'evelyn.reed@university.edu',
+            phone: '+1 (555) 234-5678',
+            location: 'Cambridge, MA',
+            website: 'https://evelynreed.org',
+          ),
+          summary: ProfessionalSummary(
+            summaryText:
+                'Researcher specializing in distributed systems, formal methods, and programming language design with 15+ peer-reviewed publications.',
+          ),
+          educationList: [
+            Education(
+              institution: 'Massachusetts Institute of Technology',
+              degree: 'Ph.D.',
+              fieldOfStudy: 'Computer Science',
+              location: 'Cambridge, MA',
+              startDate: '2014',
+              endDate: '2019',
+              gpa: '4.0',
+            ),
+            Education(
+              institution: 'Stanford University',
+              degree: 'B.S.',
+              fieldOfStudy: 'Computer Science',
+              location: 'Stanford, CA',
+              startDate: '2010',
+              endDate: '2014',
+            ),
+          ],
+          experiences: [
+            Experience(
+              company: 'Harvard University',
+              position: 'Associate Professor',
+              location: 'Cambridge, MA',
+              startDate: '2022',
+              endDate: 'Present',
+              isCurrent: true,
+              description:
+                  'Leading the Concurrent Systems Laboratory. Principal Investigator on NSF Grant #2049182.',
+            ),
+            Experience(
+              company: 'MIT CSAIL',
+              position: 'Postdoctoral Researcher',
+              location: 'Cambridge, MA',
+              startDate: '2019',
+              endDate: '2022',
+              description:
+                  'Researched mechanized proofs for fault-tolerant consensus protocols.',
+            ),
+          ],
+          projects: [
+            Project(
+              name: 'VeriLog Logic Verifier',
+              role: 'Principal Investigator',
+              description: 'Formally verified model checker for distributed protocols.',
+              technologies: 'Coq, OCaml, C++',
+            ),
+          ],
+          customSections: [
+            CustomSection(
+              title: 'Selected Publications',
+              items: [
+                'Reed, E. et al. (2024). "Mechanized Verification of Raft Consensus." POPL 2024.',
+                'Reed, E. & Smith, A. (2023). "Linearizability at Scale." OSDI 2023.',
               ],
             ),
           ],
