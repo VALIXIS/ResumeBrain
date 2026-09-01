@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/providers.dart';
 import '../../../core/theme/app_colors.dart';
@@ -9,6 +10,8 @@ import '../../../core/widgets/custom_card.dart';
 import '../../../data/models/resume_models.dart';
 import '../../pdf/presentation/resume_preview_screen.dart';
 import '../../templates/presentation/template_selector_screen.dart';
+import '../providers/resume_history_provider.dart';
+import '../utils/resume_input_scrubber.dart';
 import '../widgets/education_editor_dialog.dart';
 import '../widgets/experience_editor_dialog.dart';
 import '../widgets/project_editor_dialog.dart';
@@ -47,6 +50,8 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
     super.initState();
     _tabController = TabController(length: 7, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final resume = ref.read(currentResumeProvider);
+      ref.read(resumeHistoryProvider.notifier).initializeWithResume(resume);
       _loadCurrentResumeData();
     });
   }
@@ -62,6 +67,14 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
       _locationCtrl.text = resume.personalInfo.location;
       _websiteCtrl.text = resume.personalInfo.website;
       _summaryCtrl.text = resume.summary.summaryText;
+    }
+  }
+
+  void _updateResumeWithHistory(Resume Function(Resume current) updateFn) {
+    final current = ref.read(currentResumeProvider);
+    if (current != null) {
+      ref.read(resumeHistoryProvider.notifier).recordSnapshot(current);
+      ref.read(currentResumeProvider.notifier).updateResume(updateFn);
     }
   }
 
@@ -83,6 +96,37 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
   @override
   Widget build(BuildContext context) {
     final resume = ref.watch(currentResumeProvider);
+    final historyState = ref.watch(resumeHistoryProvider);
+
+    // Sync text controllers when undo/redo or external mutations update the resume
+    ref.listen<Resume?>(currentResumeProvider, (previous, next) {
+      if (next != null) {
+        if (_titleCtrl.text != next.title) {
+          _titleCtrl.text = next.title;
+        }
+        if (_fullNameCtrl.text != next.personalInfo.fullName) {
+          _fullNameCtrl.text = next.personalInfo.fullName;
+        }
+        if (_jobTitleCtrl.text != next.personalInfo.jobTitle) {
+          _jobTitleCtrl.text = next.personalInfo.jobTitle;
+        }
+        if (_emailCtrl.text != next.personalInfo.email) {
+          _emailCtrl.text = next.personalInfo.email;
+        }
+        if (_phoneCtrl.text != next.personalInfo.phone) {
+          _phoneCtrl.text = next.personalInfo.phone;
+        }
+        if (_locationCtrl.text != next.personalInfo.location) {
+          _locationCtrl.text = next.personalInfo.location;
+        }
+        if (_websiteCtrl.text != next.personalInfo.website) {
+          _websiteCtrl.text = next.personalInfo.website;
+        }
+        if (_summaryCtrl.text != next.summary.summaryText) {
+          _summaryCtrl.text = next.summary.summaryText;
+        }
+      }
+    });
 
     if (resume == null) {
       return Scaffold(
@@ -91,223 +135,274 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          controller: _titleCtrl,
-          style: AppTypography.titleLarge,
-          decoration: const InputDecoration(
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            hintText: 'Resume Title',
-            isDense: true,
+    return CallbackShortcuts(
+      bindings: <ShortcutActivator, VoidCallback>{
+        const SingleActivator(LogicalKeyboardKey.keyZ, control: true): () {
+          ref.read(resumeHistoryProvider.notifier).undo(ref);
+        },
+        const SingleActivator(LogicalKeyboardKey.keyZ, meta: true): () {
+          ref.read(resumeHistoryProvider.notifier).undo(ref);
+        },
+        const SingleActivator(LogicalKeyboardKey.keyY, control: true): () {
+          ref.read(resumeHistoryProvider.notifier).redo(ref);
+        },
+        const SingleActivator(LogicalKeyboardKey.keyY, meta: true): () {
+          ref.read(resumeHistoryProvider.notifier).redo(ref);
+        },
+        const SingleActivator(LogicalKeyboardKey.keyZ, control: true, shift: true): () {
+          ref.read(resumeHistoryProvider.notifier).redo(ref);
+        },
+        const SingleActivator(LogicalKeyboardKey.keyZ, meta: true, shift: true): () {
+          ref.read(resumeHistoryProvider.notifier).redo(ref);
+        },
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: TextField(
+            controller: _titleCtrl,
+            style: AppTypography.titleLarge,
+            inputFormatters: [ResumeInputScrubber.titleFormatter()],
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              hintText: 'Resume Title',
+              isDense: true,
+            ),
+            onChanged: (val) {
+              _updateResumeWithHistory((r) => r.copyWith(title: val));
+            },
           ),
-          onChanged: (val) {
-            ref.read(currentResumeProvider.notifier).updateResume(
-                  (r) => r.copyWith(title: val),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.undo),
+              tooltip: 'Undo (Ctrl+Z)',
+              color: historyState.canUndo
+                  ? AppColors.textPrimary
+                  : AppColors.textMuted.withValues(alpha: 0.35),
+              onPressed: historyState.canUndo
+                  ? () => ref.read(resumeHistoryProvider.notifier).undo(ref)
+                  : null,
+            ),
+            IconButton(
+              icon: const Icon(Icons.redo),
+              tooltip: 'Redo (Ctrl+Y)',
+              color: historyState.canRedo
+                  ? AppColors.textPrimary
+                  : AppColors.textMuted.withValues(alpha: 0.35),
+              onPressed: historyState.canRedo
+                  ? () => ref.read(resumeHistoryProvider.notifier).redo(ref)
+                  : null,
+            ),
+            IconButton(
+              icon: const Icon(Icons.style_outlined, color: AppColors.accentPurple),
+              tooltip: 'Templates',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TemplateSelectorScreen(),
+                  ),
                 );
-          },
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.picture_as_pdf_outlined, color: AppColors.primary),
+              tooltip: 'Preview PDF',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ResumePreviewScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
+          bottom: TabBar(
+            controller: _tabController,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            indicatorColor: AppColors.primary,
+            labelColor: AppColors.primary,
+            unselectedLabelColor: AppColors.textMuted,
+            tabs: const [
+              Tab(text: 'Personal'),
+              Tab(text: 'Summary'),
+              Tab(text: 'Experience'),
+              Tab(text: 'Education'),
+              Tab(text: 'Skills'),
+              Tab(text: 'Projects'),
+              Tab(text: 'Sections'),
+            ],
+          ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.style_outlined, color: AppColors.accentPurple),
-            tooltip: 'Templates',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const TemplateSelectorScreen(),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf_outlined, color: AppColors.primary),
-            tooltip: 'Preview PDF',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ResumePreviewScreen(),
-                ),
-              );
-            },
-          ),
-        ],
-        bottom: TabBar(
+        body: TabBarView(
           controller: _tabController,
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          indicatorColor: AppColors.primary,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textMuted,
-          tabs: const [
-            Tab(text: 'Personal'),
-            Tab(text: 'Summary'),
-            Tab(text: 'Experience'),
-            Tab(text: 'Education'),
-            Tab(text: 'Skills'),
-            Tab(text: 'Projects'),
-            Tab(text: 'Sections'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildPersonalInfoTab(resume),
-          _buildSummaryTab(resume),
-          _buildExperienceTab(resume),
-          _buildEducationTab(resume),
-          _buildSkillsTab(resume),
-          _buildProjectsTab(resume),
-          const SectionEditorTab(),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        padding: AppSpacing.paddingMd,
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          border: Border(top: BorderSide(color: AppColors.surfaceBorder)),
-        ),
-        child: Row(
           children: [
-            Expanded(
-              child: AppButton(
-                text: 'Select Template',
-                icon: Icons.palette_outlined,
-                variant: AppButtonVariant.secondary,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const TemplateSelectorScreen(),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: AppButton(
-                text: 'Preview PDF',
-                icon: Icons.visibility_outlined,
-                variant: AppButtonVariant.primary,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ResumePreviewScreen(),
-                    ),
-                  );
-                },
-              ),
-            ),
+            _buildPersonalInfoTab(resume),
+            _buildSummaryTab(resume),
+            _buildExperienceTab(resume),
+            _buildEducationTab(resume),
+            _buildSkillsTab(resume),
+            _buildProjectsTab(resume),
+            const SectionEditorTab(),
           ],
+        ),
+        bottomNavigationBar: Container(
+          padding: AppSpacing.paddingMd,
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            border: Border(top: BorderSide(color: AppColors.surfaceBorder)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  text: 'Select Template',
+                  icon: Icons.palette_outlined,
+                  variant: AppButtonVariant.secondary,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TemplateSelectorScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: AppButton(
+                  text: 'Preview PDF',
+                  icon: Icons.visibility_outlined,
+                  variant: AppButtonVariant.primary,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ResumePreviewScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   // ---------------------------------------------------------------------------
-  // 1. Personal Information Tab (Real-Time Validated)
+  // 1. Personal Information Tab (Real-Time Validated & Focus Traversed)
   // ---------------------------------------------------------------------------
   Widget _buildPersonalInfoTab(Resume resume) {
-    return SingleChildScrollView(
-      padding: AppSpacing.screenPadding,
-      child: Form(
-        key: _personalFormKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ValidatedFormField(
-              label: 'Full Name',
-              hint: 'e.g. Alex Morgan',
-              controller: _fullNameCtrl,
-              maxLength: 80,
-              isRequired: true,
-              prefixIcon: const Icon(Icons.person_outline, size: 20),
-              validator: (val) => ResumeValidators.validateRequired(
-                val,
-                'Full name',
-                minLength: 2,
+    return FocusTraversalGroup(
+      policy: ReadingOrderTraversalPolicy(),
+      child: SingleChildScrollView(
+        padding: AppSpacing.screenPadding,
+        child: Form(
+          key: _personalFormKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ValidatedFormField(
+                label: 'Full Name',
+                hint: 'e.g. Alex Morgan',
+                controller: _fullNameCtrl,
                 maxLength: 80,
+                isRequired: true,
+                inputFormatters: [ResumeInputScrubber.nameFormatter()],
+                prefixIcon: const Icon(Icons.person_outline, size: 20),
+                validator: (val) => ResumeValidators.validateRequired(
+                  val,
+                  'Full name',
+                  minLength: 2,
+                  maxLength: 80,
+                ),
+                onChanged: (_) => _savePersonalInfo(),
               ),
-              onChanged: (_) => _savePersonalInfo(),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            ValidatedFormField(
-              label: 'Job Title / Target Role',
-              hint: 'e.g. Senior Software Engineer',
-              controller: _jobTitleCtrl,
-              maxLength: 100,
-              prefixIcon: const Icon(Icons.badge_outlined, size: 20),
-              validator: (val) => ResumeValidators.validateOptionalLength(
-                val,
-                'Job title',
+              const SizedBox(height: AppSpacing.md),
+              ValidatedFormField(
+                label: 'Job Title / Target Role',
+                hint: 'e.g. Senior Software Engineer',
+                controller: _jobTitleCtrl,
                 maxLength: 100,
+                inputFormatters: [ResumeInputScrubber.titleFormatter()],
+                prefixIcon: const Icon(Icons.badge_outlined, size: 20),
+                validator: (val) => ResumeValidators.validateOptionalLength(
+                  val,
+                  'Job title',
+                  maxLength: 100,
+                ),
+                onChanged: (_) => _savePersonalInfo(),
               ),
-              onChanged: (_) => _savePersonalInfo(),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            ValidatedFormField(
-              label: 'Email Address',
-              hint: 'e.g. alex.morgan@example.com',
-              keyboardType: TextInputType.emailAddress,
-              controller: _emailCtrl,
-              maxLength: 100,
-              isRequired: true,
-              prefixIcon: const Icon(Icons.email_outlined, size: 20),
-              validator: (val) => ResumeValidators.validateEmail(val, isRequired: true),
-              onChanged: (_) => _savePersonalInfo(),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            ValidatedFormField(
-              label: 'Phone Number',
-              hint: 'e.g. +1 (555) 234-5678',
-              keyboardType: TextInputType.phone,
-              controller: _phoneCtrl,
-              maxLength: 30,
-              prefixIcon: const Icon(Icons.phone_outlined, size: 20),
-              validator: (val) => ResumeValidators.validatePhone(val),
-              onChanged: (_) => _savePersonalInfo(),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            ValidatedFormField(
-              label: 'Location (City, Country)',
-              hint: 'e.g. San Francisco, CA',
-              controller: _locationCtrl,
-              maxLength: 100,
-              prefixIcon: const Icon(Icons.location_on_outlined, size: 20),
-              validator: (val) => ResumeValidators.validateOptionalLength(
-                val,
-                'Location',
+              const SizedBox(height: AppSpacing.md),
+              ValidatedFormField(
+                label: 'Email Address',
+                hint: 'e.g. alex.morgan@example.com',
+                keyboardType: TextInputType.emailAddress,
+                controller: _emailCtrl,
                 maxLength: 100,
+                isRequired: true,
+                inputFormatters: [ResumeInputScrubber.emailFormatter()],
+                prefixIcon: const Icon(Icons.email_outlined, size: 20),
+                validator: (val) => ResumeValidators.validateEmail(val, isRequired: true),
+                onChanged: (_) => _savePersonalInfo(),
               ),
-              onChanged: (_) => _savePersonalInfo(),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            ValidatedFormField(
-              label: 'Website / Portfolio Link',
-              hint: 'e.g. https://alexmorgan.dev',
-              keyboardType: TextInputType.url,
-              controller: _websiteCtrl,
-              maxLength: 200,
-              prefixIcon: const Icon(Icons.link_outlined, size: 20),
-              validator: (val) => ResumeValidators.validateUrl(val),
-              onChanged: (_) => _savePersonalInfo(),
-            ),
-          ],
+              const SizedBox(height: AppSpacing.md),
+              ValidatedFormField(
+                label: 'Phone Number',
+                hint: 'e.g. +1 (555) 234-5678',
+                keyboardType: TextInputType.phone,
+                controller: _phoneCtrl,
+                maxLength: 30,
+                inputFormatters: [ResumeInputScrubber.phoneFormatter()],
+                prefixIcon: const Icon(Icons.phone_outlined, size: 20),
+                validator: (val) => ResumeValidators.validatePhone(val),
+                onChanged: (_) => _savePersonalInfo(),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              ValidatedFormField(
+                label: 'Location (City, Country)',
+                hint: 'e.g. San Francisco, CA',
+                controller: _locationCtrl,
+                maxLength: 100,
+                inputFormatters: [ResumeInputScrubber.titleFormatter()],
+                prefixIcon: const Icon(Icons.location_on_outlined, size: 20),
+                validator: (val) => ResumeValidators.validateOptionalLength(
+                  val,
+                  'Location',
+                  maxLength: 100,
+                ),
+                onChanged: (_) => _savePersonalInfo(),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              ValidatedFormField(
+                label: 'Website / Portfolio Link',
+                hint: 'e.g. https://alexmorgan.dev',
+                keyboardType: TextInputType.url,
+                textInputAction: TextInputAction.done,
+                controller: _websiteCtrl,
+                maxLength: 200,
+                inputFormatters: [ResumeInputScrubber.urlFormatter()],
+                prefixIcon: const Icon(Icons.link_outlined, size: 20),
+                validator: (val) => ResumeValidators.validateUrl(val),
+                onChanged: (_) => _savePersonalInfo(),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   void _savePersonalInfo() {
-    ref.read(currentResumeProvider.notifier).updatePersonalInfo(
-          PersonalInformation(
+    _updateResumeWithHistory((r) => r.copyWith(
+          personalInfo: PersonalInformation(
             fullName: _fullNameCtrl.text.trim(),
             jobTitle: _jobTitleCtrl.text.trim(),
             email: _emailCtrl.text.trim(),
@@ -315,70 +410,74 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
             location: _locationCtrl.text.trim(),
             website: _websiteCtrl.text.trim(),
           ),
-        );
+        ));
   }
 
   // ---------------------------------------------------------------------------
   // 2. Professional Summary Tab (Real-Time Validated)
   // ---------------------------------------------------------------------------
   Widget _buildSummaryTab(Resume resume) {
-    return SingleChildScrollView(
-      padding: AppSpacing.screenPadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Professional Summary',
-                style: AppTypography.titleLarge,
-              ),
-              TextButton.icon(
-                onPressed: _isAiEnhancing ? null : _enhanceSummary,
-                icon: _isAiEnhancing
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.accentPurple,
-                        ),
-                      )
-                    : const Icon(Icons.auto_awesome, size: 14, color: AppColors.accentPurple),
-                label: Text(
-                  'AI Enhance',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.accentPurple,
-                    fontWeight: FontWeight.w600,
+    return FocusTraversalGroup(
+      policy: ReadingOrderTraversalPolicy(),
+      child: SingleChildScrollView(
+        padding: AppSpacing.screenPadding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Professional Summary',
+                  style: AppTypography.titleLarge,
+                ),
+                TextButton.icon(
+                  onPressed: _isAiEnhancing ? null : _enhanceSummary,
+                  icon: _isAiEnhancing
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.accentPurple,
+                          ),
+                        )
+                      : const Icon(Icons.auto_awesome, size: 14, color: AppColors.accentPurple),
+                  label: Text(
+                    'AI Enhance',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.accentPurple,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          ValidatedFormField(
-            label: '',
-            hint: 'Write a brief, impactful overview of your career accomplishments and strengths...',
-            maxLines: 7,
-            maxLength: 2000,
-            controller: _summaryCtrl,
-            validator: (val) => ResumeValidators.validateOptionalLength(
-              val,
-              'Summary',
-              maxLength: 2000,
+              ],
             ),
-            onChanged: (val) {
-              ref.read(currentResumeProvider.notifier).updateSummary(
-                    ProfessionalSummary(summaryText: val),
-                  );
-            },
-          ),
-          if (_isAiEnhancing) ...[
-            const SizedBox(height: AppSpacing.md),
-            const LinearProgressIndicator(color: AppColors.accentPurple),
+            const SizedBox(height: AppSpacing.sm),
+            ValidatedFormField(
+              label: '',
+              hint: 'Write a brief, impactful overview of your career accomplishments and strengths...',
+              maxLines: 7,
+              maxLength: 2000,
+              controller: _summaryCtrl,
+              inputFormatters: [ResumeInputScrubber.textBlockFormatter()],
+              validator: (val) => ResumeValidators.validateOptionalLength(
+                val,
+                'Summary',
+                maxLength: 2000,
+              ),
+              onChanged: (val) {
+                _updateResumeWithHistory((r) => r.copyWith(
+                      summary: ProfessionalSummary(summaryText: val),
+                    ));
+              },
+            ),
+            if (_isAiEnhancing) ...[
+              const SizedBox(height: AppSpacing.md),
+              const LinearProgressIndicator(color: AppColors.accentPurple),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -403,9 +502,9 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
           _isAiEnhancing = false;
           if (res.isSuccess && res.outputText.isNotEmpty) {
             _summaryCtrl.text = res.outputText;
-            ref.read(currentResumeProvider.notifier).updateSummary(
-                  ProfessionalSummary(summaryText: res.outputText),
-                );
+            _updateResumeWithHistory((r) => r.copyWith(
+                  summary: ProfessionalSummary(summaryText: res.outputText),
+                ));
           }
         });
         if (res.suggestions.isNotEmpty) {
@@ -516,9 +615,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                 final list = List<Experience>.from(resume.experiences);
                 final item = list.removeAt(oldIndex);
                 list.insert(newIndex, item);
-                ref.read(currentResumeProvider.notifier).updateResume(
-                      (r) => r.copyWith(experiences: list),
-                    );
+                _updateResumeWithHistory((r) => r.copyWith(experiences: list));
               },
               itemBuilder: (context, index) {
                 final exp = resume.experiences[index];
@@ -542,7 +639,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                   subtitle: '${exp.company} • ${exp.startDate} - ${exp.isCurrent ? "Present" : exp.endDate}${exp.location.isNotEmpty ? " • ${exp.location}" : ""}',
                   description: exp.description,
                   onEdit: () => _openExperienceDialog(context, experience: exp),
-                  onDelete: () => ref.read(currentResumeProvider.notifier).deleteExperience(exp.id),
+                  onDelete: () => _deleteExperienceWithHistory(exp.id),
                 );
               },
             ),
@@ -556,9 +653,24 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
       context: context,
       experience: experience,
       onSave: (exp) {
-        ref.read(currentResumeProvider.notifier).addExperience(exp);
+        _updateResumeWithHistory((r) {
+          final list = List<Experience>.from(r.experiences);
+          final index = list.indexWhere((item) => item.id == exp.id);
+          if (index != -1) {
+            list[index] = exp;
+          } else {
+            list.add(exp);
+          }
+          return r.copyWith(experiences: list);
+        });
       },
     );
+  }
+
+  void _deleteExperienceWithHistory(String id) {
+    _updateResumeWithHistory((r) => r.copyWith(
+          experiences: r.experiences.where((e) => e.id != id).toList(),
+        ));
   }
 
   // ---------------------------------------------------------------------------
@@ -654,9 +766,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                 final list = List<Education>.from(resume.educationList);
                 final item = list.removeAt(oldIndex);
                 list.insert(newIndex, item);
-                ref.read(currentResumeProvider.notifier).updateResume(
-                      (r) => r.copyWith(educationList: list),
-                    );
+                _updateResumeWithHistory((r) => r.copyWith(educationList: list));
               },
               itemBuilder: (context, index) {
                 final edu = resume.educationList[index];
@@ -679,7 +789,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                   title: '${edu.degree} in ${edu.fieldOfStudy}',
                   subtitle: '${edu.institution} • ${edu.startDate} - ${edu.endDate}${edu.location.isNotEmpty ? " • ${edu.location}" : ""}${edu.gpa.isNotEmpty ? " (GPA: ${edu.gpa})" : ""}',
                   onEdit: () => _openEducationDialog(context, education: edu),
-                  onDelete: () => ref.read(currentResumeProvider.notifier).deleteEducation(edu.id),
+                  onDelete: () => _deleteEducationWithHistory(edu.id),
                 );
               },
             ),
@@ -693,9 +803,24 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
       context: context,
       education: education,
       onSave: (edu) {
-        ref.read(currentResumeProvider.notifier).addEducation(edu);
+        _updateResumeWithHistory((r) {
+          final list = List<Education>.from(r.educationList);
+          final index = list.indexWhere((item) => item.id == edu.id);
+          if (index != -1) {
+            list[index] = edu;
+          } else {
+            list.add(edu);
+          }
+          return r.copyWith(educationList: list);
+        });
       },
     );
+  }
+
+  void _deleteEducationWithHistory(String id) {
+    _updateResumeWithHistory((r) => r.copyWith(
+          educationList: r.educationList.where((e) => e.id != id).toList(),
+        ));
   }
 
   // ---------------------------------------------------------------------------
@@ -743,6 +868,9 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                       hint: 'e.g. Flutter, Dart, TypeScript, Docker',
                       controller: _skillInputCtrl,
                       maxLength: 50,
+                      inputFormatters: [ResumeInputScrubber.titleFormatter()],
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _addSkill(resume),
                       validator: (val) {
                         if (_skillError != null) return _skillError;
                         return null;
@@ -806,9 +934,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                 final list = List<Skill>.from(resume.skills);
                 final item = list.removeAt(oldIndex);
                 list.insert(newIndex, item);
-                ref.read(currentResumeProvider.notifier).updateResume(
-                      (r) => r.copyWith(skills: list),
-                    );
+                _updateResumeWithHistory((r) => r.copyWith(skills: list));
               },
               itemBuilder: (context, index) {
                 final skill = resume.skills[index];
@@ -829,7 +955,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                     ),
                   ),
                   title: skill.name,
-                  onDelete: () => ref.read(currentResumeProvider.notifier).deleteSkill(skill.id),
+                  onDelete: () => _deleteSkillWithHistory(skill.id),
                 );
               },
             ),
@@ -857,8 +983,18 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
     }
 
     setState(() => _skillError = null);
-    ref.read(currentResumeProvider.notifier).addSkill(Skill(name: text));
+    _updateResumeWithHistory((r) {
+      final list = List<Skill>.from(r.skills);
+      list.add(Skill(name: text));
+      return r.copyWith(skills: list);
+    });
     _skillInputCtrl.clear();
+  }
+
+  void _deleteSkillWithHistory(String id) {
+    _updateResumeWithHistory((r) => r.copyWith(
+          skills: r.skills.where((s) => s.id != id).toList(),
+        ));
   }
 
   // ---------------------------------------------------------------------------
@@ -954,9 +1090,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                 final list = List<Project>.from(resume.projects);
                 final item = list.removeAt(oldIndex);
                 list.insert(newIndex, item);
-                ref.read(currentResumeProvider.notifier).updateResume(
-                      (r) => r.copyWith(projects: list),
-                    );
+                _updateResumeWithHistory((r) => r.copyWith(projects: list));
               },
               itemBuilder: (context, index) {
                 final proj = resume.projects[index];
@@ -1021,7 +1155,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                         )
                       : null,
                   onEdit: () => _openProjectDialog(context, project: proj),
-                  onDelete: () => ref.read(currentResumeProvider.notifier).deleteProject(proj.id),
+                  onDelete: () => _deleteProjectWithHistory(proj.id),
                 );
               },
             ),
@@ -1035,8 +1169,23 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
       context: context,
       project: project,
       onSave: (proj) {
-        ref.read(currentResumeProvider.notifier).addProject(proj);
+        _updateResumeWithHistory((r) {
+          final list = List<Project>.from(r.projects);
+          final index = list.indexWhere((item) => item.id == proj.id);
+          if (index != -1) {
+            list[index] = proj;
+          } else {
+            list.add(proj);
+          }
+          return r.copyWith(projects: list);
+        });
       },
     );
+  }
+
+  void _deleteProjectWithHistory(String id) {
+    _updateResumeWithHistory((r) => r.copyWith(
+          projects: r.projects.where((p) => p.id != id).toList(),
+        ));
   }
 }

@@ -4,10 +4,11 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../data/models/resume_models.dart';
+import '../utils/resume_input_scrubber.dart';
 import 'validated_form_field.dart';
 
-/// CertificationEditorDialog provides a full-featured modal dialog for
-/// creating and editing resume certifications with strict validation.
+/// CertificationEditorDialog provides a modal dialog for creating and editing
+/// professional certifications and licenses with real-time validation and focus traversal.
 class CertificationEditorDialog extends StatefulWidget {
   final Certification? certification;
   final ValueChanged<Certification> onSave;
@@ -34,7 +35,8 @@ class CertificationEditorDialog extends StatefulWidget {
   }
 
   @override
-  State<CertificationEditorDialog> createState() => _CertificationEditorDialogState();
+  State<CertificationEditorDialog> createState() =>
+      _CertificationEditorDialogState();
 }
 
 class _CertificationEditorDialogState extends State<CertificationEditorDialog> {
@@ -70,48 +72,29 @@ class _CertificationEditorDialogState extends State<CertificationEditorDialog> {
     super.dispose();
   }
 
-  /// Parses flexible date inputs like "2023", "05/2023", "May 2023", "2023-05" for comparisons.
-  DateTime? _parseDate(String input) {
-    final trimmed = input.trim().toLowerCase();
-    if (trimmed.isEmpty ||
-        trimmed == 'present' ||
-        trimmed == 'current' ||
-        trimmed == 'no expiry' ||
-        trimmed == 'ongoing') {
-      return null;
+  DateTime? _parseDate(String dateStr) {
+    if (dateStr.trim().isEmpty) return null;
+    final trimmed = dateStr.trim();
+
+    // Check MM/YYYY format
+    final mmYyyy = RegExp(r'^(\d{1,2})/(\d{4})$');
+    final match = mmYyyy.firstMatch(trimmed);
+    if (match != null) {
+      final month = int.tryParse(match.group(1)!);
+      final year = int.tryParse(match.group(2)!);
+      if (month != null && year != null && month >= 1 && month <= 12) {
+        return DateTime(year, month, 1);
+      }
     }
 
-    // Format: YYYY
-    final yearOnlyRegex = RegExp(r'^(\d{4})$');
-    final yearMatch = yearOnlyRegex.firstMatch(trimmed);
-    if (yearMatch != null) {
-      final year = int.tryParse(yearMatch.group(1)!);
+    // Check YYYY format
+    final yyyy = RegExp(r'^(\d{4})$');
+    if (yyyy.hasMatch(trimmed)) {
+      final year = int.tryParse(trimmed);
       if (year != null) return DateTime(year, 1, 1);
     }
 
-    // Format: MM/YYYY or MM-YYYY or MM.YYYY
-    final mmyyyyRegex = RegExp(r'^(\d{1,2})[\/\-\.](\d{4})$');
-    final mmyyyyMatch = mmyyyyRegex.firstMatch(trimmed);
-    if (mmyyyyMatch != null) {
-      final month = int.tryParse(mmyyyyMatch.group(1)!);
-      final year = int.tryParse(mmyyyyMatch.group(2)!);
-      if (month != null && year != null && month >= 1 && month <= 12) {
-        return DateTime(year, month, 1);
-      }
-    }
-
-    // Format: YYYY/MM or YYYY-MM
-    final yyyymmRegex = RegExp(r'^(\d{4})[\/\-\.](\d{1,2})$');
-    final yyyymmMatch = yyyymmRegex.firstMatch(trimmed);
-    if (yyyymmMatch != null) {
-      final year = int.tryParse(yyyymmMatch.group(1)!);
-      final month = int.tryParse(yyyymmMatch.group(2)!);
-      if (month != null && year != null && month >= 1 && month <= 12) {
-        return DateTime(year, month, 1);
-      }
-    }
-
-    // Format: "Jan 2023", "January 2023"
+    // Check Month YYYY text format
     const months = {
       'jan': 1, 'january': 1,
       'feb': 2, 'february': 2,
@@ -228,141 +211,150 @@ class _CertificationEditorDialogState extends State<CertificationEditorDialog> {
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 540),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Form(
-            key: _formKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.verified_outlined,
-                        color: AppColors.primary,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        isEditing ? 'Edit Certification' : 'Add Certification',
-                        style: AppTypography.titleLarge,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: AppColors.textMuted),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                const Divider(color: AppColors.surfaceBorder, height: 1),
-                const SizedBox(height: AppSpacing.md),
-
-                // Form Fields
-                ValidatedFormField(
-                  label: 'Certification Name',
-                  hint: 'e.g. AWS Certified Solutions Architect',
-                  controller: _nameCtrl,
-                  maxLength: 100,
-                  isRequired: true,
-                  validator: _validateName,
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                ValidatedFormField(
-                  label: 'Issuing Organization',
-                  hint: 'e.g. Amazon Web Services, Coursera, Cisco',
-                  controller: _orgCtrl,
-                  maxLength: 100,
-                  isRequired: true,
-                  validator: _validateOrg,
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: ValidatedFormField(
-                        label: 'Issue Date',
-                        hint: 'e.g. 01/2023 or Jan 2023',
-                        controller: _issueDateCtrl,
-                        maxLength: 20,
-                        isRequired: true,
-                        validator: _validateIssueDate,
-                        textInputAction: TextInputAction.next,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: ValidatedFormField(
-                        label: 'Expiry Date',
-                        hint: 'e.g. 01/2026 or No Expiry',
-                        controller: _expiryDateCtrl,
-                        maxLength: 20,
-                        validator: _validateExpiryDate,
-                        textInputAction: TextInputAction.next,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                ValidatedFormField(
-                  label: 'Credential ID',
-                  hint: 'e.g. AWS-PSA-12345 (Optional)',
-                  controller: _credIdCtrl,
-                  maxLength: 50,
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                ValidatedFormField(
-                  label: 'Credential URL',
-                  hint: 'e.g. https://www.credly.com/badges/... (Optional)',
-                  controller: _credUrlCtrl,
-                  maxLength: 200,
-                  keyboardType: TextInputType.url,
-                  validator: _validateUrl,
-                  textInputAction: TextInputAction.done,
-                ),
-                const SizedBox(height: AppSpacing.lg),
-
-                // Action Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(
-                        'Cancel',
-                        style: AppTypography.labelLarge.copyWith(
-                          color: AppColors.textMuted,
+        child: FocusTraversalGroup(
+          policy: ReadingOrderTraversalPolicy(),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Form(
+              key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.verified_outlined,
+                          color: AppColors.primary,
+                          size: 22,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    AppButton(
-                      text: isEditing ? 'Save Changes' : 'Add Certification',
-                      isFullWidth: false,
-                      onPressed: _handleSave,
-                    ),
-                  ],
-                ),
-              ],
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          isEditing ? 'Edit Certification' : 'Add Certification',
+                          style: AppTypography.titleLarge,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: AppColors.textMuted),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  const Divider(color: AppColors.surfaceBorder, height: 1),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // Form Fields
+                  ValidatedFormField(
+                    label: 'Certification Name',
+                    hint: 'e.g. AWS Certified Solutions Architect',
+                    controller: _nameCtrl,
+                    maxLength: 100,
+                    isRequired: true,
+                    inputFormatters: [ResumeInputScrubber.titleFormatter()],
+                    validator: _validateName,
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  ValidatedFormField(
+                    label: 'Issuing Organization',
+                    hint: 'e.g. Amazon Web Services, Coursera, Cisco',
+                    controller: _orgCtrl,
+                    maxLength: 100,
+                    isRequired: true,
+                    inputFormatters: [ResumeInputScrubber.titleFormatter()],
+                    validator: _validateOrg,
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: ValidatedFormField(
+                          label: 'Issue Date',
+                          hint: 'e.g. 01/2023 or Jan 2023',
+                          controller: _issueDateCtrl,
+                          maxLength: 20,
+                          isRequired: true,
+                          inputFormatters: [ResumeInputScrubber.dateFormatter()],
+                          validator: _validateIssueDate,
+                          textInputAction: TextInputAction.next,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: ValidatedFormField(
+                          label: 'Expiry Date',
+                          hint: 'e.g. 01/2026 or No Expiry',
+                          controller: _expiryDateCtrl,
+                          maxLength: 20,
+                          inputFormatters: [ResumeInputScrubber.dateFormatter()],
+                          validator: _validateExpiryDate,
+                          textInputAction: TextInputAction.next,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  ValidatedFormField(
+                    label: 'Credential ID',
+                    hint: 'e.g. AWS-PSA-12345 (Optional)',
+                    controller: _credIdCtrl,
+                    maxLength: 50,
+                    inputFormatters: [ResumeInputScrubber.titleFormatter()],
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  ValidatedFormField(
+                    label: 'Credential URL',
+                    hint: 'e.g. https://www.credly.com/badges/... (Optional)',
+                    controller: _credUrlCtrl,
+                    maxLength: 200,
+                    keyboardType: TextInputType.url,
+                    inputFormatters: [ResumeInputScrubber.urlFormatter()],
+                    validator: _validateUrl,
+                    textInputAction: TextInputAction.done,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Action Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(
+                          'Cancel',
+                          style: AppTypography.labelLarge.copyWith(
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      AppButton(
+                        text: isEditing ? 'Save Changes' : 'Add Certification',
+                        isFullWidth: false,
+                        onPressed: _handleSave,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

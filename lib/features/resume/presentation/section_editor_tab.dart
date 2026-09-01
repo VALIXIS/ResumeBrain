@@ -7,6 +7,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/custom_card.dart';
 import '../../../data/models/resume_models.dart';
+import '../providers/resume_history_provider.dart';
 import '../widgets/certification_editor_dialog.dart';
 import '../widgets/custom_section_editor_dialog.dart';
 import '../widgets/language_editor_dialog.dart';
@@ -19,6 +20,14 @@ import '../widgets/reorderable_section_card.dart';
 /// - Custom User-Defined Sections (Full CRUD & Reorderable)
 class SectionEditorTab extends ConsumerWidget {
   const SectionEditorTab({super.key});
+
+  void _updateResumeWithHistory(WidgetRef ref, Resume Function(Resume current) updateFn) {
+    final current = ref.read(currentResumeProvider);
+    if (current != null) {
+      ref.read(resumeHistoryProvider.notifier).recordSnapshot(current);
+      ref.read(currentResumeProvider.notifier).updateResume(updateFn);
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -215,9 +224,10 @@ class SectionEditorTab extends ConsumerWidget {
               final list = List<Certification>.from(resume.certifications);
               final item = list.removeAt(oldIndex);
               list.insert(newIndex, item);
-              ref.read(currentResumeProvider.notifier).updateResume(
-                    (r) => r.copyWith(certifications: list),
-                  );
+              _updateResumeWithHistory(
+                ref,
+                (r) => r.copyWith(certifications: list),
+              );
             },
             itemBuilder: (context, index) {
               final cert = resume.certifications[index];
@@ -315,7 +325,7 @@ class SectionEditorTab extends ConsumerWidget {
   }
 
   void _saveCertification(WidgetRef ref, Certification cert) {
-    ref.read(currentResumeProvider.notifier).updateResume((resume) {
+    _updateResumeWithHistory(ref, (resume) {
       final list = List<Certification>.from(resume.certifications);
       final index = list.indexWhere((c) => c.id == cert.id);
       if (index != -1) {
@@ -360,7 +370,7 @@ class SectionEditorTab extends ConsumerWidget {
   }
 
   void _deleteCertification(WidgetRef ref, String id) {
-    ref.read(currentResumeProvider.notifier).updateResume((resume) {
+    _updateResumeWithHistory(ref, (resume) {
       return resume.copyWith(
         certifications: resume.certifications.where((c) => c.id != id).toList(),
       );
@@ -484,9 +494,10 @@ class SectionEditorTab extends ConsumerWidget {
               final list = List<Language>.from(resume.languages);
               final item = list.removeAt(oldIndex);
               list.insert(newIndex, item);
-              ref.read(currentResumeProvider.notifier).updateResume(
-                    (r) => r.copyWith(languages: list),
-                  );
+              _updateResumeWithHistory(
+                ref,
+                (r) => r.copyWith(languages: list),
+              );
             },
             itemBuilder: (context, index) {
               final lang = resume.languages[index];
@@ -554,7 +565,7 @@ class SectionEditorTab extends ConsumerWidget {
   }
 
   void _saveLanguage(WidgetRef ref, Language lang) {
-    ref.read(currentResumeProvider.notifier).updateResume((resume) {
+    _updateResumeWithHistory(ref, (resume) {
       final list = List<Language>.from(resume.languages);
       final index = list.indexWhere((l) => l.id == lang.id);
       if (index != -1) {
@@ -599,7 +610,7 @@ class SectionEditorTab extends ConsumerWidget {
   }
 
   void _deleteLanguage(WidgetRef ref, String id) {
-    ref.read(currentResumeProvider.notifier).updateResume((resume) {
+    _updateResumeWithHistory(ref, (resume) {
       return resume.copyWith(
         languages: resume.languages.where((l) => l.id != id).toList(),
       );
@@ -789,9 +800,10 @@ class SectionEditorTab extends ConsumerWidget {
               final list = List<CustomSection>.from(resume.customSections);
               final item = list.removeAt(oldIndex);
               list.insert(newIndex, item);
-              ref.read(currentResumeProvider.notifier).updateResume(
-                    (r) => r.copyWith(customSections: list),
-                  );
+              _updateResumeWithHistory(
+                ref,
+                (r) => r.copyWith(customSections: list),
+              );
             },
             itemBuilder: (context, index) {
               final section = resume.customSections[index];
@@ -882,7 +894,7 @@ class SectionEditorTab extends ConsumerWidget {
   }
 
   void _saveCustomSection(WidgetRef ref, CustomSection section) {
-    ref.read(currentResumeProvider.notifier).updateResume((resume) {
+    _updateResumeWithHistory(ref, (resume) {
       final list = List<CustomSection>.from(resume.customSections);
       final index = list.indexWhere((s) => s.id == section.id);
       if (index != -1) {
@@ -927,7 +939,7 @@ class SectionEditorTab extends ConsumerWidget {
   }
 
   void _deleteCustomSection(WidgetRef ref, String id) {
-    ref.read(currentResumeProvider.notifier).updateResume((resume) {
+    _updateResumeWithHistory(ref, (resume) {
       return resume.copyWith(
         customSections: resume.customSections.where((s) => s.id != id).toList(),
       );
