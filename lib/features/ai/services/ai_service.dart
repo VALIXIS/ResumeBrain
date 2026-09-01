@@ -21,6 +21,10 @@ class AIResponse {
   final String outputText;
   final double? score; // e.g. ATS Score or Job Match percentage
   final List<String> suggestions;
+  final List<String> metricsApplied;
+  final List<String> powerVerbs;
+  final List<String> missingKeywords;
+  final Map<String, double> subScores;
   final String? errorMessage;
 
   AIResponse({
@@ -28,6 +32,10 @@ class AIResponse {
     required this.outputText,
     this.score,
     this.suggestions = const [],
+    this.metricsApplied = const [],
+    this.powerVerbs = const [],
+    this.missingKeywords = const [],
+    this.subScores = const {},
     this.errorMessage,
   });
 }

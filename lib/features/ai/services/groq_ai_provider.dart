@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'ai_service.dart';
+import 'resume_ai_prompt_engine.dart';
 
 /// Free Ultra-Fast Groq Cloud AI Provider using Llama 3.1 70B.
 /// Provides up to 14,400 FREE requests per day with sub-second latency.
@@ -24,7 +25,7 @@ class GroqAIProvider implements AIProvider {
 
     final endpoint = Uri.parse('https://api.groq.com/openai/v1/chat/completions');
 
-    final prompt = _buildSystemPrompt(request);
+    final prompt = _buildPrompt(request);
 
     try {
       final response = await client.post(
@@ -38,7 +39,7 @@ class GroqAIProvider implements AIProvider {
           'messages': [
             {'role': 'user', 'content': prompt}
           ],
-          'temperature': 0.2,
+          'temperature': 0.15,
           'response_format': {'type': 'json_object'},
         }),
       );
@@ -48,11 +49,23 @@ class GroqAIProvider implements AIProvider {
         final rawText = data['choices']?[0]?['message']?['content'] ?? '';
         final parsedJson = jsonDecode(rawText);
 
+        final subScoresRaw = parsedJson['subScores'] as Map<String, dynamic>?;
+        final subScores = <String, double>{};
+        if (subScoresRaw != null) {
+          subScoresRaw.forEach((k, v) {
+            if (v is num) subScores[k] = v.toDouble();
+          });
+        }
+
         return AIResponse(
           isSuccess: true,
           outputText: parsedJson['outputText'] ?? rawText,
           score: (parsedJson['score'] as num?)?.toDouble(),
           suggestions: List<String>.from(parsedJson['suggestions'] ?? []),
+          metricsApplied: List<String>.from(parsedJson['metricsApplied'] ?? []),
+          powerVerbs: List<String>.from(parsedJson['powerVerbs'] ?? []),
+          missingKeywords: List<String>.from(parsedJson['missingKeywords'] ?? []),
+          subScores: subScores,
         );
       } else {
         return AIResponse(
@@ -70,47 +83,31 @@ class GroqAIProvider implements AIProvider {
     }
   }
 
-  String _buildSystemPrompt(AIRequest request) {
-    final buffer = StringBuffer();
-    buffer.writeln(
-      'You are the Lead ATS Resume Intelligence System for Resume Brain (VALIXIS). '
-      'Respond STRICTLY in JSON format with fields: "outputText" (string), "score" (number 0-100 or null), and "suggestions" (array of strings).',
-    );
-
+  String _buildPrompt(AIRequest request) {
     switch (request.taskType) {
       case AITaskType.textImprovement:
-        buffer.writeln('TASK: Enhance resume bullet point using active action verbs and measurable metrics.');
-        buffer.writeln('INPUT TEXT: "${request.inputText}"');
-        break;
-
+        return ResumeAIPromptEngine.buildTextImprovementPrompt(request.inputText);
       case AITaskType.resumeAnalysis:
-        buffer.writeln('TASK: Analyze the resume for ATS compliance, content quality, formatting, and keyword density.');
         if (request.resume != null) {
-          buffer.writeln('RESUME TITLE: ${request.resume!.title}');
-          buffer.writeln('RESUME SUMMARY: ${request.resume!.summary}');
-          buffer.writeln('SKILLS: ${request.resume!.skills.join(", ")}');
+          return ResumeAIPromptEngine.buildResumeAnalysisPrompt(request.resume!);
         }
-        break;
-
+        return ResumeAIPromptEngine.buildTextImprovementPrompt(request.inputText);
       case AITaskType.jobMatching:
-        buffer.writeln('TASK: Calculate ATS percentage match score between candidate resume and target Job Description.');
-        buffer.writeln('JOB DESCRIPTION: "${request.jobDescription}"');
         if (request.resume != null) {
-          buffer.writeln('RESUME SUMMARY: ${request.resume!.summary}');
-          buffer.writeln('SKILLS: ${request.resume!.skills.join(", ")}');
+          return ResumeAIPromptEngine.buildJobMatchingPrompt(
+            request.resume!,
+            request.jobDescription ?? '',
+          );
         }
-        break;
-
+        return ResumeAIPromptEngine.buildTextImprovementPrompt(request.inputText);
       case AITaskType.resumeTailoring:
-        buffer.writeln('TASK: Generate tailored, high-impact bullet points aligned with keywords in target Job Description.');
-        buffer.writeln('JOB DESCRIPTION: "${request.jobDescription}"');
         if (request.resume != null) {
-          buffer.writeln('RESUME SUMMARY: ${request.resume!.summary}');
-          buffer.writeln('SKILLS: ${request.resume!.skills.join(", ")}');
+          return ResumeAIPromptEngine.buildResumeTailoringPrompt(
+            request.resume!,
+            request.jobDescription ?? '',
+          );
         }
-        break;
+        return ResumeAIPromptEngine.buildTextImprovementPrompt(request.inputText);
     }
-
-    return buffer.toString();
   }
 }
