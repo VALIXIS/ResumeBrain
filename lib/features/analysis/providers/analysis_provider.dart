@@ -2,13 +2,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/providers.dart';
 import '../../../data/models/resume_models.dart';
 import '../models/analysis_dashboard_stats.dart';
+import '../models/analysis_history_entry.dart';
 import '../models/resume_analysis_report.dart';
+import '../models/score_evolution.dart';
 import '../services/ai_analysis_adapter.dart';
 import '../services/analysis_engine.dart';
+import '../services/analysis_history_service.dart';
 
 /// Provider exposing the deterministic [AnalysisEngine] fallback instance.
 final analysisEngineProvider = Provider<AnalysisEngine>((ref) {
   return MockAnalysisEngine();
+});
+
+/// Provider exposing the [AnalysisHistoryService] for persisting score history.
+final analysisHistoryServiceProvider = Provider<AnalysisHistoryService>((ref) {
+  final service = AnalysisHistoryService();
+  service.init();
+  return service;
 });
 
 /// Provider exposing the [AiAnalysisAdapter] connecting the [AIService] contract
@@ -22,11 +32,36 @@ final aiAnalysisAdapterProvider = Provider<AiAnalysisAdapter>((ref) {
   );
 });
 
+/// FutureProvider exposing historical analysis snapshots for a given [resumeId].
+final resumeAnalysisHistoryProvider =
+    FutureProvider.family<List<AnalysisHistoryEntry>, String>(
+        (ref, resumeId) async {
+  if (resumeId.isEmpty) return [];
+  final historyService = ref.watch(analysisHistoryServiceProvider);
+  return historyService.getHistoryForResume(resumeId);
+});
+
+/// FutureProvider computing [ScoreEvolution] for a given [ResumeAnalysisReport].
+final scoreEvolutionProvider =
+    FutureProvider.family<ScoreEvolution, ResumeAnalysisReport>(
+        (ref, report) async {
+  final history =
+      await ref.watch(resumeAnalysisHistoryProvider(report.resumeId).future);
+  return ScoreEvolution.compute(history, report);
+});
+
 /// FutureProvider exposing analysis for a single specific [Resume].
 final singleResumeAnalysisProvider =
     FutureProvider.family<ResumeAnalysisReport, Resume>((ref, resume) async {
   final adapter = ref.watch(aiAnalysisAdapterProvider);
-  return adapter.analyze(resume);
+  final report = await adapter.analyze(resume);
+
+  // Persist snapshot to history
+  final historyService = ref.read(analysisHistoryServiceProvider);
+  await historyService.recordAnalysis(report);
+  ref.invalidate(resumeAnalysisHistoryProvider(resume.id));
+
+  return report;
 });
 
 /// FutureProvider exposing analysis for the current active resume in [currentResumeProvider].
@@ -35,7 +70,14 @@ final currentResumeAnalysisProvider =
   final resume = ref.watch(currentResumeProvider);
   if (resume == null) return null;
   final adapter = ref.watch(aiAnalysisAdapterProvider);
-  return adapter.analyze(resume);
+  final report = await adapter.analyze(resume);
+
+  // Persist snapshot to history
+  final historyService = ref.read(analysisHistoryServiceProvider);
+  await historyService.recordAnalysis(report);
+  ref.invalidate(resumeAnalysisHistoryProvider(resume.id));
+
+  return report;
 });
 
 /// FutureProvider exposing the aggregated [AnalysisDashboardStats] for the dashboard.

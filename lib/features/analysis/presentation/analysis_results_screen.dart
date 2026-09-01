@@ -13,13 +13,14 @@ import '../models/resume_analysis_report.dart';
 import '../providers/analysis_provider.dart';
 import '../services/feedback_categorizer.dart';
 import '../widgets/feedback_accordion_card.dart';
+import 'widgets/score_evolution_card.dart';
 import 'widgets/score_meter.dart';
 import 'widgets/section_grade_badge.dart';
 import 'widgets/suggestion_chip.dart';
 
 /// AnalysisResultsScreen displays complete ATS and structural analysis for a resume,
-/// including a circular score gauge, section grade badges, categorized feedback accordions,
-/// and actionable suggestion chips.
+/// including a circular score gauge, score evolution/history tracking, section grade badges,
+/// categorized feedback accordions, and actionable suggestion chips.
 class AnalysisResultsScreen extends ConsumerStatefulWidget {
   final Resume? targetResume;
 
@@ -138,9 +139,13 @@ class _AnalysisResultsScreenState extends ConsumerState<AnalysisResultsScreen> {
 
           // 2. Overall ATS Score Meter Card
           _buildScoreOverviewCard(report),
+          const SizedBox(height: AppSpacing.lg),
+
+          // 3. Historical Score Evolution & Trend Card
+          ScoreEvolutionCard(report: report),
           const SizedBox(height: AppSpacing.xl),
 
-          // 3. Section Breakdown
+          // 4. Section Breakdown
           Row(
             children: [
               const Icon(
@@ -180,7 +185,7 @@ class _AnalysisResultsScreenState extends ConsumerState<AnalysisResultsScreen> {
 
           const SizedBox(height: AppSpacing.xl),
 
-          // 4. Categorized Feedback Accordions (Formatting, Content Quality, Keywords)
+          // 5. Categorized Feedback Accordions (Formatting, Content Quality, Keywords)
           Row(
             children: [
               const Icon(
@@ -205,14 +210,14 @@ class _AnalysisResultsScreenState extends ConsumerState<AnalysisResultsScreen> {
               final category = categorizedFeedback[index];
               return FeedbackAccordionCard(
                 feedback: category,
-                initialExpanded: false, // Default collapsed per Day 4 requirements
+                initialExpanded: false,
               );
             },
           ),
 
           const SizedBox(height: AppSpacing.xl),
 
-          // 5. Actionable Suggestions
+          // 6. Actionable Suggestions
           Row(
             children: [
               const Icon(
