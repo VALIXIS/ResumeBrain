@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resume_brain/app/providers.dart';
 import 'package:resume_brain/data/models/resume_models.dart';
+import 'package:resume_brain/data/repositories/cloud_sync_adapter.dart';
 import 'package:resume_brain/data/repositories/resume_repository.dart';
 
 /// In-memory repository for isolated unit and widget tests without Hive dependencies.
@@ -26,6 +27,16 @@ class InMemoryResumeRepository implements ResumeRepository {
   @override
   Future<void> deleteResume(String id) async {
     _storage.remove(id);
+  }
+
+  @override
+  Future<CloudSyncResult> syncResumeToCloud(Resume resume) async {
+    return CloudSyncResult.unsupported();
+  }
+
+  @override
+  Future<CloudSyncResult> syncAllToCloud() async {
+    return CloudSyncResult.unsupported();
   }
 }
 

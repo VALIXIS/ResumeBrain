@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:resume_brain/app/providers.dart';
 import 'package:resume_brain/core/widgets/custom_button.dart';
 import 'package:resume_brain/data/models/resume_models.dart';
+import 'package:resume_brain/data/repositories/cloud_sync_adapter.dart';
 import 'package:resume_brain/data/repositories/resume_repository.dart';
 import 'package:resume_brain/features/resume/presentation/section_editor_tab.dart';
 import 'package:resume_brain/features/resume/widgets/custom_section_editor_dialog.dart';
@@ -29,6 +30,16 @@ class InMemoryResumeRepository implements ResumeRepository {
   @override
   Future<void> deleteResume(String id) async {
     _resumes.remove(id);
+  }
+
+  @override
+  Future<CloudSyncResult> syncResumeToCloud(Resume resume) async {
+    return CloudSyncResult.unsupported();
+  }
+
+  @override
+  Future<CloudSyncResult> syncAllToCloud() async {
+    return CloudSyncResult.unsupported();
   }
 }
 
