@@ -1,6 +1,7 @@
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../../data/models/resume_models.dart';
+import '../../pdf/models/pdf_export_config.dart';
 import '../models/resume_template.dart';
 
 class ModernClassicTemplate implements ResumeTemplate {
@@ -20,16 +21,20 @@ class ModernClassicTemplate implements ResumeTemplate {
   bool get isAtsFriendly => true;
 
   @override
-  Future<pw.Document> generatePdf(Resume resume, PdfPageFormat pageFormat) async {
-    final pdf = pw.Document();
-    final primaryColor = PdfColor.fromHex('#4F46E5');
+  Future<pw.Document> generatePdf(
+    Resume resume,
+    PdfPageFormat pageFormat, {
+    PdfExportConfig? config,
+  }) async {
+    final pdf = pw.Document(theme: config?.themeData);
+    final primaryColor = config?.colorPalette.pdfColor ?? PdfColor.fromHex('#4F46E5');
     final textColor = PdfColor.fromHex('#1E293B');
     final mutedTextColor = PdfColor.fromHex('#64748B');
 
     pdf.addPage(
       pw.MultiPage(
         pageFormat: pageFormat,
-        margin: const pw.EdgeInsets.all(36),
+        margin: config?.marginOption.insets ?? const pw.EdgeInsets.all(36),
         footer: (pw.Context context) {
           return pw.Container(
             alignment: pw.Alignment.centerRight,

@@ -1,6 +1,7 @@
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../../data/models/resume_models.dart';
+import '../../pdf/models/pdf_export_config.dart';
 import '../models/resume_template.dart';
 
 class CreativeProfessionalTemplate implements ResumeTemplate {
@@ -25,10 +26,14 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
   bool get isAtsFriendly => false;
 
   @override
-  Future<pw.Document> generatePdf(Resume resume, PdfPageFormat pageFormat) async {
-    final pdf = pw.Document();
+  Future<pw.Document> generatePdf(
+    Resume resume,
+    PdfPageFormat pageFormat, {
+    PdfExportConfig? config,
+  }) async {
+    final pdf = pw.Document(theme: config?.themeData);
 
-    final accentColor = customAccentColor ?? PdfColor.fromHex('#0D9488'); // Rich Teal Accent
+    final accentColor = config?.colorPalette.pdfColor ?? customAccentColor ?? PdfColor.fromHex('#0D9488'); // Rich Teal Accent
     final primaryTextColor = PdfColor.fromHex('#0F172A'); // Slate 900
     final bodyTextColor = PdfColor.fromHex('#334155'); // Slate 700
     final mutedTextColor = PdfColor.fromHex('#64748B'); // Slate 500
@@ -37,7 +42,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
     pdf.addPage(
       pw.MultiPage(
         pageFormat: pageFormat,
-        margin: const pw.EdgeInsets.all(32),
+        margin: config?.marginOption.insets ?? const pw.EdgeInsets.all(32),
         footer: (pw.Context context) {
           return pw.Container(
             alignment: pw.Alignment.centerRight,
