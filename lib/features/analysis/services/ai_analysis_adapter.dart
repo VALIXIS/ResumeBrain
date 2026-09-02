@@ -5,6 +5,15 @@ import 'analysis_engine.dart';
 
 /// Adapter that connects the [AIService] contract to the analysis layer
 /// with safe deterministic mock fallback handling.
+///
+/// **Founder LLM Integration Boundary**:
+/// - The analysis layer consumes this adapter to analyze resumes.
+/// - The adapter delegates directly to [AIService.analyzeResume], which is implemented
+///   and managed by the Founder AI service infrastructure (e.g. Gemini, Groq, Hybrid).
+/// - When real AI responses are returned, the adapter parses and validates the overall score,
+///   category scores, suggestions, and output text into a domain [ResumeAnalysisReport].
+/// - If the AI service is offline, unconfigured, throws an exception, or returns invalid data,
+///   the adapter deterministically falls back to [MockAnalysisEngine] to ensure 100% UI stability.
 class AiAnalysisAdapter implements AnalysisEngine {
   final AIService aiService;
   final AnalysisEngine fallbackEngine;
@@ -21,7 +30,7 @@ class AiAnalysisAdapter implements AnalysisEngine {
       final response = await aiService.analyzeResume(resume);
 
       if (response.isSuccess && _isValidResponse(response)) {
-        return _mapAiResponseToReport(resume, response);
+        return await _mapAiResponseToReport(resume, response);
       }
 
       // Graceful fallback if AI response is unsuccessful or malformed
