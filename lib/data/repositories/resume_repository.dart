@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import '../../core/constants/app_constants.dart';
 import '../../core/storage/storage_bootstrap.dart';
 import '../models/resume_models.dart';
 import 'cloud_sync_adapter.dart';
