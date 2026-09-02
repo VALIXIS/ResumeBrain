@@ -12,63 +12,148 @@ import '../../../core/widgets/custom_card.dart';
 import '../../../core/widgets/state_widgets.dart';
 import '../../../data/models/resume_models.dart';
 import '../../ai/presentation/coming_soon_screen.dart';
+import '../../job_matching/presentation/job_description_input_screen.dart';
 import '../../pdf/presentation/resume_preview_screen.dart';
 import '../../resume/presentation/resume_editor_screen.dart';
+import '../../templates/presentation/template_selector_screen.dart';
 
 import '../../../core/widgets/theme_toggle_widget.dart';
 import '../../../core/widgets/smooth_page_route.dart';
 import '../../../core/widgets/app_shimmer.dart';
 import '../../../core/widgets/shimmer_placeholders.dart';
 import '../../../core/widgets/responsive_layout.dart';
+import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/app_bottom_sheet.dart';
+import '../../../core/widgets/app_navigation_drawer.dart';
 
-class HomeDashboardScreen extends ConsumerWidget {
+class HomeDashboardScreen extends ConsumerStatefulWidget {
   const HomeDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final resumesAsync = ref.watch(resumesListProvider);
+  ConsumerState<HomeDashboardScreen> createState() => _HomeDashboardScreenState();
+}
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
-                borderRadius: AppRadius.borderSm,
-              ),
-              child: const Icon(Icons.psychology, size: 20, color: Colors.white),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
+  int _selectedIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktopOrTablet = constraints.maxWidth >= ResponsiveLayout.kMobileBreakpoint;
+
+        if (isDesktopOrTablet) {
+          return Scaffold(
+            body: Row(
               children: [
-                Text(AppConstants.appName, style: AppTypography.titleLarge),
-                Text(
-                  'BY ${AppConstants.companyName}',
-                  style: AppTypography.labelSmall.copyWith(color: AppColors.primary, letterSpacing: 1.2),
+                AppNavigationDrawer(
+                  selectedIndex: _selectedIndex,
+                  onDestinationSelected: (index) {
+                    setState(() => _selectedIndex = index);
+                  },
+                  isPermanent: true,
+                ),
+                Expanded(
+                  child: _buildCurrentTabContent(context),
                 ),
               ],
             ),
-          ],
-        ),
-        actions: const [
-          ThemeToggleWidget(),
-          SizedBox(width: 8),
-        ],
+          );
+        }
+
+        // Mobile Layout: Top AppBar, Bottom Navigation Bar, and Drawer
+        return Scaffold(
+          appBar: AppBar(
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    gradient: AppColors.primaryGradient,
+                    borderRadius: AppRadius.borderSm,
+                  ),
+                  child: const Icon(Icons.psychology, size: 20, color: Colors.white),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(AppConstants.appName, style: AppTypography.titleLarge),
+                    Text(
+                      'BY ${AppConstants.companyName}',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.primary,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.info_outline_rounded),
+                tooltip: 'Quick Help & Info',
+                onPressed: () => _showQuickHelpBottomSheet(context),
+              ),
+              const ThemeToggleWidget(),
+              const SizedBox(width: 8),
+            ],
+          ),
+          drawer: AppNavigationDrawer(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (index) {
+              setState(() => _selectedIndex = index);
+            },
+            isPermanent: false,
+          ),
+          body: _buildCurrentTabContent(context),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (index) {
+              setState(() => _selectedIndex = index);
+            },
+            destinations: AppNavigationDrawer.destinations.map((item) {
+              return NavigationDestination(
+                icon: Icon(item.icon),
+                selectedIcon: Icon(item.selectedIcon, color: AppColors.primary),
+                label: item.label,
+                tooltip: item.tooltip,
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCurrentTabContent(BuildContext context) {
+    switch (_selectedIndex) {
+      case 1:
+        return const ComingSoonScreen(featureTitle: 'AI Resume Analysis & ATS Score');
+      case 2:
+        return const JobDescriptionInputScreen();
+      case 3:
+        return const TemplateSelectorScreen();
+      case 0:
+      default:
+        return _buildDashboardView(context);
+    }
+  }
+
+  Widget _buildDashboardView(BuildContext context) {
+    final resumesAsync = ref.watch(resumesListProvider);
+
+    return resumesAsync.when(
+      loading: () => _buildLoadingShimmer(),
+      error: (err, stack) => ErrorStateWidget(
+        errorMessage: err.toString(),
+        onRetry: () => ref.read(resumesListProvider.notifier).loadResumes(),
       ),
-      body: resumesAsync.when(
-        loading: () => _buildLoadingShimmer(),
-        error: (err, stack) => ErrorStateWidget(
-          errorMessage: err.toString(),
-          onRetry: () => ref.read(resumesListProvider.notifier).loadResumes(),
-        ),
-        data: (resumes) => ResponsiveLayout(
-          mobile: _buildMobileLayout(context, ref, resumes),
-          tablet: _buildTabletDesktopLayout(context, ref, resumes, gap: AppSpacing.lg),
-          desktop: _buildTabletDesktopLayout(context, ref, resumes, gap: AppSpacing.xl),
-        ),
+      data: (resumes) => ResponsiveLayout(
+        mobile: _buildMobileLayout(context, ref, resumes),
+        tablet: _buildTabletDesktopLayout(context, ref, resumes, gap: AppSpacing.lg),
+        desktop: _buildTabletDesktopLayout(context, ref, resumes, gap: AppSpacing.xl),
       ),
     );
   }
@@ -215,6 +300,7 @@ class HomeDashboardScreen extends ConsumerWidget {
           description: 'Get deep feedback, keyword checks, and structural score.',
           icon: Icons.analytics_outlined,
           accentColor: AppColors.accentTeal,
+          onTap: () => setState(() => _selectedIndex = 1),
         ),
         const SizedBox(height: AppSpacing.md),
         _buildComingSoonFeatureCard(
@@ -223,6 +309,7 @@ class HomeDashboardScreen extends ConsumerWidget {
           description: 'Match your resume against job postings and auto-tailor bullet points.',
           icon: Icons.work_outline_rounded,
           accentColor: AppColors.accentPurple,
+          onTap: () => setState(() => _selectedIndex = 2),
         ),
       ],
     );
@@ -334,17 +421,19 @@ class HomeDashboardScreen extends ConsumerWidget {
     required String description,
     required IconData icon,
     required Color accentColor,
+    VoidCallback? onTap,
   }) {
     return AppCard(
       color: AppColors.surface.withValues(alpha: 0.6),
-      onTap: () {
-        Navigator.push(
-          context,
-          SmoothPageRoute(
-            page: ComingSoonScreen(featureTitle: title),
-          ),
-        );
-      },
+      onTap: onTap ??
+          () {
+            Navigator.push(
+              context,
+              SmoothPageRoute(
+                page: ComingSoonScreen(featureTitle: title),
+              ),
+            );
+          },
       child: Row(
         children: [
           Container(
@@ -372,7 +461,7 @@ class HomeDashboardScreen extends ConsumerWidget {
                         borderRadius: AppRadius.borderSm,
                       ),
                       child: Text(
-                        'COMING SOON',
+                        'FEATURE',
                         style: AppTypography.labelSmall.copyWith(fontSize: 9),
                       ),
                     ),
@@ -545,8 +634,47 @@ class HomeDashboardScreen extends ConsumerWidget {
             onPressed: () {
               ref.read(resumesListProvider.notifier).deleteResume(resume.id);
               Navigator.pop(context);
+              AppSnackBar.show(
+                context,
+                message: 'Deleted "${resume.title}"',
+                variant: AppSnackBarVariant.info,
+                actionLabel: 'Undo',
+                onAction: () {
+                  ref.read(resumesListProvider.notifier).saveResume(resume);
+                },
+              );
             },
             child: const Text('Delete', style: TextStyle(color: AppColors.accentRed)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showQuickHelpBottomSheet(BuildContext context) {
+    AppBottomSheet.show(
+      context: context,
+      title: 'Resume Brain Guide',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'How to get started',
+            style: AppTypography.titleMedium,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            '1. Tap "Create New Resume" to start building with structured sections.\n'
+            '2. Tailor your resume against target job descriptions in the Job Match tab.\n'
+            '3. Run ATS Analysis to check your score and get actionable feedback.\n'
+            '4. Choose from professional ATS templates and export to PDF.',
+            style: AppTypography.bodyMedium,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          AppButton(
+            text: 'Got it',
+            variant: AppButtonVariant.primary,
+            onPressed: () => Navigator.of(context).pop(),
           ),
         ],
       ),

@@ -59,8 +59,16 @@ class AppTheme {
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: AppColors.surface,
         modalBackgroundColor: AppColors.surface,
+        elevation: 8,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+        ),
+      ),
+      drawerTheme: DrawerThemeData(
+        backgroundColor: AppColors.surface,
+        elevation: 16,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.horizontal(right: Radius.circular(AppRadius.lg)),
         ),
       ),
       dividerTheme: DividerThemeData(
@@ -92,10 +100,30 @@ class AppTheme {
         backgroundColor: AppColors.surface,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textMuted,
+        type: BottomNavigationBarType.fixed,
+        elevation: 8,
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.primary.withValues(alpha: 0.1),
+        elevation: 3,
+        indicatorColor: AppColors.primary.withValues(alpha: 0.12),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppTypography.labelSmall.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+            );
+          }
+          return AppTypography.labelSmall.copyWith(color: AppColors.textSecondary);
+        }),
+      ),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: AppColors.surface,
+        elevation: 2,
+        selectedIconTheme: const IconThemeData(color: AppColors.primary),
+        unselectedIconTheme: const IconThemeData(color: AppColors.textSecondary),
+        selectedLabelTextStyle: AppTypography.labelLarge.copyWith(color: AppColors.primary),
+        unselectedLabelTextStyle: AppTypography.labelLarge.copyWith(color: AppColors.textSecondary),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surface,
@@ -105,8 +133,10 @@ class AppTheme {
         ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.textPrimary,
-        contentTextStyle: TextStyle(color: AppColors.background),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.borderMd),
+        contentTextStyle: TextStyle(color: AppColors.textPrimary),
       ),
     );
   }
@@ -166,8 +196,16 @@ class AppTheme {
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: AppColors.surface,
         modalBackgroundColor: AppColors.surface,
+        elevation: 8,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+        ),
+      ),
+      drawerTheme: DrawerThemeData(
+        backgroundColor: AppColors.surface,
+        elevation: 16,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.horizontal(right: Radius.circular(AppRadius.lg)),
         ),
       ),
       dividerTheme: DividerThemeData(
@@ -199,10 +237,30 @@ class AppTheme {
         backgroundColor: AppColors.surface,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textMuted,
+        type: BottomNavigationBarType.fixed,
+        elevation: 8,
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.primary.withValues(alpha: 0.1),
+        elevation: 3,
+        indicatorColor: AppColors.primary.withValues(alpha: 0.12),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppTypography.labelSmall.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+            );
+          }
+          return AppTypography.labelSmall.copyWith(color: AppColors.textSecondary);
+        }),
+      ),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: AppColors.surface,
+        elevation: 2,
+        selectedIconTheme: const IconThemeData(color: AppColors.primary),
+        unselectedIconTheme: const IconThemeData(color: AppColors.textSecondary),
+        selectedLabelTextStyle: AppTypography.labelLarge.copyWith(color: AppColors.primary),
+        unselectedLabelTextStyle: AppTypography.labelLarge.copyWith(color: AppColors.textSecondary),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surface,
@@ -212,8 +270,10 @@ class AppTheme {
         ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.textPrimary,
-        contentTextStyle: TextStyle(color: AppColors.background),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.borderMd),
+        contentTextStyle: TextStyle(color: AppColors.textPrimary),
       ),
     );
   }
