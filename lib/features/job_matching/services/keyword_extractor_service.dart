@@ -82,6 +82,7 @@ class KeywordExtractorService {
     SkillDefinition(canonicalName: 'Ruby on Rails', aliases: ['ruby on rails', 'rails']),
     SkillDefinition(canonicalName: 'Laravel', aliases: ['laravel']),
     SkillDefinition(canonicalName: 'Flutter', aliases: ['flutter']),
+    SkillDefinition(canonicalName: 'Riverpod', aliases: ['riverpod']),
     SkillDefinition(canonicalName: 'SwiftUI', aliases: ['swiftui']),
     SkillDefinition(canonicalName: 'Jetpack Compose', aliases: ['jetpack compose', 'compose']),
 

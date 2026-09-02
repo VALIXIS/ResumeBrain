@@ -297,7 +297,7 @@ void main() {
       );
 
       expect(reportText, contains('Lead Flutter Architect'));
-      expect(reportText, contains('66.7%')); // 2 of 3 extracted skills matched (Flutter, Dart)
+      expect(reportText, contains('50.0%')); // 2 of 4 extracted skills matched (Flutter, Dart)
       expect(reportText, contains('[✓] Flutter'));
       expect(reportText, contains('[✓] Dart'));
       expect(reportText, contains('[!] GraphQL'));

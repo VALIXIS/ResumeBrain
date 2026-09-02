@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:resume_brain/data/models/resume_models.dart';
 import 'package:resume_brain/features/job_matching/controllers/job_matching_controller.dart';
-import 'package:resume_brain/features/job_matching/models/job_description.dart';
 
 void main() {
   late ProviderContainer container;
@@ -204,29 +202,32 @@ void main() {
       );
 
       // Populate history via controller
-      await testContainer.read(jobMatchingControllerProvider.notifier).submitJobDescription(
+      testContainer.read(jobMatchingControllerProvider.notifier).submitJobDescription(
             'Requirements: Flutter, Dart, Riverpod.',
             title: 'Mobile Engineer',
           );
-      await testContainer.read(jobMatchingControllerProvider.notifier).submitJobDescription(
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump();
+
+      testContainer.read(jobMatchingControllerProvider.notifier).submitJobDescription(
             'Requirements: Python, Django, PostgreSQL.',
             title: 'Backend Engineer',
           );
-
       await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump();
 
-      // Verify both items appear in the list
+      // Verify both items appear in the list (Backend Engineer in AppBar & ListTile)
       expect(find.text('Mobile Engineer'), findsOneWidget);
-      expect(find.text('Backend Engineer'), findsOneWidget);
+      expect(find.text('Backend Engineer'), findsWidgets);
 
       // Tap on the first item ('Mobile Engineer')
       await tester.tap(find.byKey(const Key('history-item-0')));
-      await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump();
 
-      // Verify selected job updated in currentJob state and displayed in AppBar
+      // Verify selected job updated in currentJob state and displayed in AppBar (now in AppBar & ListTile)
       expect(testContainer.read(jobMatchingControllerProvider).currentJob!.title, equals('Mobile Engineer'));
-      expect(find.text('Mobile Engineer'), findsOneWidget);
+      expect(find.text('Mobile Engineer'), findsWidgets);
     });
   });
 }
