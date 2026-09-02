@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,10 +9,15 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/home/presentation/home_dashboard_screen.dart';
 
+bool _firstFrameRendered = false;
+
 void main() {
-  // STARTUP STAGE 1: Bindings
-  StartupStages.logStage(StartupStages.stage1Binding, 'WidgetsFlutterBinding.ensureInitialized()');
+  // DIAGNOSTIC BOUNDARY 1: MAIN_ENTER
+  StartupStages.logStage('MAIN_ENTER', 'main() entrypoint executed');
+
+  // DIAGNOSTIC BOUNDARY 2: BINDING_READY
   WidgetsFlutterBinding.ensureInitialized();
+  StartupStages.logStage('BINDING_READY', 'WidgetsFlutterBinding initialized');
 
   // Production-safe global exception logging
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -21,14 +27,23 @@ void main() {
 
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
     StartupStages.logStage('PLATFORM_ERROR', '$error\n$stack');
-    return true; // Prevents app process termination
+    return true; // Prevents process termination
   };
 
-  // GoogleFonts configuration
   GoogleFonts.config.allowRuntimeFetching = true;
 
-  // STARTUP STAGE 2: Immediate, non-blocking runApp() using standard ProviderScope
-  StartupStages.logStage(StartupStages.stage2RunApp, 'Invoking runApp with standard ProviderScope');
+  // FIRST FRAME WATCHDOG (5 Seconds)
+  Timer(const Duration(seconds: 5), () {
+    if (!_firstFrameRendered) {
+      StartupStages.logStage(
+        'FIRST_FRAME_TIMEOUT',
+        'CRITICAL ALERT: Flutter has not rendered the first frame within 5000ms. Storage status: ${StorageBootstrapService().status}',
+      );
+    }
+  });
+
+  // DIAGNOSTIC BOUNDARY 3: RUN_APP_CALLED
+  StartupStages.logStage('RUN_APP_CALLED', 'Calling runApp with ProviderScope');
   runApp(
     const ProviderScope(
       child: ResumeBrainApp(),
@@ -36,18 +51,65 @@ void main() {
   );
 }
 
-class ResumeBrainApp extends ConsumerWidget {
+class ResumeBrainApp extends ConsumerStatefulWidget {
   const ResumeBrainApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ResumeBrainApp> createState() => _ResumeBrainAppState();
+}
+
+class _ResumeBrainAppState extends ConsumerState<ResumeBrainApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    // Register first frame callback
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _firstFrameRendered = true;
+      StartupStages.logStage('FIRST_FRAME', 'First Flutter frame rendered successfully');
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.resumed:
+        StartupStages.logStage('APP_RESUMED', 'Android Activity resumed into foreground');
+        break;
+      case AppLifecycleState.paused:
+        StartupStages.logStage('APP_PAUSED', 'Android Activity paused into background');
+        break;
+      case AppLifecycleState.inactive:
+        StartupStages.logStage('APP_INACTIVE', 'Android Activity inactive state');
+        break;
+      case AppLifecycleState.detached:
+        StartupStages.logStage('APP_DETACHED', 'Android Activity detached state');
+        break;
+      default:
+        break;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // DIAGNOSTIC BOUNDARY 4: APP_BUILD_ENTER
+    StartupStages.logStage('APP_BUILD_ENTER', 'Building ResumeBrainApp root widget');
     final themeMode = ref.watch(themeModeProvider);
 
-    // Synchronize AppColors.isDarkMode with platform brightness safely
     if (themeMode == ThemeMode.system) {
       final brightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
       AppColors.isDarkMode = brightness == Brightness.dark;
     }
+
+    // DIAGNOSTIC BOUNDARY 5: MATERIAL_APP_CREATED
+    StartupStages.logStage('MATERIAL_APP_CREATED', 'Creating MaterialApp instance');
 
     return MaterialApp(
       title: 'Resume Brain',

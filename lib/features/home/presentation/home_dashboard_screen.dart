@@ -40,7 +40,8 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
+    StartupStages.logStage('HOME_BUILD_ENTER', 'HomeDashboardScreen build entered');
+    final widget = LayoutBuilder(
       builder: (context, constraints) {
         final isDesktopOrTablet = constraints.maxWidth >= ResponsiveLayout.kMobileBreakpoint;
 
@@ -127,6 +128,8 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
         );
       },
     );
+    StartupStages.logStage('HOME_BUILD_EXIT', 'HomeDashboardScreen build exited');
+    return widget;
   }
 
   Widget _buildCurrentTabContent(BuildContext context) {

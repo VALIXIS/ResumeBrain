@@ -27,7 +27,6 @@ class StartupStages {
 }
 
 /// Centralized owner for Hive initialization and box management.
-/// Prevents multiple independent calls to Hive.initFlutter() and box race conditions.
 class StorageBootstrapService {
   static final StorageBootstrapService _instance = StorageBootstrapService._internal();
   factory StorageBootstrapService() => _instance;
@@ -54,36 +53,38 @@ class StorageBootstrapService {
 
     _status = StorageStatus.initializing;
     _errorMessage = null;
-    StartupStages.logStage(StartupStages.stage3StorageInit, 'Initializing Hive core');
+    StartupStages.logStage('STORAGE_INIT_START', 'Initializing Hive core');
 
     try {
       // 1. Single owner initialization of Hive for Flutter
       await Hive.initFlutter();
 
       // 2. Open Resume box safely
-      StartupStages.logStage(StartupStages.stage4ResumeBox, 'Opening ${AppConstants.hiveResumeBox}');
+      StartupStages.logStage('RESUME_BOX_OPEN_START', 'Opening ${AppConstants.hiveResumeBox}');
       if (Hive.isBoxOpen(AppConstants.hiveResumeBox)) {
         _resumesBox = Hive.box(AppConstants.hiveResumeBox);
       } else {
         _resumesBox = await Hive.openBox(AppConstants.hiveResumeBox);
       }
+      StartupStages.logStage('RESUME_BOX_OPEN_COMPLETE', 'Opened ${AppConstants.hiveResumeBox}');
 
       // 3. Open Analysis History box safely
-      StartupStages.logStage(StartupStages.stage5HistoryBox, 'Opening analysis_history_box');
       const historyBoxName = 'analysis_history_box';
+      StartupStages.logStage('HISTORY_BOX_OPEN_START', 'Opening $historyBoxName');
       if (Hive.isBoxOpen(historyBoxName)) {
         _analysisHistoryBox = Hive.box(historyBoxName);
       } else {
         _analysisHistoryBox = await Hive.openBox(historyBoxName);
       }
+      StartupStages.logStage('HISTORY_BOX_OPEN_COMPLETE', 'Opened $historyBoxName');
 
       _status = StorageStatus.ready;
-      StartupStages.logStage(StartupStages.stage6ProviderBoot, 'Centralized storage initialized successfully');
+      StartupStages.logStage('STORAGE_INIT_COMPLETE', 'Centralized storage initialized successfully');
     } catch (e, stack) {
       _status = StorageStatus.error;
       _errorMessage = e.toString();
       StartupStages.logStage(
-        StartupStages.stage3StorageInit,
+        'STORAGE_INIT_ERROR',
         'Storage init error: $e\n$stack',
       );
       // NOTE: We DO NOT call deleteBoxFromDisk to preserve user data.
