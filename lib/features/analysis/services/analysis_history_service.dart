@@ -14,14 +14,20 @@ class AnalysisHistoryService {
   /// Initializes the Hive box for analysis history.
   Future<void> init() async {
     try {
+      await Hive.initFlutter();
       if (!Hive.isBoxOpen(boxName)) {
         _box = await Hive.openBox(boxName);
       } else {
         _box = Hive.box(boxName);
       }
     } catch (_) {
-      // Graceful fallback to memory storage if Hive fails
-      _box = null;
+      try {
+        await Hive.deleteBoxFromDisk(boxName);
+        _box = await Hive.openBox(boxName);
+      } catch (_) {
+        // Graceful fallback to memory storage if Hive box fails
+        _box = null;
+      }
     }
   }
 

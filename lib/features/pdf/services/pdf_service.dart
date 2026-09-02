@@ -24,7 +24,8 @@ class PdfService {
 
   Future<File> savePdfFile(Resume resume, Uint8List pdfBytes) async {
     final outputDir = await getApplicationDocumentsDirectory();
-    final fileName = '${resume.title.replaceAll(RegExp(r'[^\w\s\.-]'), '_')}_${resume.id.substring(0, 6)}.pdf';
+    final safeId = resume.id.length >= 6 ? resume.id.substring(0, 6) : resume.id;
+    final fileName = '${resume.title.replaceAll(RegExp(r'[^\w\s\.-]'), '_')}_$safeId.pdf';
     final file = File('${outputDir.path}/$fileName');
     await file.writeAsBytes(pdfBytes);
     return file;

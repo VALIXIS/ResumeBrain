@@ -9,13 +9,23 @@ import 'features/home/presentation/home_dashboard_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive repository before launching app UI with safety fallback
+  // Configure GoogleFonts fallback safety so network font failures never crash the app
+  GoogleFonts.config.allowRuntimeFetching = true;
+
+  // Initialize Hive storage and repositories safely before launching app UI
   final container = ProviderContainer();
   try {
     final repo = container.read(resumeRepositoryProvider);
     await repo.init();
   } catch (e, stack) {
     debugPrint('Failed to initialize ResumeRepository during startup: $e\n$stack');
+  }
+
+  try {
+    final historyService = container.read(analysisHistoryServiceProvider);
+    await historyService.init();
+  } catch (e, stack) {
+    debugPrint('Failed to initialize AnalysisHistoryService during startup: $e\n$stack');
   }
 
   runApp(

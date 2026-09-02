@@ -59,7 +59,9 @@ final singleResumeAnalysisProvider =
   // Persist snapshot to history
   final historyService = ref.read(analysisHistoryServiceProvider);
   await historyService.recordAnalysis(report);
-  ref.invalidate(resumeAnalysisHistoryProvider(resume.id));
+  Future.microtask(() {
+    ref.invalidate(resumeAnalysisHistoryProvider(resume.id));
+  });
 
   return report;
 });
@@ -75,7 +77,9 @@ final currentResumeAnalysisProvider =
   // Persist snapshot to history
   final historyService = ref.read(analysisHistoryServiceProvider);
   await historyService.recordAnalysis(report);
-  ref.invalidate(resumeAnalysisHistoryProvider(resume.id));
+  Future.microtask(() {
+    ref.invalidate(resumeAnalysisHistoryProvider(resume.id));
+  });
 
   return report;
 });
