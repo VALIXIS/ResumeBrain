@@ -9,10 +9,14 @@ import 'features/home/presentation/home_dashboard_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive repository before launching app UI
+  // Initialize Hive repository before launching app UI with safety fallback
   final container = ProviderContainer();
-  final repo = container.read(resumeRepositoryProvider);
-  await repo.init();
+  try {
+    final repo = container.read(resumeRepositoryProvider);
+    await repo.init();
+  } catch (e, stack) {
+    debugPrint('Failed to initialize ResumeRepository during startup: $e\n$stack');
+  }
 
   runApp(
     UncontrolledProviderScope(
@@ -29,9 +33,9 @@ class ResumeBrainApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
 
-    // Synchronize AppColors.isDarkMode with the platform brightness when set to system theme.
+    // Synchronize AppColors.isDarkMode with platform brightness safely without ancestor MediaQuery requirement
     if (themeMode == ThemeMode.system) {
-      final brightness = MediaQuery.platformBrightnessOf(context);
+      final brightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
       AppColors.isDarkMode = brightness == Brightness.dark;
     }
 

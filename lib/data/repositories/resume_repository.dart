@@ -38,12 +38,19 @@ class HiveResumeRepository implements ResumeRepository {
   @override
   Future<void> init() async {
     await Hive.initFlutter();
-    _box = await Hive.openBox(AppConstants.hiveResumeBox);
+    try {
+      _box = await Hive.openBox(AppConstants.hiveResumeBox);
+    } catch (e) {
+      try {
+        await Hive.deleteBoxFromDisk(AppConstants.hiveResumeBox);
+        _box = await Hive.openBox(AppConstants.hiveResumeBox);
+      } catch (_) {}
+    }
   }
 
   Box get box {
     if (_box == null || !_box!.isOpen) {
-      throw Exception('ResumeRepository not initialized. Call init() first.');
+      throw Exception('ResumeRepository box is unavailable. Ensure init() has completed.');
     }
     return _box!;
   }
