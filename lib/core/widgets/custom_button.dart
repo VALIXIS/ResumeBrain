@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_typography.dart';
-
 import 'tap_scale_widget.dart';
 
 enum AppButtonVariant { primary, secondary, outline, text, ai }
@@ -27,6 +26,8 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isEnabled = !isLoading && onPressed != null;
+
     Widget child = Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -45,9 +46,11 @@ class AppButton extends StatelessWidget {
         Text(
           text,
           style: AppTypography.labelLarge.copyWith(
-            color: variant == AppButtonVariant.outline
-                ? AppColors.textPrimary
-                : (variant == AppButtonVariant.text ? AppColors.primary : Colors.white),
+            color: !isEnabled
+                ? AppColors.textDisabled
+                : (variant == AppButtonVariant.outline
+                    ? AppColors.textPrimary
+                    : (variant == AppButtonVariant.text ? AppColors.primary : Colors.white)),
           ),
         ),
       ],
@@ -59,22 +62,39 @@ class AppButton extends StatelessWidget {
     switch (variant) {
       case AppButtonVariant.primary:
         decoration = BoxDecoration(
-          gradient: AppColors.primaryGradient,
+          gradient: isEnabled
+              ? AppColors.primaryGradient
+              : LinearGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.5),
+                    AppColors.secondary.withValues(alpha: 0.5),
+                  ],
+                ),
           borderRadius: AppRadius.borderMd,
         );
         break;
       case AppButtonVariant.ai:
         decoration = BoxDecoration(
-          gradient: AppColors.aiGradient,
+          gradient: isEnabled
+              ? AppColors.aiGradient
+              : LinearGradient(
+                  colors: [
+                    AppColors.accentPurple.withValues(alpha: 0.5),
+                    AppColors.primary.withValues(alpha: 0.5),
+                  ],
+                ),
           borderRadius: AppRadius.borderMd,
         );
         break;
       case AppButtonVariant.secondary:
-        buttonColor = AppColors.surfaceLight;
+        buttonColor = isEnabled ? AppColors.surfaceLight : AppColors.surface;
         break;
       case AppButtonVariant.outline:
         decoration = BoxDecoration(
-          border: Border.all(color: AppColors.surfaceBorder, width: 1.5),
+          border: Border.all(
+            color: isEnabled ? AppColors.surfaceBorder : AppColors.surfaceBorder.withValues(alpha: 0.5),
+            width: 1.5,
+          ),
           borderRadius: AppRadius.borderMd,
         );
         break;
@@ -87,22 +107,30 @@ class AppButton extends StatelessWidget {
       color: decoration == null ? buttonColor : Colors.transparent,
       borderRadius: AppRadius.borderMd,
       child: InkWell(
-        onTap: isLoading ? null : onPressed,
+        onTap: isEnabled ? onPressed : null,
         borderRadius: AppRadius.borderMd,
-        child: Container(
-          decoration: decoration,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          alignment: Alignment.center,
-          child: child,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
+          child: Container(
+            decoration: decoration,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            alignment: Alignment.center,
+            child: child,
+          ),
         ),
       ),
     );
 
     buttonWidget = TapScaleWidget(
-      onTap: isLoading ? null : onPressed,
+      onTap: isEnabled ? onPressed : null,
       child: buttonWidget,
     );
 
-    return isFullWidth ? SizedBox(width: double.infinity, child: buttonWidget) : buttonWidget;
+    return Semantics(
+      button: true,
+      enabled: isEnabled,
+      label: text,
+      child: isFullWidth ? SizedBox(width: double.infinity, child: buttonWidget) : buttonWidget,
+    );
   }
 }

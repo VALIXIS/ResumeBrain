@@ -12,6 +12,7 @@ class StatCardShimmer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       label: 'Loading statistics card',
+      excludeSemantics: true,
       child: const AppCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,6 +38,7 @@ class ListRowShimmer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       label: 'Loading list item',
+      excludeSemantics: true,
       child: const AppCard(
         child: Row(
           children: [
@@ -67,6 +69,7 @@ class DashboardCardShimmer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       label: 'Loading feature card',
+      excludeSemantics: true,
       child: const AppCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,6 +107,7 @@ class TextBlockShimmer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       label: 'Loading text content',
+      excludeSemantics: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: List.generate(lines, (index) {

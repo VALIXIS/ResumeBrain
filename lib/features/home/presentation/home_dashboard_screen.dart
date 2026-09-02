@@ -91,10 +91,13 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
               ],
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.info_outline_rounded),
-                tooltip: 'Quick Help & Info',
-                onPressed: () => _showQuickHelpBottomSheet(context),
+              ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                child: IconButton(
+                  icon: const Icon(Icons.info_outline_rounded),
+                  tooltip: 'Quick Help & Info',
+                  onPressed: () => _showQuickHelpBottomSheet(context),
+                ),
               ),
               const ThemeToggleWidget(),
               const SizedBox(width: 8),
@@ -352,40 +355,44 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                   ],
                 ),
               ),
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert_rounded, color: AppColors.textMuted),
-                color: AppColors.surfaceLight,
-                onSelected: (value) async {
-                  if (value == 'edit') {
-                    ref.read(currentResumeProvider.notifier).setResume(resume);
-                    Navigator.push(
-                      context,
-                      SmoothPageRoute(page: const ResumeEditorScreen()),
-                    );
-                  } else if (value == 'preview') {
-                    ref.read(currentResumeProvider.notifier).setResume(resume);
-                    Navigator.push(
-                      context,
-                      SmoothPageRoute(page: const ResumePreviewScreen()),
-                    );
-                  } else if (value == 'delete') {
-                    _confirmDelete(context, ref, resume);
-                  }
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'edit',
-                    child: Row(children: [Icon(Icons.edit_outlined, size: 18), SizedBox(width: 8), Text('Edit')]),
-                  ),
-                  const PopupMenuItem(
-                    value: 'preview',
-                    child: Row(children: [Icon(Icons.visibility_outlined, size: 18), SizedBox(width: 8), Text('Preview PDF')]),
-                  ),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(children: [Icon(Icons.delete_outline, size: 18, color: AppColors.accentRed), SizedBox(width: 8), Text('Delete', style: TextStyle(color: AppColors.accentRed))]),
-                  ),
-                ],
+              ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                child: PopupMenuButton<String>(
+                  tooltip: 'Options for ${resume.title}',
+                  icon: const Icon(Icons.more_vert_rounded, color: AppColors.textMuted),
+                  color: AppColors.surfaceLight,
+                  onSelected: (value) async {
+                    if (value == 'edit') {
+                      ref.read(currentResumeProvider.notifier).setResume(resume);
+                      Navigator.push(
+                        context,
+                        SmoothPageRoute(page: const ResumeEditorScreen()),
+                      );
+                    } else if (value == 'preview') {
+                      ref.read(currentResumeProvider.notifier).setResume(resume);
+                      Navigator.push(
+                        context,
+                        SmoothPageRoute(page: const ResumePreviewScreen()),
+                      );
+                    } else if (value == 'delete') {
+                      _confirmDelete(context, ref, resume);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(children: [Icon(Icons.edit_outlined, size: 18), SizedBox(width: 8), Text('Edit')]),
+                    ),
+                    const PopupMenuItem(
+                      value: 'preview',
+                      child: Row(children: [Icon(Icons.visibility_outlined, size: 18), SizedBox(width: 8), Text('Preview PDF')]),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(children: [Icon(Icons.delete_outline, size: 18, color: AppColors.accentRed), SizedBox(width: 8), Text('Delete', style: TextStyle(color: AppColors.accentRed))]),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -626,25 +633,31 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
         title: const Text('Delete Resume'),
         content: Text('Are you sure you want to delete "${resume.title}"? This action cannot be undone.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
+            child: TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
           ),
-          TextButton(
-            onPressed: () {
-              ref.read(resumesListProvider.notifier).deleteResume(resume.id);
-              Navigator.pop(context);
-              AppSnackBar.show(
-                context,
-                message: 'Deleted "${resume.title}"',
-                variant: AppSnackBarVariant.info,
-                actionLabel: 'Undo',
-                onAction: () {
-                  ref.read(resumesListProvider.notifier).saveResume(resume);
-                },
-              );
-            },
-            child: const Text('Delete', style: TextStyle(color: AppColors.accentRed)),
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
+            child: TextButton(
+              onPressed: () {
+                ref.read(resumesListProvider.notifier).deleteResume(resume.id);
+                Navigator.pop(context);
+                AppSnackBar.show(
+                  context,
+                  message: 'Deleted "${resume.title}"',
+                  variant: AppSnackBarVariant.info,
+                  actionLabel: 'Undo',
+                  onAction: () {
+                    ref.read(resumesListProvider.notifier).saveResume(resume);
+                  },
+                );
+              },
+              child: const Text('Delete', style: TextStyle(color: AppColors.accentRed)),
+            ),
           ),
         ],
       ),
