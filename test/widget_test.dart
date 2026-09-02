@@ -9,6 +9,7 @@ void main() {
         child: ResumeBrainApp(),
       ),
     );
+    await tester.pumpAndSettle();
     expect(find.text('Resume Brain'), findsOneWidget);
   });
 }
