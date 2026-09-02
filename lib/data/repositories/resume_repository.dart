@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/storage/storage_bootstrap.dart';
 import '../models/resume_models.dart';
 import 'cloud_sync_adapter.dart';
 
@@ -29,7 +31,6 @@ abstract class ResumeRepository {
 
 /// Local Hive implementation of [ResumeRepository].
 class HiveResumeRepository implements ResumeRepository {
-  Box? _box;
   final CloudSyncAdapter _cloudSyncAdapter;
 
   HiveResumeRepository({CloudSyncAdapter? cloudSyncAdapter})
@@ -37,26 +38,20 @@ class HiveResumeRepository implements ResumeRepository {
 
   @override
   Future<void> init() async {
-    await Hive.initFlutter();
-    try {
-      _box = await Hive.openBox(AppConstants.hiveResumeBox);
-    } catch (e) {
-      try {
-        await Hive.deleteBoxFromDisk(AppConstants.hiveResumeBox);
-        _box = await Hive.openBox(AppConstants.hiveResumeBox);
-      } catch (_) {}
-    }
+    // Storage initialization is handled centrally by StorageBootstrapService.
+    await StorageBootstrapService().initializeStorage();
   }
 
-  Box get box {
-    if (_box == null || !_box!.isOpen) {
-      throw Exception('ResumeRepository box is unavailable. Ensure init() has completed.');
-    }
-    return _box!;
-  }
+  Box? get _safeBox => StorageBootstrapService().resumesBox;
 
   @override
   Future<List<Resume>> getAllResumes() async {
+    final box = _safeBox;
+    if (box == null) {
+      debugPrint('HiveResumeRepository: Storage box unavailable. Returning empty list.');
+      return [];
+    }
+
     final list = <Resume>[];
     for (var key in box.keys) {
       try {
@@ -74,18 +69,32 @@ class HiveResumeRepository implements ResumeRepository {
 
   @override
   Future<Resume?> getResumeById(String id) async {
-    final data = box.get(id);
-    if (data == null) return null;
-    return Resume.fromMap(Map<String, dynamic>.from(data));
+    final box = _safeBox;
+    if (box == null) return null;
+    try {
+      final data = box.get(id);
+      if (data == null || data is! Map) return null;
+      return Resume.fromMap(Map<String, dynamic>.from(data));
+    } catch (e) {
+      debugPrint('Error retrieving resume $id: $e');
+      return null;
+    }
   }
 
   @override
   Future<void> saveResume(Resume resume) async {
+    final box = _safeBox;
+    if (box == null) {
+      debugPrint('Cannot save resume ${resume.id}: Storage box unavailable.');
+      return;
+    }
     await box.put(resume.id, resume.toMap());
   }
 
   @override
   Future<void> deleteResume(String id) async {
+    final box = _safeBox;
+    if (box == null) return;
     await box.delete(id);
   }
 

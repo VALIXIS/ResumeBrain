@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../../../core/storage/storage_bootstrap.dart';
 import '../models/analysis_history_entry.dart';
 import '../models/resume_analysis_report.dart';
 
@@ -8,35 +10,14 @@ class AnalysisHistoryService {
   static const String boxName = 'analysis_history_box';
   static const int maxHistoryPerResume = 20;
 
-  Box? _box;
   final Map<String, List<AnalysisHistoryEntry>> _memoryFallback = {};
 
-  /// Initializes the Hive box for analysis history.
+  /// Storage is initialized centrally by StorageBootstrapService.
   Future<void> init() async {
-    try {
-      await Hive.initFlutter();
-      if (!Hive.isBoxOpen(boxName)) {
-        _box = await Hive.openBox(boxName);
-      } else {
-        _box = Hive.box(boxName);
-      }
-    } catch (_) {
-      try {
-        await Hive.deleteBoxFromDisk(boxName);
-        _box = await Hive.openBox(boxName);
-      } catch (_) {
-        // Graceful fallback to memory storage if Hive box fails
-        _box = null;
-      }
-    }
+    await StorageBootstrapService().initializeStorage();
   }
 
-  Box? get _safeBox {
-    if (_box != null && _box!.isOpen) {
-      return _box;
-    }
-    return null;
-  }
+  Box? get _safeBox => StorageBootstrapService().analysisHistoryBox;
 
   /// Retrieves the history of analysis entries for a given [resumeId],
   /// sorted from newest to oldest.

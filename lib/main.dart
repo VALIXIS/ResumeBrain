@@ -1,39 +1,37 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'app/providers.dart';
+import 'core/storage/storage_bootstrap.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
-import 'features/analysis/providers/analysis_provider.dart';
 import 'features/home/presentation/home_dashboard_screen.dart';
 
-void main() async {
+void main() {
+  // STARTUP STAGE 1: Bindings
+  StartupStages.logStage(StartupStages.stage1Binding, 'WidgetsFlutterBinding.ensureInitialized()');
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Configure GoogleFonts fallback safety so network font failures never crash the app
+  // Production-safe global exception logging
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    StartupStages.logStage('FLUTTER_ERROR', '${details.exception}\n${details.stack}');
+  };
+
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    StartupStages.logStage('PLATFORM_ERROR', '$error\n$stack');
+    return true; // Prevents app process termination
+  };
+
+  // GoogleFonts configuration
   GoogleFonts.config.allowRuntimeFetching = true;
 
-  // Initialize Hive storage and repositories safely before launching app UI
-  final container = ProviderContainer();
-  try {
-    final repo = container.read(resumeRepositoryProvider);
-    await repo.init();
-  } catch (e, stack) {
-    debugPrint('Failed to initialize ResumeRepository during startup: $e\n$stack');
-  }
-
-  try {
-    final historyService = container.read(analysisHistoryServiceProvider);
-    await historyService.init();
-  } catch (e, stack) {
-    debugPrint('Failed to initialize AnalysisHistoryService during startup: $e\n$stack');
-  }
-
+  // STARTUP STAGE 2: Immediate, non-blocking runApp() using standard ProviderScope
+  StartupStages.logStage(StartupStages.stage2RunApp, 'Invoking runApp with standard ProviderScope');
   runApp(
-    UncontrolledProviderScope(
-      container: container,
-      child: const ResumeBrainApp(),
+    const ProviderScope(
+      child: ResumeBrainApp(),
     ),
   );
 }
@@ -45,7 +43,7 @@ class ResumeBrainApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
 
-    // Synchronize AppColors.isDarkMode with platform brightness safely without ancestor MediaQuery requirement
+    // Synchronize AppColors.isDarkMode with platform brightness safely
     if (themeMode == ThemeMode.system) {
       final brightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
       AppColors.isDarkMode = brightness == Brightness.dark;

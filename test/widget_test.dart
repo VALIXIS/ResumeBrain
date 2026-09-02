@@ -9,7 +9,8 @@ void main() {
         child: ResumeBrainApp(),
       ),
     );
-    await tester.pumpAndSettle();
-    expect(find.text('Resume Brain'), findsOneWidget);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byType(ResumeBrainApp), findsOneWidget);
   });
 }

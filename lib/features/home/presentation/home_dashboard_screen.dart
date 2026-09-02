@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../app/providers.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/storage/storage_bootstrap.dart';
+import '../../../core/storage/storage_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -142,6 +144,32 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
   }
 
   Widget _buildDashboardView(BuildContext context) {
+    StartupStages.logStage(StartupStages.stage7HomeRender, 'Rendering HomeDashboardScreen view');
+    final storageStatus = ref.watch(storageBootstrapProvider);
+
+    if (storageStatus == StorageStatus.initializing || storageStatus == StorageStatus.uninitialized) {
+      return _buildLoadingShimmer();
+    }
+
+    if (storageStatus == StorageStatus.error) {
+      return SingleChildScrollView(
+        padding: AppSpacing.screenPadding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeroCard(context, ref),
+            const SizedBox(height: AppSpacing.xl),
+            ErrorStateWidget(
+              errorMessage: 'Storage initialized with fallback. Tap Retry to reconnect storage.',
+              onRetry: () => ref.read(storageBootstrapProvider.notifier).retry(),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            _buildAiSuiteSection(context),
+          ],
+        ),
+      );
+    }
+
     final resumesAsync = ref.watch(resumesListProvider);
 
     return resumesAsync.when(
