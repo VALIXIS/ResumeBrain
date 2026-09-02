@@ -1,6 +1,7 @@
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../../data/models/resume_models.dart';
+import '../../pdf/models/pdf_export_config.dart';
 import '../models/resume_template.dart';
 
 class ExecutiveMinimalTemplate implements ResumeTemplate {
@@ -20,17 +21,21 @@ class ExecutiveMinimalTemplate implements ResumeTemplate {
   bool get isAtsFriendly => true;
 
   @override
-  Future<pw.Document> generatePdf(Resume resume, PdfPageFormat pageFormat) async {
-    final pdf = pw.Document();
+  Future<pw.Document> generatePdf(
+    Resume resume,
+    PdfPageFormat pageFormat, {
+    PdfExportConfig? config,
+  }) async {
+    final pdf = pw.Document(theme: config?.themeData);
     final primaryColor = PdfColor.fromHex('#0F172A'); // Dark Navy
-    final accentColor = PdfColor.fromHex('#2563EB'); // Royal Blue
+    final accentColor = config?.colorPalette.pdfColor ?? PdfColor.fromHex('#2563EB'); // Royal Blue
     final textColor = PdfColor.fromHex('#334155');
     final mutedTextColor = PdfColor.fromHex('#64748B');
 
     pdf.addPage(
       pw.MultiPage(
         pageFormat: pageFormat,
-        margin: const pw.EdgeInsets.all(40),
+        margin: config?.marginOption.insets ?? const pw.EdgeInsets.all(40),
         footer: (pw.Context context) {
           return pw.Container(
             alignment: pw.Alignment.centerRight,

@@ -1,6 +1,7 @@
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../../data/models/resume_models.dart';
+import '../../pdf/models/pdf_export_config.dart';
 import '../models/resume_template.dart';
 
 /// Template 4: TechSpecialistTemplate
@@ -33,13 +34,14 @@ class TechSpecialistTemplate implements ResumeTemplate {
   @override
   Future<pw.Document> generatePdf(
     Resume resume,
-    PdfPageFormat pageFormat,
-  ) async {
-    final pdf = pw.Document();
+    PdfPageFormat pageFormat, {
+    PdfExportConfig? config,
+  }) async {
+    final pdf = pw.Document(theme: config?.themeData);
 
     final primaryColor = PdfColor.fromHex('#0F172A'); // Slate 900
     final accentColor =
-        customAccentColor ?? PdfColor.fromHex('#0284C7'); // Tech Sky 600
+        config?.colorPalette.pdfColor ?? customAccentColor ?? PdfColor.fromHex('#0284C7'); // Tech Sky 600
     final secondaryAccent = PdfColor.fromHex('#2563EB'); // Royal Blue 600
     final textColor = PdfColor.fromHex('#1E293B'); // Slate 800
     final mutedTextColor = PdfColor.fromHex('#64748B'); // Slate 500
@@ -58,7 +60,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
     pdf.addPage(
       pw.MultiPage(
         pageFormat: pageFormat,
-        margin: const pw.EdgeInsets.all(36),
+        margin: config?.marginOption.insets ?? const pw.EdgeInsets.all(36),
         footer: (pw.Context context) {
           return pw.Container(
             alignment: pw.Alignment.centerRight,

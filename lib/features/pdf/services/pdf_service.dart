@@ -5,11 +5,20 @@ import 'package:pdf/pdf.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../data/models/resume_models.dart';
 import '../../templates/services/template_registry.dart';
+import '../models/pdf_export_config.dart';
 
 class PdfService {
-  Future<Uint8List> buildPdfBytes(Resume resume, {PdfPageFormat pageFormat = PdfPageFormat.a4}) async {
+  Future<Uint8List> buildPdfBytes(
+    Resume resume, {
+    PdfPageFormat pageFormat = PdfPageFormat.a4,
+    PdfExportConfig? config,
+  }) async {
     final template = TemplateRegistry.getTemplateById(resume.templateId);
-    final pdfDocument = await template.generatePdf(resume, pageFormat);
+    final pdfDocument = await template.generatePdf(
+      resume,
+      pageFormat,
+      config: config,
+    );
     return pdfDocument.save();
   }
 

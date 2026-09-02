@@ -1,6 +1,7 @@
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../../data/models/resume_models.dart';
+import '../../pdf/models/pdf_export_config.dart';
 import '../models/resume_template.dart';
 
 class AcademicCvTemplate implements ResumeTemplate {
@@ -21,11 +22,15 @@ class AcademicCvTemplate implements ResumeTemplate {
   bool get isAtsFriendly => true;
 
   @override
-  Future<pw.Document> generatePdf(Resume resume, PdfPageFormat pageFormat) async {
-    final pdf = pw.Document();
+  Future<pw.Document> generatePdf(
+    Resume resume,
+    PdfPageFormat pageFormat, {
+    PdfExportConfig? config,
+  }) async {
+    final pdf = pw.Document(theme: config?.themeData);
 
     final primaryColor = PdfColor.fromHex('#1B2A4A'); // Deep Navy Blue
-    final accentColor = PdfColor.fromHex('#800020'); // Burgundy Accent
+    final accentColor = config?.colorPalette.pdfColor ?? PdfColor.fromHex('#800020'); // Burgundy Accent
     final textColor = PdfColor.fromHex('#1E293B'); // Slate 800
     final mutedTextColor = PdfColor.fromHex('#64748B'); // Slate 500
     final dividerColor = PdfColor.fromHex('#CBD5E1'); // Slate 300
@@ -37,7 +42,7 @@ class AcademicCvTemplate implements ResumeTemplate {
     pdf.addPage(
       pw.MultiPage(
         pageFormat: pageFormat,
-        margin: const pw.EdgeInsets.all(36),
+        margin: config?.marginOption.insets ?? const pw.EdgeInsets.all(36),
         header: (pw.Context context) {
           if (context.pageNumber == 1) {
             return pw.SizedBox();
