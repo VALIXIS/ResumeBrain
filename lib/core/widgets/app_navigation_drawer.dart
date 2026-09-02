@@ -199,7 +199,7 @@ class AppNavigationDrawer extends StatelessWidget {
                         style: AppTypography.bodySmall.copyWith(fontSize: 11),
                       ),
                       Text(
-                        'v1.0.0 • Production',
+                        'v${AppConstants.appVersion} • Production',
                         style: AppTypography.labelSmall.copyWith(
                           color: AppColors.textMuted,
                           fontSize: 10,

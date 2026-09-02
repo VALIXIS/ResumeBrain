@@ -59,9 +59,13 @@ class HiveResumeRepository implements ResumeRepository {
   Future<List<Resume>> getAllResumes() async {
     final list = <Resume>[];
     for (var key in box.keys) {
-      final data = box.get(key);
-      if (data != null) {
-        list.add(Resume.fromMap(Map<String, dynamic>.from(data)));
+      try {
+        final data = box.get(key);
+        if (data != null && data is Map) {
+          list.add(Resume.fromMap(Map<String, dynamic>.from(data)));
+        }
+      } catch (e) {
+        debugPrint('Skipping corrupted resume record for key $key: $e');
       }
     }
     list.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));

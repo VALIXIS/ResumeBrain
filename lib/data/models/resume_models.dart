@@ -545,10 +545,14 @@ class Resume {
       };
 
   factory Resume.fromMap(Map<String, dynamic> map) => Resume(
-        id: map['id'],
+        id: map['id'] != null ? map['id'].toString() : const Uuid().v4(),
         title: map['title'] ?? 'Untitled Resume',
-        createdAt: DateTime.parse(map['createdAt']),
-        updatedAt: DateTime.parse(map['updatedAt']),
+        createdAt: map['createdAt'] != null
+            ? (DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now())
+            : DateTime.now(),
+        updatedAt: map['updatedAt'] != null
+            ? (DateTime.tryParse(map['updatedAt'].toString()) ?? DateTime.now())
+            : DateTime.now(),
         templateId: map['templateId'] ?? 'modern_classic',
         personalInfo: map['personalInfo'] != null
             ? PersonalInformation.fromMap(Map<String, dynamic>.from(map['personalInfo']))
@@ -556,28 +560,28 @@ class Resume {
         summary: map['summary'] != null
             ? ProfessionalSummary.fromMap(Map<String, dynamic>.from(map['summary']))
             : ProfessionalSummary(),
-        experiences: map['experiences'] != null
+        experiences: map['experiences'] != null && map['experiences'] is List
             ? (map['experiences'] as List).map((e) => Experience.fromMap(Map<String, dynamic>.from(e))).toList()
             : [],
-        educationList: map['educationList'] != null
+        educationList: map['educationList'] != null && map['educationList'] is List
             ? (map['educationList'] as List).map((e) => Education.fromMap(Map<String, dynamic>.from(e))).toList()
             : [],
-        projects: map['projects'] != null
+        projects: map['projects'] != null && map['projects'] is List
             ? (map['projects'] as List).map((e) => Project.fromMap(Map<String, dynamic>.from(e))).toList()
             : [],
-        skills: map['skills'] != null
+        skills: map['skills'] != null && map['skills'] is List
             ? (map['skills'] as List).map((e) => Skill.fromMap(Map<String, dynamic>.from(e))).toList()
             : [],
-        certifications: map['certifications'] != null
+        certifications: map['certifications'] != null && map['certifications'] is List
             ? (map['certifications'] as List).map((e) => Certification.fromMap(Map<String, dynamic>.from(e))).toList()
             : [],
-        languages: map['languages'] != null
+        languages: map['languages'] != null && map['languages'] is List
             ? (map['languages'] as List).map((e) => Language.fromMap(Map<String, dynamic>.from(e))).toList()
             : [],
-        customSections: map['customSections'] != null
+        customSections: map['customSections'] != null && map['customSections'] is List
             ? (map['customSections'] as List).map((e) => CustomSection.fromMap(Map<String, dynamic>.from(e))).toList()
             : [],
-        socialLinks: map['socialLinks'] != null
+        socialLinks: map['socialLinks'] != null && map['socialLinks'] is List
             ? (map['socialLinks'] as List).map((e) => SocialLink.fromMap(Map<String, dynamic>.from(e))).toList()
             : [],
       );
