@@ -30,14 +30,10 @@ class InMemoryResumeRepository implements ResumeRepository {
   }
 
   @override
-  Future<CloudSyncResult> syncResumeToCloud(Resume resume) async {
-    return CloudSyncResult.unsupported();
-  }
+  Future<CloudSyncResult> syncResumeToCloud(Resume resume) async => CloudSyncResult.unsupported();
 
   @override
-  Future<CloudSyncResult> syncAllToCloud() async {
-    return CloudSyncResult.unsupported();
-  }
+  Future<CloudSyncResult> syncAllToCloud() async => CloudSyncResult.unsupported();
 }
 
 void main() {
