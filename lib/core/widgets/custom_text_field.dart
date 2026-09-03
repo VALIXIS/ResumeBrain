@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_radius.dart';
+import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 
 class AppTextField extends StatelessWidget {
@@ -36,31 +38,48 @@ class AppTextField extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: AppTypography.labelLarge),
+            Expanded(
+              child: Text(
+                label,
+                style: AppTypography.labelLarge,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             if (onAiEnhance != null)
-              InkWell(
-                onTap: onAiEnhance,
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.auto_awesome, size: 14, color: AppColors.accentPurple),
-                      const SizedBox(width: 4),
-                      Text(
-                        'AI Enhance',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.accentPurple,
-                          fontWeight: FontWeight.w600,
+              Semantics(
+                button: true,
+                label: 'AI Enhance $label',
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
+                  child: Center(
+                    child: InkWell(
+                      onTap: onAiEnhance,
+                      borderRadius: AppRadius.borderSm,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.auto_awesome, size: 14, color: AppColors.accentPurple),
+                            const SizedBox(width: 4),
+                            Text(
+                              'AI Enhance',
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.accentPurple,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         TextFormField(
           controller: controller,
           initialValue: initialValue,
@@ -71,7 +90,12 @@ class AppTextField extends StatelessWidget {
           style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: hint,
-            suffixIcon: suffixIcon,
+            suffixIcon: suffixIcon != null
+                ? ConstrainedBox(
+                    constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                    child: Center(child: suffixIcon),
+                  )
+                : null,
           ),
         ),
       ],
