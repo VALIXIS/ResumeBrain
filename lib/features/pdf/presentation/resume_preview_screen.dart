@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 import '../../../app/providers.dart';
+import '../../../data/models/resume_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/state_widgets.dart';
@@ -24,10 +25,34 @@ class _ResumePreviewScreenState extends ConsumerState<ResumePreviewScreen> {
     final resume = ref.watch(currentResumeProvider);
     final pdfService = ref.watch(pdfServiceProvider);
 
+    final resumesList = ref.watch(resumesListProvider).value ?? [];
+
     if (resume == null) {
+      if (resumesList.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(currentResumeProvider.notifier).setResume(resumesList.first);
+        });
+        return Scaffold(
+          appBar: AppBar(title: const Text('Resume Preview')),
+          body: const LoadingStateWidget(message: 'Loading resume preview...'),
+        );
+      }
+
       return Scaffold(
         appBar: AppBar(title: const Text('Resume Preview')),
-        body: const Center(child: Text('No resume selected')),
+        body: EmptyStateWidget(
+          title: 'No Resume Available',
+          description: 'Create or select a resume to preview and export to PDF.',
+          icon: Icons.picture_as_pdf_outlined,
+          actionText: 'Create Resume Now',
+          onAction: () {
+            final newResume = Resume(
+              title: 'New Resume ${DateTime.now().day}',
+            );
+            ref.read(currentResumeProvider.notifier).setResume(newResume);
+            ref.read(resumesListProvider.notifier).saveResume(newResume);
+          },
+        ),
       );
     }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/providers.dart';
+import '../../../data/models/resume_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -15,7 +16,16 @@ class TemplateSelectorScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final resume = ref.watch(currentResumeProvider);
+    final resumesList = ref.watch(resumesListProvider).value ?? [];
     final templates = TemplateRegistry.allTemplates;
+    
+    // Auto-select first resume if none active
+    if (resume == null && resumesList.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(currentResumeProvider.notifier).setResume(resumesList.first);
+      });
+    }
+
     final selectedId = resume?.templateId ?? 'modern_classic';
 
     return Scaffold(
@@ -27,6 +37,42 @@ class TemplateSelectorScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (resume != null) ...[
+              AppCard(
+                color: AppColors.surfaceLight,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                child: Row(
+                  children: [
+                    const Icon(Icons.description_outlined, color: AppColors.primary, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('ACTIVE RESUME', style: AppTypography.labelSmall.copyWith(color: AppColors.primary, fontSize: 10)),
+                          Text(resume.title, style: AppTypography.titleMedium.copyWith(fontSize: 14)),
+                        ],
+                      ),
+                    ),
+                    if (resumesList.length > 1)
+                      PopupMenuButton<Resume>(
+                        icon: const Icon(Icons.swap_horiz_rounded, color: AppColors.primary),
+                        tooltip: 'Switch Resume',
+                        onSelected: (selected) {
+                          ref.read(currentResumeProvider.notifier).setResume(selected);
+                        },
+                        itemBuilder: (context) => resumesList.map((r) {
+                          return PopupMenuItem<Resume>(
+                            value: r,
+                            child: Text(r.title),
+                          );
+                        }).toList(),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+            ],
             Text('Professional ATS Templates', style: AppTypography.titleLarge),
             const SizedBox(height: AppSpacing.xs),
             Text(

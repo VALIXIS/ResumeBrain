@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../app/providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -85,14 +86,7 @@ class _AnalysisResultsScreenState extends ConsumerState<AnalysisResultsScreen> {
     AsyncValue<ResumeAnalysisReport?> analysisAsync,
   ) {
     if (resume == null) {
-      return EmptyStateWidget(
-        title: 'No Resume Selected',
-        description:
-            'Select or create a resume to perform ATS and structural analysis.',
-        icon: Icons.description_outlined,
-        actionText: 'Go Back',
-        onAction: () => Navigator.of(context).maybePop(),
-      );
+      return _buildResumeSelectionView(context);
     }
 
     return analysisAsync.when(
@@ -288,6 +282,92 @@ class _AnalysisResultsScreenState extends ConsumerState<AnalysisResultsScreen> {
     );
   }
 
+  Widget _buildResumeSelectionView(BuildContext context) {
+    final resumesAsync = ref.watch(resumesListProvider);
+
+    return resumesAsync.when(
+      loading: () => const LoadingStateWidget(message: 'Loading saved resumes...'),
+      error: (err, stack) => ErrorStateWidget(
+        errorMessage: err.toString(),
+        onRetry: () => ref.read(resumesListProvider.notifier).loadResumes(),
+      ),
+      data: (resumes) {
+        if (resumes.isEmpty) {
+          return EmptyStateWidget(
+            title: 'No Saved Resumes Found',
+            description: 'Create your first resume to generate detailed ATS analysis & recommendations.',
+            icon: Icons.description_outlined,
+            actionText: 'Create Resume Now',
+            onAction: () {
+              final newResume = Resume(
+                title: 'New Resume ${DateFormat('MMM d').format(DateTime.now())}',
+              );
+              ref.read(currentResumeProvider.notifier).setResume(newResume);
+              ref.read(resumesListProvider.notifier).saveResume(newResume);
+            },
+          );
+        }
+
+        return SingleChildScrollView(
+          padding: AppSpacing.screenPadding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Select Resume for ATS Analysis', style: AppTypography.titleLarge),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'Choose a resume from your library to evaluate its overall score and structural compliance.',
+                style: AppTypography.bodySmall,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: resumes.length,
+                separatorBuilder: (c, i) => const SizedBox(height: AppSpacing.md),
+                itemBuilder: (context, index) {
+                  final resume = resumes[index];
+                  return AppCard(
+                    onTap: () {
+                      ref.read(currentResumeProvider.notifier).setResume(resume);
+                    },
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.15),
+                            borderRadius: AppRadius.borderSm,
+                          ),
+                          child: const Icon(Icons.analytics_outlined, color: AppColors.primary, size: 24),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(resume.title, style: AppTypography.titleMedium),
+                              if (resume.personalInfo.fullName.isNotEmpty)
+                                Text(
+                                  '${resume.personalInfo.fullName} • ${resume.personalInfo.jobTitle}',
+                                  style: AppTypography.bodySmall,
+                                ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.textMuted),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildResumeOverviewCard(Resume resume) {
     return AppCard(
       color: AppColors.surfaceLight,
@@ -331,8 +411,61 @@ class _AnalysisResultsScreenState extends ConsumerState<AnalysisResultsScreen> {
               ],
             ),
           ),
+          TextButton.icon(
+            onPressed: () {
+              ref.read(currentResumeProvider.notifier).setResume(resume);
+              _showResumePickerModal(context);
+            },
+            icon: const Icon(Icons.swap_horiz_rounded, size: 16),
+            label: const Text('Switch'),
+          ),
         ],
       ),
+    );
+  }
+
+  void _showResumePickerModal(BuildContext context) {
+    final resumes = ref.read(resumesListProvider).value ?? [];
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: AppSpacing.paddingMd,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Select Resume to Analyze', style: AppTypography.titleMedium),
+                const SizedBox(height: AppSpacing.md),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: resumes.length,
+                    separatorBuilder: (c, i) => const SizedBox(height: AppSpacing.sm),
+                    itemBuilder: (context, index) {
+                      final item = resumes[index];
+                      return ListTile(
+                        title: Text(item.title),
+                        subtitle: Text(item.personalInfo.fullName),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          ref.read(currentResumeProvider.notifier).setResume(item);
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

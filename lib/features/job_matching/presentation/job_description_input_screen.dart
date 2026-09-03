@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../app/providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/custom_text_field.dart';
+import '../../../data/models/resume_models.dart';
 import '../controllers/job_matching_controller.dart';
 
 import 'job_match_results_screen.dart';
@@ -62,6 +64,14 @@ class _JobDescriptionInputScreenState extends ConsumerState<JobDescriptionInputS
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(jobMatchingControllerProvider);
+    final resume = ref.watch(currentResumeProvider);
+    final resumesList = ref.watch(resumesListProvider).value ?? [];
+
+    if (resume == null && resumesList.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(currentResumeProvider.notifier).setResume(resumesList.first);
+      });
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -74,6 +84,46 @@ class _JobDescriptionInputScreenState extends ConsumerState<JobDescriptionInputS
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (resume != null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceLight,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.surfaceBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.description_outlined, color: AppColors.primary, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('TARGET RESUME FOR MATCHING', style: AppTypography.labelSmall.copyWith(color: AppColors.primary, fontSize: 10)),
+                            Text(resume.title, style: AppTypography.titleMedium.copyWith(fontSize: 14)),
+                          ],
+                        ),
+                      ),
+                      if (resumesList.length > 1)
+                        PopupMenuButton<Resume>(
+                          icon: const Icon(Icons.swap_horiz_rounded, color: AppColors.primary),
+                          tooltip: 'Switch Resume',
+                          onSelected: (selected) {
+                            ref.read(currentResumeProvider.notifier).setResume(selected);
+                          },
+                          itemBuilder: (context) => resumesList.map((r) {
+                            return PopupMenuItem<Resume>(
+                              value: r,
+                              child: Text(r.title),
+                            );
+                          }).toList(),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+              ],
               Text(
                 'Enter Job Details',
                 style: AppTypography.titleLarge.copyWith(color: AppColors.textPrimary),

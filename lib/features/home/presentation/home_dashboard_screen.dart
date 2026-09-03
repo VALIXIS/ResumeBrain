@@ -14,6 +14,7 @@ import '../../../core/widgets/custom_card.dart';
 import '../../../core/widgets/state_widgets.dart';
 import '../../../data/models/resume_models.dart';
 import '../../ai/presentation/coming_soon_screen.dart';
+import '../../analysis/presentation/analysis_results_screen.dart';
 import '../../job_matching/presentation/job_description_input_screen.dart';
 import '../../pdf/presentation/resume_preview_screen.dart';
 import '../../resume/presentation/resume_editor_screen.dart';
@@ -135,7 +136,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
   Widget _buildCurrentTabContent(BuildContext context) {
     switch (_selectedIndex) {
       case 1:
-        return const ComingSoonScreen(featureTitle: 'AI Resume Analysis & ATS Score');
+        return const AnalysisResultsScreen();
       case 2:
         return const JobDescriptionInputScreen();
       case 3:
@@ -325,7 +326,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
           style: AppTypography.bodySmall,
         ),
         const SizedBox(height: AppSpacing.md),
-        _buildComingSoonFeatureCard(
+        _buildAiFeatureCard(
           context,
           title: 'AI Resume Analysis & ATS Score',
           description: 'Get deep feedback, keyword checks, and structural score.',
@@ -334,7 +335,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
           onTap: () => setState(() => _selectedIndex = 1),
         ),
         const SizedBox(height: AppSpacing.md),
-        _buildComingSoonFeatureCard(
+        _buildAiFeatureCard(
           context,
           title: 'Job Match & Resume Tailoring',
           description: 'Match your resume against job postings and auto-tailor bullet points.',
@@ -446,7 +447,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
     );
   }
 
-  Widget _buildComingSoonFeatureCard(
+  Widget _buildAiFeatureCard(
     BuildContext context, {
     required String title,
     required String description,
@@ -488,12 +489,16 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceBorder,
+                        color: accentColor.withValues(alpha: 0.2),
                         borderRadius: AppRadius.borderSm,
                       ),
                       child: Text(
-                        'FEATURE',
-                        style: AppTypography.labelSmall.copyWith(fontSize: 9),
+                        'AI LIVE',
+                        style: AppTypography.labelSmall.copyWith(
+                          fontSize: 9,
+                          color: accentColor,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
