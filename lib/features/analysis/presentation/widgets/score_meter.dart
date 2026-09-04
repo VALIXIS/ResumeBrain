@@ -2,9 +2,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import 'analysis_accessibility_helper.dart';
 
 /// Circular animated score meter displaying overall ATS Score (0 to 100).
-/// Uses CustomPainter for smooth rendering with accessibility semantics.
+/// Uses CustomPainter for smooth rendering with comprehensive accessibility semantics,
+/// WCAG AAA contrast compliance, and color-independent status indicators.
 class CircularScoreMeter extends StatelessWidget {
   final int? score; // 0 to 100 or null
   final double size;
@@ -32,7 +34,7 @@ class CircularScoreMeter extends StatelessWidget {
   Widget build(BuildContext context) {
     if (score == null) {
       return Semantics(
-        label: 'No analysis score available',
+        label: 'Overall resume ATS score: No analysis score available. Please run analysis to evaluate.',
         child: SizedBox(
           width: size,
           height: size,
@@ -60,16 +62,20 @@ class CircularScoreMeter extends StatelessWidget {
     }
 
     final validScore = score!.clamp(0, 100).toDouble();
-    final scoreColor = _getScoreColor(validScore);
+    final scoreInt = validScore.toInt();
+    final arcColor = _getScoreColor(validScore);
     final scoreLabel = _getScoreLabel(validScore);
+    final status = AnalysisA11y.getScoreStatus(context, scoreInt);
 
     return Semantics(
-      label: 'Overall resume ATS score: ${validScore.toInt()} out of 100, rated $scoreLabel',
+      label: 'Overall resume ATS score: $scoreInt out of 100, rated $scoreLabel (${status.statusLabel})',
+      value: '$scoreInt',
       child: TweenAnimationBuilder<double>(
         tween: Tween<double>(begin: 0.0, end: validScore),
         duration: const Duration(milliseconds: 1200),
         curve: Curves.easeOutCubic,
         builder: (context, animatedScore, child) {
+          final currentScore = animatedScore.toInt();
           return SizedBox(
             width: size,
             height: size,
@@ -81,55 +87,71 @@ class CircularScoreMeter extends StatelessWidget {
                   size: Size(size, size),
                   painter: _ScoreMeterPainter(
                     score: animatedScore,
-                    scoreColor: scoreColor,
+                    scoreColor: arcColor,
                   ),
                 ),
-                // Center content
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      animatedScore.toInt().toString(),
-                      style: AppTypography.displayLarge.copyWith(
-                        fontSize: size * 0.28,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                        height: 1.0,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'OUT OF 100',
-                      style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.textMuted,
-                        fontSize: size * 0.065,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: scoreColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: scoreColor.withValues(alpha: 0.4),
-                          width: 1,
+                // Center content with high-contrast text and non-color icon
+                Padding(
+                  padding: EdgeInsets.all(size * 0.12),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        currentScore.toString(),
+                        style: AppTypography.displayLarge.copyWith(
+                          fontSize: (size * 0.26).clamp(24.0, 52.0),
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                          height: 1.0,
                         ),
                       ),
-                      child: Text(
-                        scoreLabel,
+                      const SizedBox(height: 2),
+                      Text(
+                        'OUT OF 100',
                         style: AppTypography.labelSmall.copyWith(
-                          color: scoreColor,
+                          color: AnalysisA11y.textSecondary(context),
+                          fontSize: (size * 0.065).clamp(10.0, 13.0),
+                          letterSpacing: 1.0,
                           fontWeight: FontWeight.w700,
-                          fontSize: size * 0.065,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: status.bgColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: status.borderColor,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              status.icon,
+                              size: 12,
+                              color: status.textColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              scoreLabel,
+                              style: AppTypography.labelSmall.copyWith(
+                                color: status.textColor,
+                                fontWeight: FontWeight.w800,
+                                fontSize: (size * 0.065).clamp(10.0, 13.0),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
