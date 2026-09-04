@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../app/providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../data/models/resume_models.dart';
 import '../utils/resume_input_scrubber.dart';
+import 'bullet_point_enhancer.dart';
 import 'resume_validators.dart';
 import 'validated_form_field.dart';
 
@@ -52,7 +52,6 @@ class _ExperienceEditorDialogState extends ConsumerState<ExperienceEditorDialog>
   late final TextEditingController _descCtrl;
 
   late bool _isCurrent;
-  bool _isAiEnhancing = false;
 
   @override
   void initState() {
@@ -95,40 +94,19 @@ class _ExperienceEditorDialogState extends ConsumerState<ExperienceEditorDialog>
     }
   }
 
-  Future<void> _enhanceDescription() async {
-    if (_descCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter some description text first to enhance.'),
-          backgroundColor: AppColors.accentRed,
-        ),
-      );
-      return;
-    }
-
-    setState(() => _isAiEnhancing = true);
-    try {
-      final aiService = ref.read(aiServiceProvider);
-      final res = await aiService.improveText(_descCtrl.text, 'experience');
-      if (mounted) {
+  void _enhanceDescription() {
+    final text = _descCtrl.text.trim();
+    final roleCtx = '${_positionCtrl.text.trim()} ${_companyCtrl.text.trim()}'.trim();
+    BulletPointEnhancerDialog.show(
+      context: context,
+      initialBullet: text,
+      roleContext: roleCtx.isEmpty ? null : roleCtx,
+      onApply: (enhanced) {
         setState(() {
-          _isAiEnhancing = false;
-          if (res.isSuccess && res.outputText.isNotEmpty) {
-            _descCtrl.text = res.outputText;
-          }
+          _descCtrl.text = enhanced;
         });
-        if (res.suggestions.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('AI Enhanced: ${res.suggestions.first}'),
-              backgroundColor: AppColors.accentPurple,
-            ),
-          );
-        }
-      }
-    } catch (_) {
-      if (mounted) setState(() => _isAiEnhancing = false);
-    }
+      },
+    );
   }
 
   @override
@@ -303,20 +281,22 @@ class _ExperienceEditorDialogState extends ConsumerState<ExperienceEditorDialog>
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      TextButton.icon(
-                        onPressed: _isAiEnhancing ? null : _enhanceDescription,
-                        icon: _isAiEnhancing
-                            ? const SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accentPurple),
-                              )
-                            : const Icon(Icons.auto_awesome, size: 14, color: AppColors.accentPurple),
-                        label: Text(
-                          'AI Enhance',
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.accentPurple,
-                            fontWeight: FontWeight.w600,
+                      Semantics(
+                        button: true,
+                        label: 'AI Enhance Responsibilities and Accomplishments',
+                        child: TextButton.icon(
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(48, 48),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          onPressed: _enhanceDescription,
+                          icon: const Icon(Icons.auto_awesome, size: 16, color: AppColors.accentPurple),
+                          label: Text(
+                            'AI Enhance',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.accentPurple,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),

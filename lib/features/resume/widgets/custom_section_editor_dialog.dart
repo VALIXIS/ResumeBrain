@@ -5,6 +5,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../data/models/resume_models.dart';
 import '../utils/resume_input_scrubber.dart';
+import 'bullet_point_enhancer.dart';
 import 'resume_validators.dart';
 import 'validated_form_field.dart';
 
@@ -434,17 +435,50 @@ class _CustomSectionEditorDialogState extends State<CustomSectionEditorDialog> {
                                       validator: (val) => ResumeValidators.validateBulletPoint(val),
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: 4),
                                   Padding(
                                     padding: const EdgeInsets.only(top: 2),
-                                    child: IconButton(
-                                      icon: const Icon(
-                                        Icons.delete_outline,
-                                        color: AppColors.accentRed,
-                                        size: 20,
+                                    child: Semantics(
+                                      label: 'AI Enhance Bullet Point',
+                                      button: true,
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          Icons.auto_awesome,
+                                          color: AppColors.accentPurple,
+                                          size: 20,
+                                        ),
+                                        tooltip: 'AI Enhance Bullet',
+                                        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                                        onPressed: () {
+                                          BulletPointEnhancerDialog.show(
+                                            context: context,
+                                            initialBullet: ctrl.text,
+                                            roleContext: _titleCtrl.text,
+                                            onApply: (enhanced) {
+                                              setState(() {
+                                                ctrl.text = enhanced;
+                                              });
+                                            },
+                                          );
+                                        },
                                       ),
-                                      tooltip: 'Remove Bullet Point',
-                                      onPressed: () => _removeBullet(index),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 2),
+                                    child: Semantics(
+                                      label: 'Remove Bullet Point',
+                                      button: true,
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          Icons.delete_outline,
+                                          color: AppColors.accentRed,
+                                          size: 20,
+                                        ),
+                                        tooltip: 'Remove Bullet Point',
+                                        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                                        onPressed: () => _removeBullet(index),
+                                      ),
                                     ),
                                   ),
                                 ],
