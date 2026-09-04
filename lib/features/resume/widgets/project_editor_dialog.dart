@@ -194,11 +194,14 @@ class _ProjectEditorDialogState extends State<ProjectEditorDialog> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Project Overview & Accomplishments',
-                        style: AppTypography.labelLarge.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w600,
+                      Expanded(
+                        child: Text(
+                          'Project Overview & Accomplishments',
+                          style: AppTypography.labelLarge.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Semantics(
