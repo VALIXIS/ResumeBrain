@@ -3,6 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../../core/storage/storage_bootstrap.dart';
 import '../models/resume_models.dart';
 import 'cloud_sync_adapter.dart';
+import 'resume_database_migrator.dart';
 
 /// Abstract persistence boundary for resume data storage, retrieval, and cloud synchronization.
 abstract class ResumeRepository {
@@ -53,6 +54,9 @@ class HiveResumeRepository implements ResumeRepository {
 
     final list = <Resume>[];
     for (var key in box.keys) {
+      if (key == ResumeDatabaseMigrator.kDbVersionKey || key.toString().startsWith('__')) {
+        continue;
+      }
       try {
         final data = box.get(key);
         if (data != null && data is Map) {
@@ -68,6 +72,7 @@ class HiveResumeRepository implements ResumeRepository {
 
   @override
   Future<Resume?> getResumeById(String id) async {
+    if (id.startsWith('__')) return null;
     final box = _safeBox;
     if (box == null) return null;
     try {

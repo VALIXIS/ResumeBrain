@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../../data/repositories/resume_database_migrator.dart';
 import '../constants/app_constants.dart';
 
 /// Represents the explicit status of centralized persistent storage.
@@ -67,6 +68,11 @@ class StorageBootstrapService {
         _resumesBox = await Hive.openBox(AppConstants.hiveResumeBox);
       }
       StartupStages.logStage('RESUME_BOX_OPEN_COMPLETE', 'Opened ${AppConstants.hiveResumeBox}');
+
+      // Run automatic, deterministic database migration hooks
+      if (_resumesBox != null) {
+        await ResumeDatabaseMigrator.runMigrations(_resumesBox!);
+      }
 
       // 3. Open Analysis History box safely
       const historyBoxName = 'analysis_history_box';

@@ -1,4 +1,5 @@
 import 'package:uuid/uuid.dart';
+import 'resume_schema_migrator.dart';
 
 class PersonalInformation {
   final String fullName;
@@ -445,6 +446,7 @@ class SocialLink {
 }
 
 class Resume {
+  final int schemaVersion;
   final String id;
   final String title;
   final DateTime createdAt;
@@ -463,6 +465,7 @@ class Resume {
   final List<SocialLink> socialLinks;
 
   Resume({
+    int? schemaVersion,
     String? id,
     this.title = 'Untitled Resume',
     DateTime? createdAt,
@@ -478,7 +481,8 @@ class Resume {
     List<Language>? languages,
     List<CustomSection>? customSections,
     List<SocialLink>? socialLinks,
-  })  : id = id ?? const Uuid().v4(),
+  })  : schemaVersion = schemaVersion ?? ResumeSchemaMigrator.kCurrentSchemaVersion,
+        id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now(),
         personalInfo = personalInfo ?? PersonalInformation(),
@@ -493,6 +497,7 @@ class Resume {
         socialLinks = socialLinks ?? [];
 
   Resume copyWith({
+    int? schemaVersion,
     String? title,
     DateTime? updatedAt,
     String? templateId,
@@ -508,6 +513,7 @@ class Resume {
     List<SocialLink>? socialLinks,
   }) {
     return Resume(
+      schemaVersion: schemaVersion ?? this.schemaVersion,
       id: id,
       title: title ?? this.title,
       createdAt: createdAt,
@@ -527,6 +533,7 @@ class Resume {
   }
 
   Map<String, dynamic> toMap() => {
+        'schemaVersion': schemaVersion,
         'id': id,
         'title': title,
         'createdAt': createdAt.toIso8601String(),
@@ -544,45 +551,49 @@ class Resume {
         'socialLinks': socialLinks.map((e) => e.toMap()).toList(),
       };
 
-  factory Resume.fromMap(Map<String, dynamic> map) => Resume(
-        id: map['id'] != null ? map['id'].toString() : const Uuid().v4(),
-        title: map['title'] ?? 'Untitled Resume',
-        createdAt: map['createdAt'] != null
-            ? (DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now())
-            : DateTime.now(),
-        updatedAt: map['updatedAt'] != null
-            ? (DateTime.tryParse(map['updatedAt'].toString()) ?? DateTime.now())
-            : DateTime.now(),
-        templateId: map['templateId'] ?? 'modern_classic',
-        personalInfo: map['personalInfo'] != null
-            ? PersonalInformation.fromMap(Map<String, dynamic>.from(map['personalInfo']))
-            : PersonalInformation(),
-        summary: map['summary'] != null
-            ? ProfessionalSummary.fromMap(Map<String, dynamic>.from(map['summary']))
-            : ProfessionalSummary(),
-        experiences: map['experiences'] != null && map['experiences'] is List
-            ? (map['experiences'] as List).map((e) => Experience.fromMap(Map<String, dynamic>.from(e))).toList()
-            : [],
-        educationList: map['educationList'] != null && map['educationList'] is List
-            ? (map['educationList'] as List).map((e) => Education.fromMap(Map<String, dynamic>.from(e))).toList()
-            : [],
-        projects: map['projects'] != null && map['projects'] is List
-            ? (map['projects'] as List).map((e) => Project.fromMap(Map<String, dynamic>.from(e))).toList()
-            : [],
-        skills: map['skills'] != null && map['skills'] is List
-            ? (map['skills'] as List).map((e) => Skill.fromMap(Map<String, dynamic>.from(e))).toList()
-            : [],
-        certifications: map['certifications'] != null && map['certifications'] is List
-            ? (map['certifications'] as List).map((e) => Certification.fromMap(Map<String, dynamic>.from(e))).toList()
-            : [],
-        languages: map['languages'] != null && map['languages'] is List
-            ? (map['languages'] as List).map((e) => Language.fromMap(Map<String, dynamic>.from(e))).toList()
-            : [],
-        customSections: map['customSections'] != null && map['customSections'] is List
-            ? (map['customSections'] as List).map((e) => CustomSection.fromMap(Map<String, dynamic>.from(e))).toList()
-            : [],
-        socialLinks: map['socialLinks'] != null && map['socialLinks'] is List
-            ? (map['socialLinks'] as List).map((e) => SocialLink.fromMap(Map<String, dynamic>.from(e))).toList()
-            : [],
-      );
+  factory Resume.fromMap(Map<String, dynamic> rawMap) {
+    final map = ResumeSchemaMigrator.migrateJsonMap(rawMap);
+    return Resume(
+      schemaVersion: map['schemaVersion'] is int ? map['schemaVersion'] : ResumeSchemaMigrator.kCurrentSchemaVersion,
+      id: map['id'] != null ? map['id'].toString() : const Uuid().v4(),
+      title: map['title'] ?? 'Untitled Resume',
+      createdAt: map['createdAt'] != null
+          ? (DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now())
+          : DateTime.now(),
+      updatedAt: map['updatedAt'] != null
+          ? (DateTime.tryParse(map['updatedAt'].toString()) ?? DateTime.now())
+          : DateTime.now(),
+      templateId: map['templateId'] ?? 'modern_classic',
+      personalInfo: map['personalInfo'] != null
+          ? PersonalInformation.fromMap(Map<String, dynamic>.from(map['personalInfo']))
+          : PersonalInformation(),
+      summary: map['summary'] != null
+          ? ProfessionalSummary.fromMap(Map<String, dynamic>.from(map['summary']))
+          : ProfessionalSummary(),
+      experiences: map['experiences'] != null && map['experiences'] is List
+          ? (map['experiences'] as List).map((e) => Experience.fromMap(Map<String, dynamic>.from(e))).toList()
+          : [],
+      educationList: map['educationList'] != null && map['educationList'] is List
+          ? (map['educationList'] as List).map((e) => Education.fromMap(Map<String, dynamic>.from(e))).toList()
+          : [],
+      projects: map['projects'] != null && map['projects'] is List
+          ? (map['projects'] as List).map((e) => Project.fromMap(Map<String, dynamic>.from(e))).toList()
+          : [],
+      skills: map['skills'] != null && map['skills'] is List
+          ? (map['skills'] as List).map((e) => Skill.fromMap(Map<String, dynamic>.from(e))).toList()
+          : [],
+      certifications: map['certifications'] != null && map['certifications'] is List
+          ? (map['certifications'] as List).map((e) => Certification.fromMap(Map<String, dynamic>.from(e))).toList()
+          : [],
+      languages: map['languages'] != null && map['languages'] is List
+          ? (map['languages'] as List).map((e) => Language.fromMap(Map<String, dynamic>.from(e))).toList()
+          : [],
+      customSections: map['customSections'] != null && map['customSections'] is List
+          ? (map['customSections'] as List).map((e) => CustomSection.fromMap(Map<String, dynamic>.from(e))).toList()
+          : [],
+      socialLinks: map['socialLinks'] != null && map['socialLinks'] is List
+          ? (map['socialLinks'] as List).map((e) => SocialLink.fromMap(Map<String, dynamic>.from(e))).toList()
+          : [],
+    );
+  }
 }

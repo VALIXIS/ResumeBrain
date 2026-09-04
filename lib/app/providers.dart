@@ -1,9 +1,10 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/resume_models.dart';
 import '../data/repositories/resume_repository.dart';
 import '../features/ai/services/ai_service.dart';
 import '../features/pdf/services/pdf_service.dart';
-
 import '../features/ai/services/hybrid_ai_provider.dart';
 
 // Services & Repositories
@@ -61,21 +62,88 @@ final resumesListProvider = StateNotifierProvider<ResumesListNotifier, AsyncValu
   return ResumesListNotifier(repo);
 });
 
-// Currently Editing Resume Notifier
+// Currently Editing Resume Notifier with Debounced Auto-Save & Revision Race Protection
 class CurrentResumeNotifier extends StateNotifier<Resume?> {
   final Ref _ref;
+  Timer? _debounceTimer;
+  Duration debounceDuration;
 
-  CurrentResumeNotifier(this._ref) : super(null);
+  int _revisionToken = 0;
+  int _lastSavedRevision = 0;
+  bool _isSaving = false;
 
+  CurrentResumeNotifier(this._ref, {this.debounceDuration = const Duration(milliseconds: 500)})
+      : super(null);
+
+  /// Accessor for current revision token (useful for unit testing race conditions).
+  int get revisionToken => _revisionToken;
+
+  /// Accessor for last saved revision token.
+  int get lastSavedRevision => _lastSavedRevision;
+
+  /// Returns true if an auto-save timer is currently pending.
+  bool get isSavePending => _debounceTimer?.isActive ?? false;
+
+  /// Sets active resume, resetting pending timers and updating revision token baseline.
   void setResume(Resume resume) {
+    _debounceTimer?.cancel();
     state = resume;
+    _revisionToken++;
+    _lastSavedRevision = _revisionToken;
   }
 
-  void updateResume(Resume Function(Resume current) updateFn) {
-    if (state != null) {
-      final updated = updateFn(state!);
-      state = updated;
-      _ref.read(resumesListProvider.notifier).saveResume(updated);
+  /// Updates resume state and schedules a debounced auto-save write.
+  /// If [immediate] is true, persists state immediately without debouncing.
+  void updateResume(
+    Resume Function(Resume current) updateFn, {
+    bool immediate = false,
+  }) {
+    if (state == null) return;
+
+    final updated = updateFn(state!);
+    state = updated;
+    _revisionToken++;
+
+    _debounceTimer?.cancel();
+    if (immediate) {
+      _triggerSave();
+    } else {
+      _debounceTimer = Timer(debounceDuration, () {
+        _triggerSave();
+      });
+    }
+  }
+
+  /// Flushes any pending auto-save immediately.
+  Future<void> flushPendingSave() async {
+    if (_debounceTimer?.isActive ?? false) {
+      _debounceTimer?.cancel();
+      await _triggerSave();
+    }
+  }
+
+  Future<void> _triggerSave() async {
+    if (state == null || _isSaving || _revisionToken <= _lastSavedRevision) {
+      return;
+    }
+
+    _isSaving = true;
+    final tokenToSave = _revisionToken;
+    final resumeToSave = state!;
+
+    try {
+      await _ref.read(resumesListProvider.notifier).saveResume(resumeToSave);
+      if (tokenToSave > _lastSavedRevision) {
+        _lastSavedRevision = tokenToSave;
+      }
+    } catch (e) {
+      debugPrint('Error auto-saving resume: $e');
+    } finally {
+      _isSaving = false;
+      // If new edits arrived while saving was in progress, save latest revision
+      if (_revisionToken > _lastSavedRevision) {
+        await _triggerSave();
+      }
     }
   }
 
@@ -88,7 +156,7 @@ class CurrentResumeNotifier extends StateNotifier<Resume?> {
   }
 
   void setTemplate(String templateId) {
-    updateResume((r) => r.copyWith(templateId: templateId));
+    updateResume((r) => r.copyWith(templateId: templateId), immediate: true);
   }
 
   void addExperience(Experience exp) {
@@ -165,6 +233,12 @@ class CurrentResumeNotifier extends StateNotifier<Resume?> {
     updateResume((r) => r.copyWith(
       projects: r.projects.where((p) => p.id != id).toList(),
     ));
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
   }
 }
 
