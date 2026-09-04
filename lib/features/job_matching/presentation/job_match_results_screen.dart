@@ -10,10 +10,11 @@ import '../controllers/job_matching_controller.dart';
 import '../models/job_description.dart';
 import '../models/keyword_extraction_result.dart';
 import '../services/keyword_extractor_service.dart';
+import 'widgets/resume_vs_jd_comparison_widget.dart';
 
-/// Screen displaying the overall match score, matched technical skill chips,
-/// and missing keyword gaps for a target Job Description compared against a Resume.
-class JobMatchResultsScreen extends ConsumerWidget {
+/// Screen displaying overall match score, TF-IDF keyword weights, salary/seniority analysis,
+/// missing skill insertion badges, and responsive side-by-side Resume vs JD comparison UI.
+class JobMatchResultsScreen extends ConsumerStatefulWidget {
   final JobDescription? jobDescription;
   final Resume? resume;
   final KeywordExtractionResult? initialResult;
@@ -25,6 +26,11 @@ class JobMatchResultsScreen extends ConsumerWidget {
     this.initialResult,
   });
 
+  @override
+  ConsumerState<JobMatchResultsScreen> createState() => _JobMatchResultsScreenState();
+}
+
+class _JobMatchResultsScreenState extends ConsumerState<JobMatchResultsScreen> {
   Color _getScoreColor(double percentage) {
     if (percentage >= 75.0) {
       return AppColors.accentGreen;
@@ -36,15 +42,15 @@ class JobMatchResultsScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final controllerState = ref.watch(jobMatchingControllerProvider);
-    final activeJob = jobDescription ?? controllerState.currentJob;
-    final activeResume = resume ?? ref.watch(currentResumeProvider);
+    final activeJob = widget.jobDescription ?? controllerState.currentJob;
+    final activeResume = widget.resume ?? ref.watch(currentResumeProvider);
 
     final KeywordExtractionResult result;
-    if (initialResult != null) {
-      result = initialResult!;
-    } else if (controllerState.extractionResult != null && jobDescription == null) {
+    if (widget.initialResult != null) {
+      result = widget.initialResult!;
+    } else if (controllerState.extractionResult != null && widget.jobDescription == null) {
       result = controllerState.extractionResult!;
     } else if (activeJob != null && activeJob.descriptionText.trim().isNotEmpty) {
       final extractor = ref.watch(keywordExtractorServiceProvider);
@@ -78,7 +84,7 @@ class JobMatchResultsScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'Technical skill overlap and keyword gap analysis against your resume.',
+                    'Technical skill overlap, TF-IDF relevance, salary/seniority analysis, and comparison view.',
                     style: AppTypography.bodyMedium.copyWith(color: AppColors.textMuted),
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -92,25 +98,28 @@ class JobMatchResultsScreen extends ConsumerWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Overall Skill Match',
-                                    style: AppTypography.titleMedium.copyWith(
-                                      color: AppColors.textPrimary,
-                                      fontWeight: FontWeight.bold,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Overall Skill Match',
+                                      style: AppTypography.titleMedium.copyWith(
+                                        color: AppColors.textPrimary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: AppSpacing.xs),
-                                  Text(
-                                    '${result.matchedSkills.length} of ${result.extractedJdSkills.length} JD skills matched',
-                                    style: AppTypography.bodySmall.copyWith(
-                                      color: AppColors.textMuted,
+                                    const SizedBox(height: AppSpacing.xs),
+                                    Text(
+                                      '${result.matchedSkills.length} of ${result.extractedJdSkills.length} JD skills matched',
+                                      style: AppTypography.bodySmall.copyWith(
+                                        color: AppColors.textMuted,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
+                              const SizedBox(width: AppSpacing.sm),
                               // Percentage Badge
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -151,168 +160,70 @@ class JobMatchResultsScreen extends ConsumerWidget {
                     ),
                   ),
 
-                  const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.lg),
 
-                  // Matched Skills Section
-                  Row(
-                    children: [
-                      const Icon(Icons.check_circle_outline, color: AppColors.accentGreen, size: 22),
-                      const SizedBox(width: AppSpacing.xs),
-                      Text(
-                        'Matched Skills (${result.matchedSkills.length})',
-                        style: AppTypography.titleMedium.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  // TF-IDF Relevance Key Highlights Section
+                  if (result.tfidfScores.isNotEmpty) ...[
+                    Text(
+                      'Top TF-IDF Keyword Scores',
+                      style: AppTypography.titleMedium.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    'Technical skills present in both the target job description and your resume.',
-                    style: AppTypography.bodySmall.copyWith(color: AppColors.textMuted),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-
-                  if (result.matchedSkills.isEmpty)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(AppSpacing.md),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceLight.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.surfaceBorder),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.info_outline, color: AppColors.textMuted, size: 20),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: Text(
-                              'No matching technical skills detected in your resume.',
-                              style: AppTypography.bodyMedium.copyWith(color: AppColors.textMuted),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Ranked by statistical frequency and technical relevance weight.',
+                      style: AppTypography.bodySmall.copyWith(color: AppColors.textMuted),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
                     Wrap(
                       spacing: AppSpacing.xs,
                       runSpacing: AppSpacing.xs,
-                      children: result.matchedSkills.map((skill) {
+                      children: result.tfidfScores.entries.take(8).map((entry) {
                         return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm,
-                            vertical: 6,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AppColors.accentGreen.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.accentGreen.withValues(alpha: 0.5)),
+                            color: AppColors.surfaceLight,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.surfaceBorder),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.check, size: 14, color: AppColors.accentGreen),
-                              const SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
-                                  skill,
-                                  style: AppTypography.bodySmall.copyWith(
-                                    color: AppColors.accentGreen,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            '${entry.key}: ${entry.value.toStringAsFixed(2)}',
+                            style: AppTypography.labelSmall.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         );
                       }).toList(),
                     ),
+                    const SizedBox(height: AppSpacing.xl),
+                  ],
 
-                  const SizedBox(height: AppSpacing.xl),
-
-                  // Missing Skills / Gap Section
-                  Row(
-                    children: [
-                      const Icon(Icons.warning_amber_rounded, color: AppColors.accentOrange, size: 22),
-                      const SizedBox(width: AppSpacing.xs),
-                      Text(
-                        'Missing Keywords Gap (${result.missingSkills.length})',
-                        style: AppTypography.titleMedium.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+                  // Responsive Side-by-Side Comparison UI
+                  Text(
+                    'Resume vs Job Description Comparison',
+                    style: AppTypography.titleMedium.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'Key technical skills mentioned in the job description that were not detected in your resume.',
+                    'Interactive breakdown of matched skills, missing skill badges (+ Add to resume), seniority, and salary range.',
                     style: AppTypography.bodySmall.copyWith(color: AppColors.textMuted),
                   ),
                   const SizedBox(height: AppSpacing.md),
 
-                  if (result.missingSkills.isEmpty)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(AppSpacing.md),
-                      decoration: BoxDecoration(
-                        color: AppColors.accentGreen.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.accentGreen),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.stars_rounded, color: AppColors.accentGreen, size: 22),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: Text(
-                              'No missing technical keywords detected! Your resume covers all extracted skills.',
-                              style: AppTypography.bodyMedium.copyWith(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    Wrap(
-                      spacing: AppSpacing.xs,
-                      runSpacing: AppSpacing.xs,
-                      children: result.missingSkills.map((skill) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.accentOrange.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.accentOrange.withValues(alpha: 0.5)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.add_circle_outline, size: 14, color: AppColors.accentOrange),
-                              const SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
-                                  skill,
-                                  style: AppTypography.bodySmall.copyWith(
-                                    color: AppColors.accentOrange,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
+                  ResumeVsJdComparisonWidget(
+                    resume: activeResume,
+                    jobDescription: activeJob,
+                    result: result,
+                    onSkillAdded: () {
+                      setState(() {});
+                    },
+                  ),
 
                   const SizedBox(height: AppSpacing.xl),
                 ],
@@ -340,7 +251,7 @@ class JobMatchResultsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'Please submit a job description to view match score and skill gap analysis.',
+              'Please submit a job description to view match score, TF-IDF ranking, and gap comparison.',
               textAlign: TextAlign.center,
               style: AppTypography.bodyMedium.copyWith(color: AppColors.textMuted),
             ),

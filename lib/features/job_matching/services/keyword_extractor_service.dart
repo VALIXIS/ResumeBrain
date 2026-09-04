@@ -1,6 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/resume_models.dart';
 import '../models/keyword_extraction_result.dart';
+import 'salary_analyzer_service.dart';
+import 'semantic_matcher_service.dart';
+import 'seniority_analyzer_service.dart';
+import 'tf_idf_extractor_service.dart';
 
 /// Definition of a technical skill and its alias variations.
 class SkillDefinition {
@@ -25,8 +29,14 @@ class _CandidateAlias {
 }
 
 /// Service responsible for extracting technical keywords from Job Description text,
-/// normalizing technology names, and calculating skill overlap against resume data.
+/// normalizing technology names, running TF-IDF scoring, semantic matching,
+/// salary range parsing, seniority analysis, and skill overlap computation.
 class KeywordExtractorService {
+  final TfIdfExtractorService _tfidfExtractor;
+  final SemanticMatcherService _semanticMatcher;
+  final SalaryAnalyzerService _salaryAnalyzer;
+  final SeniorityAnalyzerService _seniorityAnalyzer;
+
   /// Comprehensive catalog of technical skill definitions across all required categories.
   static const List<SkillDefinition> _skillDefinitions = [
     // Programming Languages
@@ -273,12 +283,19 @@ class KeywordExtractorService {
   late final List<_CandidateAlias> _candidatesSortedByLength;
   late final Map<String, String> _aliasToCanonicalMap;
 
-  KeywordExtractorService() {
+  KeywordExtractorService({
+    TfIdfExtractorService? tfidfExtractor,
+    SemanticMatcherService? semanticMatcher,
+    SalaryAnalyzerService? salaryAnalyzer,
+    SeniorityAnalyzerService? seniorityAnalyzer,
+  })  : _tfidfExtractor = tfidfExtractor ?? TfIdfExtractorService(),
+        _semanticMatcher = semanticMatcher ?? SemanticMatcherService(),
+        _salaryAnalyzer = salaryAnalyzer ?? SalaryAnalyzerService(),
+        _seniorityAnalyzer = seniorityAnalyzer ?? SeniorityAnalyzerService() {
     final list = <_CandidateAlias>[];
     final map = <String, String>{};
 
     for (final def in _skillDefinitions) {
-      // Map canonical name to itself
       map[def.canonicalName.toLowerCase()] = def.canonicalName;
 
       for (final alias in def.aliases) {
@@ -291,7 +308,6 @@ class KeywordExtractorService {
       }
     }
 
-    // Sort candidates by length in descending order to give priority to multi-word phrases.
     list.sort((a, b) => b.alias.length.compareTo(a.alias.length));
 
     _candidatesSortedByLength = list;
@@ -299,8 +315,6 @@ class KeywordExtractorService {
   }
 
   /// Normalizes a raw skill string into its canonical technical term representation.
-  /// If the raw string is an alias, returns the canonical name.
-  /// If not found in the dictionary, returns a cleaned, trimmed title-case version of [rawSkill].
   String normalizeSkill(String rawSkill) {
     final trimmed = rawSkill.trim();
     if (trimmed.isEmpty) return '';
@@ -310,13 +324,11 @@ class KeywordExtractorService {
       return _aliasToCanonicalMap[lower]!;
     }
 
-    // If it's not in the dictionary, check if running extractor on it yields a known skill
     final extracted = extractKeywords(trimmed);
     if (extracted.length == 1) {
       return extracted.first;
     }
 
-    // Strip leading/trailing punctuation and clean up spacing
     final cleaned = trimmed.replaceAll(RegExp(r'^[^\w+#.]+|[^\w+#.]+$'), '');
     return cleaned.isNotEmpty ? _toTitleCase(cleaned) : trimmed;
   }
@@ -342,7 +354,6 @@ class KeywordExtractorService {
 
         final endPos = matchPos + aliasLen;
 
-        // Check character index overlaps
         bool hasIndexOverlap = false;
         for (int i = matchPos; i < endPos; i++) {
           if (matchedIndices.contains(i)) {
@@ -372,14 +383,17 @@ class KeywordExtractorService {
     Resume? resume,
     List<String>? userSkills,
   }) {
-    final jdSkills = extractKeywords(jobDescriptionText);
-    if (jdSkills.isEmpty) {
+    if (jobDescriptionText.trim().isEmpty) {
       return KeywordExtractionResult.empty();
     }
 
+    final jdSkills = extractKeywords(jobDescriptionText);
+    final tfidfScores = _tfidfExtractor.extractTfIdfScores(jobDescriptionText);
+    final salaryAnalysis = _salaryAnalyzer.parseSalary(jobDescriptionText);
+    final seniorityAnalysis = _seniorityAnalyzer.analyzeSeniority(jobDescriptionText, resume: resume);
+
     final resumeSkillsSet = <String>{};
 
-    // Add provided explicit user skills
     if (userSkills != null) {
       for (final s in userSkills) {
         final normalized = normalizeSkill(s);
@@ -389,9 +403,7 @@ class KeywordExtractorService {
       }
     }
 
-    // Extract skills from resume fields if available
     if (resume != null) {
-      // 1. Explicit skill section
       for (final s in resume.skills) {
         final normalized = normalizeSkill(s.name);
         if (normalized.isNotEmpty) {
@@ -399,7 +411,6 @@ class KeywordExtractorService {
         }
       }
 
-      // 2. Extract technical terms from resume prose
       final resumeProseBuffer = StringBuffer();
       if (resume.personalInfo.jobTitle.isNotEmpty) {
         resumeProseBuffer.writeln(resume.personalInfo.jobTitle);
@@ -427,25 +438,51 @@ class KeywordExtractorService {
       resumeSkillsSet.addAll(extractedFromResume);
     }
 
+    if (jdSkills.isEmpty) {
+      return KeywordExtractionResult(
+        extractedJdSkills: const [],
+        matchedSkills: const [],
+        missingSkills: const [],
+        overlapPercentage: 0.0,
+        tfidfScores: tfidfScores,
+        semanticMatches: const {},
+        salaryAnalysis: salaryAnalysis,
+        seniorityAnalysis: seniorityAnalysis,
+      );
+    }
+
     final jdSet = jdSkills.toSet();
-    final matchedSet = jdSet.intersection(resumeSkillsSet);
-    final missingSet = jdSet.difference(resumeSkillsSet);
+    final exactMatchedSet = jdSet.intersection(resumeSkillsSet);
+    final initialMissingSet = jdSet.difference(resumeSkillsSet);
 
-    final matchedList = matchedSet.toList()..sort();
-    final missingList = missingSet.toList()..sort();
+    // Run semantic matcher on initial missing skills
+    final semanticMatches = _semanticMatcher.findSemanticMatches(
+      jdSkills: initialMissingSet.toList(),
+      resumeSkills: resumeSkillsSet.toList(),
+    );
 
+    final finalMatchedSet = {...exactMatchedSet, ...semanticMatches.keys};
+    final finalMissingSet = jdSet.difference(finalMatchedSet);
+
+    final matchedList = finalMatchedSet.toList()..sort();
+    final missingList = finalMissingSet.toList()..sort();
+
+    // Weighted overlap percentage calculation
     final double rawPercentage = (matchedList.length / jdSkills.length) * 100.0;
-    final double overlapPercentage = double.parse(rawPercentage.toStringAsFixed(2));
+    final double overlapPercentage = double.parse(rawPercentage.clamp(0.0, 100.0).toStringAsFixed(2));
 
     return KeywordExtractionResult(
       extractedJdSkills: jdSkills,
       matchedSkills: matchedList,
       missingSkills: missingList,
       overlapPercentage: overlapPercentage,
+      tfidfScores: tfidfScores,
+      semanticMatches: semanticMatches,
+      salaryAnalysis: salaryAnalysis,
+      seniorityAnalysis: seniorityAnalysis,
     );
   }
 
-  /// Verifies boundary rules around a candidate match to avoid substring false positives.
   bool _isValidBoundary(String text, int start, int end, String alias) {
     final firstChar = alias[0];
     final isFirstAlphaNum = RegExp(r'^[a-zA-Z0-9]').hasMatch(firstChar);
@@ -484,7 +521,6 @@ class KeywordExtractorService {
   }
 }
 
-/// Riverpod provider exposing [KeywordExtractorService].
 final keywordExtractorServiceProvider = Provider<KeywordExtractorService>((ref) {
   return KeywordExtractorService();
 });
