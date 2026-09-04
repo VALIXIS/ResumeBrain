@@ -24,8 +24,11 @@ class SectionEditorTab extends ConsumerWidget {
   void _updateResumeWithHistory(WidgetRef ref, Resume Function(Resume current) updateFn) {
     final current = ref.read(currentResumeProvider);
     if (current != null) {
-      ref.read(resumeHistoryProvider.notifier).recordSnapshot(current);
       ref.read(currentResumeProvider.notifier).updateResume(updateFn);
+      final updated = ref.read(currentResumeProvider);
+      if (updated != null) {
+        ref.read(resumeHistoryProvider.notifier).recordSnapshot(updated);
+      }
     }
   }
 

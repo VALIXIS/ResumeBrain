@@ -114,28 +114,34 @@ class _ValidatedFormFieldState extends State<ValidatedFormField> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Text(
-                    widget.label,
-                    style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (widget.isRequired) ...[
-                    const SizedBox(width: 4),
-                    const Text(
-                      '*',
-                      style: TextStyle(
-                        color: AppColors.accentRed,
-                        fontWeight: FontWeight.bold,
+              Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        widget.label,
+                        style: AppTypography.labelLarge.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    if (widget.isRequired) ...[
+                      const SizedBox(width: 4),
+                      const Text(
+                        '*',
+                        style: TextStyle(
+                          color: AppColors.accentRed,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-              if (widget.maxLength != null)
+              if (widget.maxLength != null) ...[
+                const SizedBox(width: 8),
                 Text(
                   '$_charCount / ${widget.maxLength}',
                   style: AppTypography.bodySmall.copyWith(
@@ -145,6 +151,7 @@ class _ValidatedFormFieldState extends State<ValidatedFormField> {
                     fontSize: 11,
                   ),
                 ),
+              ],
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
