@@ -5,6 +5,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../data/models/resume_models.dart';
 import '../utils/resume_input_scrubber.dart';
+import 'bullet_point_enhancer.dart';
 import 'resume_validators.dart';
 import 'validated_form_field.dart';
 
@@ -190,8 +191,52 @@ class _ProjectEditorDialogState extends State<ProjectEditorDialog> {
                   const SizedBox(height: AppSpacing.md),
 
                   // Description
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Project Overview & Accomplishments',
+                        style: AppTypography.labelLarge.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Semantics(
+                        button: true,
+                        label: 'AI Enhance Project Accomplishments',
+                        child: TextButton.icon(
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(48, 48),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          onPressed: () {
+                            final roleCtx = '${_roleCtrl.text.trim()} ${_technologiesCtrl.text.trim()}'.trim();
+                            BulletPointEnhancerDialog.show(
+                              context: context,
+                              initialBullet: _descriptionCtrl.text.trim(),
+                              roleContext: roleCtx.isEmpty ? null : roleCtx,
+                              onApply: (enhanced) {
+                                setState(() {
+                                  _descriptionCtrl.text = enhanced;
+                                });
+                              },
+                            );
+                          },
+                          icon: const Icon(Icons.auto_awesome, size: 16, color: AppColors.accentPurple),
+                          label: Text(
+                            'AI Enhance',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.accentPurple,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
                   ValidatedFormField(
-                    label: 'Project Overview & Key Accomplishments',
+                    label: '',
                     hint: '• Architected state management using Riverpod...\n• Achieved 60fps across mobile and web targets...',
                     controller: _descriptionCtrl,
                     maxLines: 4,
