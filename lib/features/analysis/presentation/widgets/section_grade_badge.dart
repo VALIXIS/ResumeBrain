@@ -4,8 +4,10 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/custom_card.dart';
+import 'analysis_accessibility_helper.dart';
 
 /// Card widget displaying the score and status for a specific resume category.
+/// Hardened for WCAG AAA contrast, text scaling up to 200%, and comprehensive Semantics.
 class SectionGradeBadge extends StatelessWidget {
   final String categoryKey;
   final int score; // 0 to 100
@@ -70,87 +72,80 @@ class SectionGradeBadge extends StatelessWidget {
     return Icons.dashboard_customize_outlined;
   }
 
-  Color _getScoreColor(int score) {
-    if (score >= 80) return AppColors.accentGreen;
-    if (score >= 60) return AppColors.accentOrange;
-    return AppColors.accentRed;
-  }
-
-  IconData _getStatusIcon(int score) {
-    if (score >= 80) return Icons.check_circle_outline_rounded;
-    if (score >= 60) return Icons.info_outline_rounded;
-    return Icons.warning_amber_rounded;
-  }
-
-  String _getGradeLabel(int score) {
-    if (score >= 90) return 'A+';
-    if (score >= 80) return 'A';
-    if (score >= 70) return 'B';
-    if (score >= 60) return 'C';
-    return 'Needs Work';
-  }
-
   @override
   Widget build(BuildContext context) {
     final title = _formatCategoryTitle(categoryKey);
-    final scoreColor = _getScoreColor(score);
-    final statusIcon = _getStatusIcon(score);
     final categoryIcon = _getCategoryIcon(categoryKey);
-    final gradeLabel = _getGradeLabel(score);
+    final status = AnalysisA11y.getScoreStatus(context, score);
 
     return Semantics(
-      label: '$title score: $score%, grade: $gradeLabel',
+      label: '$title section score: $score%, grade: ${status.gradeLabel} (${status.statusLabel})',
+      value: '$score%',
       child: AppCard(
         color: AppColors.surfaceLight,
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.xs,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.12),
-                    borderRadius: AppRadius.borderSm,
-                  ),
-                  child: Icon(
-                    categoryIcon,
-                    size: 18,
-                    color: AppColors.primary,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AnalysisA11y.primaryBg(context),
+                        borderRadius: AppRadius.borderSm,
+                        border: Border.all(
+                          color: AnalysisA11y.primaryBorder(context).withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Icon(
+                        categoryIcon,
+                        size: 18,
+                        color: AnalysisA11y.primaryText(context),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Flexible(
+                      child: Text(
+                        title,
+                        style: AppTypography.titleMedium.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: AppTypography.titleMedium.copyWith(fontSize: 14),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                // Status Badge with icon + text for accessibility
+                // Status Badge with AAA high-contrast icon + text
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: scoreColor.withValues(alpha: 0.15),
+                    color: status.bgColor,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: scoreColor.withValues(alpha: 0.4),
+                      color: status.borderColor,
+                      width: 1,
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(statusIcon, size: 12, color: scoreColor),
+                      Icon(status.icon, size: 13, color: status.textColor),
                       const SizedBox(width: 4),
                       Text(
-                        '$score% ($gradeLabel)',
+                        '$score% (${status.gradeLabel})',
                         style: AppTypography.labelSmall.copyWith(
-                          color: scoreColor,
-                          fontWeight: FontWeight.bold,
+                          color: status.textColor,
+                          fontWeight: FontWeight.w800,
                           fontSize: 11,
                         ),
                       ),
@@ -160,14 +155,16 @@ class SectionGradeBadge extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
-            // Visual progress bar
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: (score / 100).clamp(0.0, 1.0),
-                backgroundColor: AppColors.surfaceBorder,
-                valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
-                minHeight: 4,
+            // Decorative progress bar excluded from screen reader redundancy
+            ExcludeSemantics(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: (score / 100).clamp(0.0, 1.0),
+                  backgroundColor: AppColors.surfaceBorder,
+                  valueColor: AlwaysStoppedAnimation<Color>(status.borderColor),
+                  minHeight: 4,
+                ),
               ),
             ),
           ],
@@ -176,3 +173,4 @@ class SectionGradeBadge extends StatelessWidget {
     );
   }
 }
+

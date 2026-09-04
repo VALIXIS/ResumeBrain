@@ -5,10 +5,13 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/custom_card.dart';
 import '../models/category_feedback.dart';
+import '../presentation/widgets/analysis_accessibility_helper.dart';
 import '../presentation/widgets/suggestion_chip.dart';
 
 /// Reusable accordion component displaying categorized resume feedback
 /// (Formatting, Content Quality, Keywords) with strengths, weaknesses, and recommendations.
+/// Hardened for WCAG AAA contrast, 48x48 dp minimum touch targets, 200% text scaling,
+/// and comprehensive Flutter Semantics.
 class FeedbackAccordionCard extends StatefulWidget {
   final CategoryFeedback feedback;
   final IconData? icon;
@@ -49,281 +52,316 @@ class _FeedbackAccordionCardState extends State<FeedbackAccordionCard>
     return Icons.category_outlined;
   }
 
-  Color _getStatusColor(int? score) {
-    if (score == null) return AppColors.textMuted;
-    if (score >= 80) return AppColors.accentGreen;
-    if (score >= 60) return AppColors.accentOrange;
-    return AppColors.accentRed;
-  }
-
   @override
   Widget build(BuildContext context) {
     final feedback = widget.feedback;
     final categoryIcon = widget.icon ?? _getDefaultCategoryIcon(feedback.title);
-    final statusColor = _getStatusColor(feedback.score);
+
+    final status = feedback.score != null
+        ? AnalysisA11y.getScoreStatus(context, feedback.score!)
+        : null;
 
     final hasContent = feedback.strengths.isNotEmpty ||
         feedback.weaknesses.isNotEmpty ||
         feedback.recommendations.isNotEmpty;
 
-    return Semantics(
-      label:
-          '${feedback.title} feedback category, status: ${feedback.status ?? "Available"}. ${_isExpanded ? "Expanded" : "Collapsed"}',
-      button: true,
-      child: AppCard(
-        color: AppColors.surfaceLight,
-        padding: EdgeInsets.zero,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Clickable Accordion Header
-            InkWell(
-              onTap: () {
-                setState(() {
-                  _isExpanded = !_isExpanded;
-                });
-              },
-              borderRadius: AppRadius.borderMd,
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Row(
-                  children: [
-                    // Category Icon
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.12),
-                        borderRadius: AppRadius.borderSm,
-                      ),
-                      child: Icon(
-                        categoryIcon,
-                        size: 20,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
+    final statusText = feedback.status ?? (status != null ? status.statusLabel : 'Available');
 
-                    // Title & Status
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            feedback.title,
-                            style: AppTypography.titleMedium.copyWith(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
+    return AppCard(
+      color: AppColors.surfaceLight,
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Clickable Accordion Header with 48x48 min touch target & Semantics
+          Semantics(
+            label: '${feedback.title} feedback category. '
+                '${feedback.score != null ? "Score: ${feedback.score}%, " : ""}'
+                'Status: $statusText.',
+            value: _isExpanded ? 'Expanded' : 'Collapsed',
+            button: true,
+            hint: _isExpanded
+                ? 'Double tap to collapse category details'
+                : 'Double tap to expand category details',
+            child: ConstrainedBox(
+              constraints: AnalysisA11y.minTouchTargetConstraints,
+              child: InkWell(
+                onTap: () {
+                  setState(() {
+                    _isExpanded = !_isExpanded;
+                  });
+                },
+                borderRadius: AppRadius.borderMd,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Row(
+                    children: [
+                      // Category Icon with high-contrast background
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AnalysisA11y.primaryBg(context),
+                          borderRadius: AppRadius.borderSm,
+                          border: Border.all(
+                            color: AnalysisA11y.primaryBorder(context).withValues(alpha: 0.3),
                           ),
-                          if (feedback.status != null ||
-                              feedback.score != null) ...[
-                            const SizedBox(height: 2),
-                            Row(
-                              children: [
-                                if (feedback.score != null) ...[
-                                  Text(
-                                    '${feedback.score!}%',
-                                    style: AppTypography.labelSmall.copyWith(
-                                      color: statusColor,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    '•',
-                                    style: TextStyle(
-                                      color: AppColors.textMuted,
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                ],
-                                if (feedback.status != null)
-                                  Text(
-                                    feedback.status!,
-                                    style: AppTypography.labelSmall.copyWith(
-                                      color: statusColor,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ],
-                        ],
+                        ),
+                        child: Icon(
+                          categoryIcon,
+                          size: 20,
+                          color: AnalysisA11y.primaryText(context),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: AppSpacing.md),
 
-                    // Expansion Chevron Indicator
-                    AnimatedRotation(
-                      turns: _isExpanded ? 0.5 : 0.0,
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeInOut,
-                      child: const Icon(
-                        Icons.expand_more_rounded,
-                        color: AppColors.textMuted,
-                        size: 24,
+                      // Title & Status
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              feedback.title,
+                              style: AppTypography.titleMedium.copyWith(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            if (feedback.status != null || feedback.score != null) ...[
+                              const SizedBox(height: 3),
+                              Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 6,
+                                children: [
+                                  if (feedback.score != null && status != null) ...[
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(status.icon, size: 12, color: status.textColor),
+                                        const SizedBox(width: 3),
+                                        Text(
+                                          '${feedback.score!}% (${status.gradeLabel})',
+                                          style: AppTypography.labelSmall.copyWith(
+                                            color: status.textColor,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Text(
+                                      '•',
+                                      style: TextStyle(
+                                        color: AnalysisA11y.textMuted(context),
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ],
+                                  if (feedback.status != null)
+                                    Text(
+                                      feedback.status!,
+                                      style: AppTypography.labelSmall.copyWith(
+                                        color: status?.textColor ?? AnalysisA11y.textSecondary(context),
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+
+                      // Expansion Chevron Indicator
+                      AnimatedRotation(
+                        turns: _isExpanded ? 0.5 : 0.0,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                        child: Icon(
+                          Icons.expand_more_rounded,
+                          color: AnalysisA11y.textSecondary(context),
+                          size: 24,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
+          ),
 
-            // Expandable Content Body
-            AnimatedCrossFade(
-              firstChild: const SizedBox.shrink(),
-              secondChild: Padding(
-                padding: const EdgeInsets.only(
-                  left: AppSpacing.md,
-                  right: AppSpacing.md,
-                  bottom: AppSpacing.md,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Divider(color: AppColors.surfaceBorder, height: 1),
-                    const SizedBox(height: AppSpacing.md),
+          // Expandable Content Body
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.only(
+                left: AppSpacing.md,
+                right: AppSpacing.md,
+                bottom: AppSpacing.md,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(color: AppColors.surfaceBorder, height: 1),
+                  const SizedBox(height: AppSpacing.md),
 
-                    if (!hasContent)
-                      Padding(
-                        padding:
-                            const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.info_outline_rounded,
-                              color: AppColors.textMuted,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'No feedback available',
+                  if (!hasContent)
+                    Padding(
+                      padding:
+                          const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            color: AnalysisA11y.textMuted(context),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'No feedback items available for this category.',
                               style: AppTypography.bodyMedium.copyWith(
-                                color: AppColors.textMuted,
+                                color: AnalysisA11y.textMuted(context),
                                 fontStyle: FontStyle.italic,
                               ),
                             ),
-                          ],
-                        ),
-                      )
-                    else ...[
-                      // 1. Strengths Subsection
-                      if (feedback.strengths.isNotEmpty) ...[
-                        _buildSectionHeader(
-                          icon: Icons.check_circle_outline_rounded,
-                          title: 'Strengths',
-                          iconColor: AppColors.accentGreen,
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        ...feedback.strengths.map(
-                          (item) => _buildBulletItem(
-                            text: item,
-                            bulletColor: AppColors.accentGreen,
                           ),
+                        ],
+                      ),
+                    )
+                  else ...[
+                    // 1. Strengths Subsection
+                    if (feedback.strengths.isNotEmpty) ...[
+                      _buildSectionHeader(
+                        context: context,
+                        icon: Icons.check_circle_outline_rounded,
+                        title: 'Strengths',
+                        iconColor: AnalysisA11y.successText(context),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      ...feedback.strengths.map(
+                        (item) => _buildBulletItem(
+                          context: context,
+                          prefix: 'Strength: ',
+                          text: item,
+                          bulletColor: AnalysisA11y.successText(context),
                         ),
-                        const SizedBox(height: AppSpacing.md),
-                      ],
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
 
-                      // 2. Weaknesses Subsection
-                      if (feedback.weaknesses.isNotEmpty) ...[
-                        _buildSectionHeader(
-                          icon: Icons.warning_amber_rounded,
-                          title: 'Areas for Improvement',
-                          iconColor: AppColors.accentOrange,
+                    // 2. Weaknesses Subsection
+                    if (feedback.weaknesses.isNotEmpty) ...[
+                      _buildSectionHeader(
+                        context: context,
+                        icon: Icons.warning_amber_rounded,
+                        title: 'Areas for Improvement',
+                        iconColor: AnalysisA11y.warningText(context),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      ...feedback.weaknesses.map(
+                        (item) => _buildBulletItem(
+                          context: context,
+                          prefix: 'Area for improvement: ',
+                          text: item,
+                          bulletColor: AnalysisA11y.warningText(context),
                         ),
-                        const SizedBox(height: AppSpacing.xs),
-                        ...feedback.weaknesses.map(
-                          (item) => _buildBulletItem(
-                            text: item,
-                            bulletColor: AppColors.accentOrange,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                      ],
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
 
-                      // 3. Actionable Recommendations Subsection
-                      if (feedback.recommendations.isNotEmpty) ...[
-                        _buildSectionHeader(
-                          icon: Icons.lightbulb_outline_rounded,
-                          title: 'Recommendations',
-                          iconColor: AppColors.accentPurple,
+                    // 3. Actionable Recommendations Subsection
+                    if (feedback.recommendations.isNotEmpty) ...[
+                      _buildSectionHeader(
+                        context: context,
+                        icon: Icons.lightbulb_outline_rounded,
+                        title: 'Recommendations',
+                        iconColor: AnalysisA11y.purpleText(context),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      ...feedback.recommendations.map(
+                        (rec) => Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                          child: SuggestionChipWidget(suggestion: rec),
                         ),
-                        const SizedBox(height: AppSpacing.xs),
-                        ...feedback.recommendations.map(
-                          (rec) => Padding(
-                            padding:
-                                const EdgeInsets.only(bottom: AppSpacing.xs),
-                            child: SuggestionChipWidget(suggestion: rec),
-                          ),
-                        ),
-                      ],
+                      ),
                     ],
                   ],
-                ),
+                ],
               ),
-              crossFadeState: _isExpanded
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
-              duration: const Duration(milliseconds: 250),
             ),
-          ],
-        ),
+            crossFadeState: _isExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 250),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildSectionHeader({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required Color iconColor,
   }) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: iconColor),
-        const SizedBox(width: 6),
-        Text(
-          title,
-          style: AppTypography.titleMedium.copyWith(
-            fontWeight: FontWeight.w700,
-            fontSize: 13,
-            color: AppColors.textPrimary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBulletItem({
-    required String text,
-    required Color bulletColor,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 6, top: 4, bottom: 4),
+    return Semantics(
+      header: true,
+      label: '$title subsection',
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            margin: const EdgeInsets.only(top: 6),
-            width: 5,
-            height: 5,
-            decoration: BoxDecoration(
-              color: bulletColor,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: AppTypography.bodyMedium.copyWith(
-                fontSize: 13,
-                color: AppColors.textSecondary,
-                height: 1.35,
-              ),
+          Icon(icon, size: 16, color: iconColor),
+          const SizedBox(width: 6),
+          Text(
+            title,
+            style: AppTypography.titleMedium.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              color: AppColors.textPrimary,
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildBulletItem({
+    required BuildContext context,
+    required String prefix,
+    required String text,
+    required Color bulletColor,
+  }) {
+    return Semantics(
+      label: '$prefix$text',
+      child: Padding(
+        padding: const EdgeInsets.only(left: 6, top: 4, bottom: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 6),
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: bulletColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                text,
+                style: AppTypography.bodyMedium.copyWith(
+                  fontSize: 13,
+                  color: AnalysisA11y.textSecondary(context),
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
+
