@@ -73,8 +73,11 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
   void _updateResumeWithHistory(Resume Function(Resume current) updateFn) {
     final current = ref.read(currentResumeProvider);
     if (current != null) {
-      ref.read(resumeHistoryProvider.notifier).recordSnapshot(current);
       ref.read(currentResumeProvider.notifier).updateResume(updateFn);
+      final updated = ref.read(currentResumeProvider);
+      if (updated != null) {
+        ref.read(resumeHistoryProvider.notifier).recordSnapshot(updated);
+      }
     }
   }
 

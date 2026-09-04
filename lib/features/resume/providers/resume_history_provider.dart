@@ -40,12 +40,16 @@ class ResumeHistoryNotifier extends StateNotifier<ResumeHistoryState> {
   ResumeHistoryNotifier([this._ref]) : super(const ResumeHistoryState());
 
   /// Initializes or resets the history baseline with the current active resume.
+  /// If switching to a new resume with a different ID, clears existing history stacks.
   void initializeWithResume(Resume? resume) {
     if (resume == null) return;
-    _currentSnapshot ??= resume;
+    if (_currentSnapshot == null || _currentSnapshot!.id != resume.id) {
+      _currentSnapshot = resume;
+      state = const ResumeHistoryState();
+    }
   }
 
-  /// Records a new snapshot before or after a state mutation.
+  /// Records a new snapshot resulting from a user mutation.
   /// Deduplicates identical snapshots and clears the redo stack on new user edits.
   void recordSnapshot(Resume? newResume) {
     if (newResume == null || _isPerformingUndoRedo) return;
