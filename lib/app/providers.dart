@@ -7,9 +7,37 @@ import '../features/ai/services/ai_service.dart';
 import '../features/pdf/services/pdf_service.dart';
 import '../features/ai/services/hybrid_ai_provider.dart';
 
-// Services & Repositories
+import '../core/security/resume_encryption_service.dart';
+import '../data/repositories/cloud_sync_adapter.dart';
+import '../data/repositories/supabase_cloud_sync_adapter.dart';
+import '../features/resume/services/encrypted_export_service.dart';
+
+// Security & Cloud Providers
+final resumeEncryptionServiceProvider = Provider<ResumeEncryptionService>((ref) {
+  return ResumeEncryptionService();
+});
+
+final cloudSyncAdapterProvider = Provider<CloudSyncAdapter>((ref) {
+  final encService = ref.watch(resumeEncryptionServiceProvider);
+  return SupabaseCloudSyncAdapter(encryptionService: encService);
+});
+
+final encryptedExportServiceProvider = Provider<EncryptedExportService>((ref) {
+  final encService = ref.watch(resumeEncryptionServiceProvider);
+  final pdfService = ref.watch(pdfServiceProvider);
+  return EncryptedExportService(
+    encryptionService: encService,
+    pdfService: pdfService,
+  );
+});
+
 final resumeRepositoryProvider = Provider<ResumeRepository>((ref) {
-  return HiveResumeRepository();
+  final cloudAdapter = ref.watch(cloudSyncAdapterProvider);
+  final encService = ref.watch(resumeEncryptionServiceProvider);
+  return HiveResumeRepository(
+    cloudSyncAdapter: cloudAdapter,
+    encryptionService: encService,
+  );
 });
 
 final aiServiceProvider = Provider<AIService>((ref) {

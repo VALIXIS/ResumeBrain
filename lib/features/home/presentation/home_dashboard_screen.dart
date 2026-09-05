@@ -28,6 +28,7 @@ import '../../../core/widgets/responsive_layout.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_navigation_drawer.dart';
+import '../../../core/widgets/security_settings_dialog.dart';
 
 class HomeDashboardScreen extends ConsumerStatefulWidget {
   const HomeDashboardScreen({super.key});
@@ -95,6 +96,16 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
               ],
             ),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.shield_outlined, color: AppColors.primary),
+                tooltip: 'Security & Privacy Settings',
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const SecuritySettingsDialog(),
+                  );
+                },
+              ),
               ConstrainedBox(
                 constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                 child: IconButton(
@@ -406,6 +417,35 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                         context,
                         SmoothPageRoute(page: const ResumePreviewScreen()),
                       );
+                    } else if (value == 'export_enc_json') {
+                      try {
+                        final exportService = ref.read(encryptedExportServiceProvider);
+                        final file = await exportService.exportEncryptedJsonFile(resume);
+                        if (context.mounted) {
+                          AppSnackBar.showSuccess(context, 'Exported encrypted JSON to ${file.path}');
+                        }
+                      } catch (e) {
+                        if (context.mounted) AppSnackBar.showError(context, 'Export failed: $e');
+                      }
+                    } else if (value == 'export_enc_pdf') {
+                      try {
+                        final exportService = ref.read(encryptedExportServiceProvider);
+                        final file = await exportService.exportProtectedPdfFile(resume);
+                        if (context.mounted) {
+                          AppSnackBar.showSuccess(context, 'Exported protected PDF to ${file.path}');
+                        }
+                      } catch (e) {
+                        if (context.mounted) AppSnackBar.showError(context, 'Export failed: $e');
+                      }
+                    } else if (value == 'cloud_sync') {
+                      final result = await ref.read(resumeRepositoryProvider).syncResumeToCloud(resume);
+                      if (context.mounted) {
+                        if (result.isSuccess) {
+                          AppSnackBar.showSuccess(context, result.message);
+                        } else {
+                          AppSnackBar.showError(context, result.message);
+                        }
+                      }
                     } else if (value == 'delete') {
                       _confirmDelete(context, ref, resume);
                     }
@@ -418,6 +458,18 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                     const PopupMenuItem(
                       value: 'preview',
                       child: Row(children: [Icon(Icons.visibility_outlined, size: 18), SizedBox(width: 8), Text('Preview PDF')]),
+                    ),
+                    const PopupMenuItem(
+                      value: 'export_enc_json',
+                      child: Row(children: [Icon(Icons.lock_outline, size: 18, color: Colors.blueAccent), SizedBox(width: 8), Text('Export Encrypted JSON')]),
+                    ),
+                    const PopupMenuItem(
+                      value: 'export_enc_pdf',
+                      child: Row(children: [Icon(Icons.picture_as_pdf, size: 18, color: Colors.amber), SizedBox(width: 8), Text('Export Protected PDF')]),
+                    ),
+                    const PopupMenuItem(
+                      value: 'cloud_sync',
+                      child: Row(children: [Icon(Icons.cloud_upload_outlined, size: 18, color: Colors.teal), SizedBox(width: 8), Text('Cloud Backup / Sync')]),
                     ),
                     const PopupMenuItem(
                       value: 'delete',

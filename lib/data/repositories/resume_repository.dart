@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../../core/security/resume_encryption_service.dart';
 import '../../core/storage/storage_bootstrap.dart';
 import '../models/resume_models.dart';
 import 'cloud_sync_adapter.dart';
@@ -29,12 +31,16 @@ abstract class ResumeRepository {
   Future<CloudSyncResult> syncAllToCloud();
 }
 
-/// Local Hive implementation of [ResumeRepository].
+/// Encrypted Local Hive implementation of [ResumeRepository].
 class HiveResumeRepository implements ResumeRepository {
   final CloudSyncAdapter _cloudSyncAdapter;
+  final ResumeEncryptionService _encryptionService;
 
-  HiveResumeRepository({CloudSyncAdapter? cloudSyncAdapter})
-      : _cloudSyncAdapter = cloudSyncAdapter ?? const StubCloudSyncAdapter();
+  HiveResumeRepository({
+    CloudSyncAdapter? cloudSyncAdapter,
+    ResumeEncryptionService? encryptionService,
+  })  : _cloudSyncAdapter = cloudSyncAdapter ?? const StubCloudSyncAdapter(),
+        _encryptionService = encryptionService ?? ResumeEncryptionService();
 
   @override
   Future<void> init() async {
@@ -58,9 +64,9 @@ class HiveResumeRepository implements ResumeRepository {
         continue;
       }
       try {
-        final data = box.get(key);
-        if (data != null && data is Map) {
-          list.add(Resume.fromMap(Map<String, dynamic>.from(data)));
+        final resume = await getResumeById(key.toString());
+        if (resume != null) {
+          list.add(resume);
         }
       } catch (e) {
         debugPrint('Skipping corrupted resume record for key $key: $e');
@@ -78,9 +84,20 @@ class HiveResumeRepository implements ResumeRepository {
     try {
       final data = box.get(id);
       if (data == null || data is! Map) return null;
-      return Resume.fromMap(Map<String, dynamic>.from(data));
+
+      final map = Map<String, dynamic>.from(data);
+
+      // Check if payload is encrypted envelope vs legacy plaintext
+      if (map.containsKey('ciphertext') && map.containsKey('nonce')) {
+        final jsonStr = await _encryptionService.decryptStringEnvelope(map);
+        final decodedMap = Map<String, dynamic>.from(jsonDecode(jsonStr));
+        return Resume.fromMap(decodedMap);
+      } else {
+        // Legacy unencrypted record fallback
+        return Resume.fromMap(map);
+      }
     } catch (e) {
-      debugPrint('Error retrieving resume $id: $e');
+      debugPrint('Error retrieving/decrypting resume $id: $e');
       return null;
     }
   }
@@ -92,7 +109,12 @@ class HiveResumeRepository implements ResumeRepository {
       debugPrint('Cannot save resume ${resume.id}: Storage box unavailable.');
       return;
     }
-    await box.put(resume.id, resume.toMap());
+
+    final rawMap = resume.toMap();
+    final jsonStr = jsonEncode(rawMap);
+    final encryptedEnvelope = await _encryptionService.encryptString(jsonStr);
+
+    await box.put(resume.id, encryptedEnvelope);
   }
 
   @override
