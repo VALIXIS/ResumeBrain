@@ -12,6 +12,7 @@ import '../widgets/certification_editor_dialog.dart';
 import '../widgets/custom_section_editor_dialog.dart';
 import '../widgets/language_editor_dialog.dart';
 import '../widgets/reorderable_section_card.dart';
+import '../widgets/resume_error_boundary.dart';
 
 /// SectionEditorTab provides the editor UI for supplementary resume sections
 /// with drag-and-drop reordering using Flutter's [ReorderableListView]:
@@ -22,13 +23,17 @@ class SectionEditorTab extends ConsumerWidget {
   const SectionEditorTab({super.key});
 
   void _updateResumeWithHistory(WidgetRef ref, Resume Function(Resume current) updateFn) {
-    final current = ref.read(currentResumeProvider);
-    if (current != null) {
-      ref.read(currentResumeProvider.notifier).updateResume(updateFn);
-      final updated = ref.read(currentResumeProvider);
-      if (updated != null) {
-        ref.read(resumeHistoryProvider.notifier).recordSnapshot(updated);
+    try {
+      final current = ref.read(currentResumeProvider);
+      if (current != null) {
+        ref.read(currentResumeProvider.notifier).updateResume(updateFn);
+        final updated = ref.read(currentResumeProvider);
+        if (updated != null) {
+          ref.read(resumeHistoryProvider.notifier).recordSnapshot(updated);
+        }
       }
+    } catch (e) {
+      debugPrint('[RESUME_ERROR_BOUNDARY] Error updating resume history in section tab: ${e.runtimeType}');
     }
   }
 
@@ -52,11 +57,20 @@ class SectionEditorTab extends ConsumerWidget {
         children: [
           _buildReorderTipsCard(),
           const SizedBox(height: AppSpacing.lg),
-          _buildCertificationsSection(context, ref, resume),
+          ResumeErrorBoundary(
+            sectionName: 'Certifications',
+            child: _buildCertificationsSection(context, ref, resume),
+          ),
           const SizedBox(height: AppSpacing.xxl),
-          _buildLanguagesSection(context, ref, resume),
+          ResumeErrorBoundary(
+            sectionName: 'Languages',
+            child: _buildLanguagesSection(context, ref, resume),
+          ),
           const SizedBox(height: AppSpacing.xxl),
-          _buildCustomSections(context, ref, resume),
+          ResumeErrorBoundary(
+            sectionName: 'Custom Sections',
+            child: _buildCustomSections(context, ref, resume),
+          ),
           const SizedBox(height: AppSpacing.xxl),
         ],
       ),
