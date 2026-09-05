@@ -9,6 +9,7 @@ import '../../../core/widgets/state_widgets.dart';
 import '../../templates/presentation/template_selector_screen.dart';
 import '../models/pdf_export_config.dart';
 import '../widgets/pdf_export_customization_dialog.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 class ResumePreviewScreen extends ConsumerStatefulWidget {
   const ResumePreviewScreen({super.key});
@@ -96,6 +97,21 @@ class _ResumePreviewScreenState extends ConsumerState<ResumePreviewScreen> {
                 config: _exportConfig,
               );
               await pdfService.sharePdf(resume, pdfBytes);
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.lock_outline, color: Colors.amber),
+            tooltip: 'Export Protected Encrypted PDF (.resume.pdf.enc)',
+            onPressed: () async {
+              try {
+                final exportService = ref.read(encryptedExportServiceProvider);
+                final file = await exportService.exportProtectedPdfFile(resume, config: _exportConfig);
+                if (context.mounted) {
+                  AppSnackBar.showSuccess(context, 'Exported protected PDF to ${file.path}');
+                }
+              } catch (e) {
+                if (context.mounted) AppSnackBar.showError(context, 'Export failed: $e');
+              }
             },
           ),
         ],

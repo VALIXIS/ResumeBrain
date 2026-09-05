@@ -7,6 +7,7 @@ import 'core/storage/storage_bootstrap.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
+import 'core/widgets/privacy_lock_overlay.dart';
 import 'features/home/presentation/home_dashboard_screen.dart';
 
 bool _firstFrameRendered = false;
@@ -117,7 +118,9 @@ class _ResumeBrainAppState extends ConsumerState<ResumeBrainApp> with WidgetsBin
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
-      home: const HomeDashboardScreen(),
+      home: const PrivacyLockOverlay(
+        child: HomeDashboardScreen(),
+      ),
     );
   }
 }

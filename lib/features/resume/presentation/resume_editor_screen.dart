@@ -19,6 +19,7 @@ import '../widgets/reorderable_section_card.dart';
 import '../widgets/resume_validators.dart';
 import '../widgets/validated_form_field.dart';
 import 'section_editor_tab.dart';
+import '../../../core/widgets/security_settings_dialog.dart';
 
 class ResumeEditorScreen extends ConsumerStatefulWidget {
   const ResumeEditorScreen({super.key});
@@ -218,6 +219,16 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                   MaterialPageRoute(
                     builder: (context) => const ResumePreviewScreen(),
                   ),
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.shield_outlined, color: AppColors.primary),
+              tooltip: 'Security Settings',
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => const SecuritySettingsDialog(),
                 );
               },
             ),
