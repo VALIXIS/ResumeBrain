@@ -86,4 +86,12 @@ class AppSnackBar {
       ),
     );
   }
+
+  static void showSuccess(BuildContext context, String message) {
+    show(context, message: message, variant: AppSnackBarVariant.success);
+  }
+
+  static void showError(BuildContext context, String message) {
+    show(context, message: message, variant: AppSnackBarVariant.error);
+  }
 }

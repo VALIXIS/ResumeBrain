@@ -45,3 +45,4 @@ app.*.map.json
 *.keystore
 api_keys.json
 .env
+test_hive_tmp/
