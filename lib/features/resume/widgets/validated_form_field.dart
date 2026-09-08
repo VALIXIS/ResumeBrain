@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
@@ -53,6 +54,7 @@ class ValidatedFormField extends StatefulWidget {
 class _ValidatedFormFieldState extends State<ValidatedFormField> {
   late int _charCount;
   FocusNode? _internalFocusNode;
+  Timer? _scrollTimer;
 
   FocusNode get _effectiveFocusNode => widget.focusNode ?? (_internalFocusNode ??= FocusNode());
 
@@ -67,6 +69,11 @@ class _ValidatedFormFieldState extends State<ValidatedFormField> {
   @override
   void didUpdateWidget(covariant ValidatedFormField oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.controller != oldWidget.controller) {
+      oldWidget.controller.removeListener(_updateCount);
+      _charCount = widget.controller.text.length;
+      widget.controller.addListener(_updateCount);
+    }
     if (widget.focusNode != oldWidget.focusNode) {
       (oldWidget.focusNode ?? _internalFocusNode)?.removeListener(_handleFocusChange);
       _effectiveFocusNode.addListener(_handleFocusChange);
@@ -75,6 +82,7 @@ class _ValidatedFormFieldState extends State<ValidatedFormField> {
 
   @override
   void dispose() {
+    _scrollTimer?.cancel();
     widget.controller.removeListener(_updateCount);
     _effectiveFocusNode.removeListener(_handleFocusChange);
     _internalFocusNode?.dispose();
@@ -91,8 +99,9 @@ class _ValidatedFormFieldState extends State<ValidatedFormField> {
 
   void _handleFocusChange() {
     if (widget.autoScrollOnFocus && _effectiveFocusNode.hasFocus && mounted) {
+      _scrollTimer?.cancel();
       // Delay slightly to coordinate with mobile keyboard appearance
-      Future.delayed(const Duration(milliseconds: 100), () {
+      _scrollTimer = Timer(const Duration(milliseconds: 100), () {
         if (mounted && _effectiveFocusNode.hasFocus) {
           Scrollable.ensureVisible(
             context,

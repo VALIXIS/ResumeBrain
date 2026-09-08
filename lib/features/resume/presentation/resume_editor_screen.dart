@@ -16,6 +16,7 @@ import '../widgets/education_editor_dialog.dart';
 import '../widgets/experience_editor_dialog.dart';
 import '../widgets/project_editor_dialog.dart';
 import '../widgets/reorderable_section_card.dart';
+import '../widgets/resume_error_boundary.dart';
 import '../widgets/resume_validators.dart';
 import '../widgets/validated_form_field.dart';
 import 'section_editor_tab.dart';
@@ -49,11 +50,9 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 7, vsync: this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final resume = ref.read(currentResumeProvider);
-      ref.read(resumeHistoryProvider.notifier).initializeWithResume(resume);
-      _loadCurrentResumeData();
-    });
+    final resume = ref.read(currentResumeProvider);
+    ref.read(resumeHistoryProvider.notifier).initializeWithResume(resume);
+    _loadCurrentResumeData();
   }
 
   void _loadCurrentResumeData() {
@@ -71,13 +70,17 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
   }
 
   void _updateResumeWithHistory(Resume Function(Resume current) updateFn) {
-    final current = ref.read(currentResumeProvider);
-    if (current != null) {
-      ref.read(currentResumeProvider.notifier).updateResume(updateFn);
-      final updated = ref.read(currentResumeProvider);
-      if (updated != null) {
-        ref.read(resumeHistoryProvider.notifier).recordSnapshot(updated);
+    try {
+      final current = ref.read(currentResumeProvider);
+      if (current != null) {
+        ref.read(currentResumeProvider.notifier).updateResume(updateFn);
+        final updated = ref.read(currentResumeProvider);
+        if (updated != null) {
+          ref.read(resumeHistoryProvider.notifier).recordSnapshot(updated);
+        }
       }
+    } catch (e) {
+      debugPrint('[RESUME_ERROR_BOUNDARY] Error updating resume history: ${e.runtimeType}');
     }
   }
 
@@ -99,7 +102,6 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
   @override
   Widget build(BuildContext context) {
     final resume = ref.watch(currentResumeProvider);
-    final historyState = ref.watch(resumeHistoryProvider);
 
     // Sync text controllers when undo/redo or external mutations update the resume
     ref.listen<Resume?>(currentResumeProvider, (previous, next) {
@@ -177,25 +179,35 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
             },
           ),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.undo),
-              tooltip: 'Undo (Ctrl+Z)',
-              color: historyState.canUndo
-                  ? AppColors.textPrimary
-                  : AppColors.textMuted.withValues(alpha: 0.35),
-              onPressed: historyState.canUndo
-                  ? () => ref.read(resumeHistoryProvider.notifier).undo(ref)
-                  : null,
+            Consumer(
+              builder: (context, ref, _) {
+                final canUndo = ref.watch(resumeHistoryProvider.select((s) => s.canUndo));
+                return IconButton(
+                  icon: const Icon(Icons.undo),
+                  tooltip: 'Undo (Ctrl+Z)',
+                  color: canUndo
+                      ? AppColors.textPrimary
+                      : AppColors.textMuted.withValues(alpha: 0.35),
+                  onPressed: canUndo
+                      ? () => ref.read(resumeHistoryProvider.notifier).undo(ref)
+                      : null,
+                );
+              },
             ),
-            IconButton(
-              icon: const Icon(Icons.redo),
-              tooltip: 'Redo (Ctrl+Y)',
-              color: historyState.canRedo
-                  ? AppColors.textPrimary
-                  : AppColors.textMuted.withValues(alpha: 0.35),
-              onPressed: historyState.canRedo
-                  ? () => ref.read(resumeHistoryProvider.notifier).redo(ref)
-                  : null,
+            Consumer(
+              builder: (context, ref, _) {
+                final canRedo = ref.watch(resumeHistoryProvider.select((s) => s.canRedo));
+                return IconButton(
+                  icon: const Icon(Icons.redo),
+                  tooltip: 'Redo (Ctrl+Y)',
+                  color: canRedo
+                      ? AppColors.textPrimary
+                      : AppColors.textMuted.withValues(alpha: 0.35),
+                  onPressed: canRedo
+                      ? () => ref.read(resumeHistoryProvider.notifier).redo(ref)
+                      : null,
+                );
+              },
             ),
             IconButton(
               icon: const Icon(Icons.style_outlined, color: AppColors.accentPurple),
@@ -243,13 +255,34 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
         body: TabBarView(
           controller: _tabController,
           children: [
-            _buildPersonalInfoTab(resume),
-            _buildSummaryTab(resume),
-            _buildExperienceTab(resume),
-            _buildEducationTab(resume),
-            _buildSkillsTab(resume),
-            _buildProjectsTab(resume),
-            const SectionEditorTab(),
+            ResumeErrorBoundary(
+              sectionName: 'Personal Information',
+              child: RepaintBoundary(child: _buildPersonalInfoTab(resume)),
+            ),
+            ResumeErrorBoundary(
+              sectionName: 'Professional Summary',
+              child: RepaintBoundary(child: _buildSummaryTab(resume)),
+            ),
+            ResumeErrorBoundary(
+              sectionName: 'Work Experience',
+              child: RepaintBoundary(child: _buildExperienceTab(resume)),
+            ),
+            ResumeErrorBoundary(
+              sectionName: 'Education',
+              child: RepaintBoundary(child: _buildEducationTab(resume)),
+            ),
+            ResumeErrorBoundary(
+              sectionName: 'Skills Inventory',
+              child: RepaintBoundary(child: _buildSkillsTab(resume)),
+            ),
+            ResumeErrorBoundary(
+              sectionName: 'Showcase Projects',
+              child: RepaintBoundary(child: _buildProjectsTab(resume)),
+            ),
+            const ResumeErrorBoundary(
+              sectionName: 'Supplementary Sections',
+              child: RepaintBoundary(child: SectionEditorTab()),
+            ),
           ],
         ),
         bottomNavigationBar: Container(
