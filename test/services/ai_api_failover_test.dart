@@ -93,12 +93,13 @@ void main() {
       expect(response.errorMessage, contains('429'));
     });
 
-    test('3. HybridAIProvider automatically falls back to MockAIProvider when keys are unconfigured', () async {
+    test('3. HybridAIProvider automatically falls back to MockAIProvider when keys are unconfigured — signals offline', () async {
       final hybrid = HybridAIProvider(geminiApiKey: '', groqApiKey: '');
       final response = await hybrid.processRequest(sampleRequest);
 
-      expect(response.isSuccess, isTrue);
-      expect(response.outputText, contains('Architected'));
+      // MockAIProvider now signals offline instead of faking success
+      expect(response.isSuccess, isFalse);
+      expect(response.errorMessage, isNotNull);
     });
 
     test('4. Groq Provider parses OpenAI-compatible JSON responses cleanly', () async {
@@ -127,12 +128,14 @@ void main() {
       expect(response.outputText, contains('Led high-performing development squad'));
     });
 
-    test('5. Complete offline outage: HybridAIProvider with MOCK_KEY guarantees safe non-null response', () async {
+    test('5. Complete offline outage: HybridAIProvider with MOCK_KEY signals offline cleanly', () async {
       final hybrid = HybridAIProvider(geminiApiKey: 'MOCK_KEY', groqApiKey: 'MOCK_KEY');
       final response = await hybrid.processRequest(sampleRequest);
 
-      expect(response.isSuccess, isTrue);
-      expect(response.outputText.isNotEmpty, isTrue);
+      // MockAIProvider signals offline: isSuccess false, response is non-null and safe
+      expect(response, isNotNull);
+      expect(response.isSuccess, isFalse);
+      expect(response.errorMessage, isNotNull);
     });
   });
 

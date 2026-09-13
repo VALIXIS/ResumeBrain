@@ -8,14 +8,16 @@ import 'package:resume_brain/features/ai/services/gemini_ai_provider.dart';
 
 void main() {
   group('GeminiAIProvider Tests', () {
-    test('Fallback to MockAIProvider when API key is empty or MOCK_KEY', () async {
+    test('Fallback to MockAIProvider when API key is empty or MOCK_KEY signals offline correctly', () async {
       final provider = GeminiAIProvider(apiKey: 'MOCK_KEY');
       final response = await provider.processRequest(
         AIRequest(taskType: AITaskType.textImprovement, inputText: 'Lead developer'),
       );
 
-      expect(response.isSuccess, isTrue);
-      expect(response.outputText, contains('Architected'));
+      // MockAIProvider now signals that AI is offline rather than faking success
+      expect(response.isSuccess, isFalse);
+      expect(response.errorMessage, isNotNull);
+      expect(response.errorMessage, contains('AI offline'));
     });
 
     test('Successful Gemini API JSON response parsing with Google XYZ metrics & subScores', () async {

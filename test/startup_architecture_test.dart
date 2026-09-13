@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:resume_brain/core/storage/storage_bootstrap.dart';
 import 'package:resume_brain/core/storage/storage_provider.dart';
 import 'package:resume_brain/features/home/presentation/home_dashboard_screen.dart';
+import 'package:resume_brain/features/splash/presentation/splash_screen.dart';
 import 'package:resume_brain/main.dart';
 
 void main() {
@@ -18,7 +19,7 @@ void main() {
       );
       // First frame renders immediately without waiting for storage
       expect(find.byType(MaterialApp), findsOneWidget);
-      expect(find.byType(HomeDashboardScreen), findsOneWidget);
+      expect(find.byType(SplashScreen), findsOneWidget);
     });
 
     testWidgets('2. HomeDashboardScreen renders loading shimmer while storage is initializing', (WidgetTester tester) async {

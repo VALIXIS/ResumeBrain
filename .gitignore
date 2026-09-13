@@ -46,3 +46,5 @@ app.*.map.json
 api_keys.json
 .env
 test_hive_tmp/
+.kotlin/
+**/android/.kotlin/

@@ -14,6 +14,9 @@ import '../../../core/widgets/custom_card.dart';
 import '../../../core/widgets/state_widgets.dart';
 import '../../../data/models/resume_models.dart';
 import '../../ai/presentation/coming_soon_screen.dart';
+import '../../ai/presentation/ai_settings_screen.dart';
+import '../../resume/presentation/live_resume_tailor_screen.dart';
+import '../../onboarding/presentation/onboarding_screen.dart';
 import '../../analysis/presentation/analysis_results_screen.dart';
 import '../../job_matching/presentation/job_description_input_screen.dart';
 import '../../pdf/presentation/resume_preview_screen.dart';
@@ -28,7 +31,6 @@ import '../../../core/widgets/responsive_layout.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_navigation_drawer.dart';
-import '../../../core/widgets/security_settings_dialog.dart';
 
 class HomeDashboardScreen extends ConsumerStatefulWidget {
   const HomeDashboardScreen({super.key});
@@ -97,12 +99,12 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
             ),
             actions: [
               IconButton(
-                icon: const Icon(Icons.shield_outlined, color: AppColors.primary),
-                tooltip: 'Security & Privacy Settings',
+                icon: const Icon(Icons.auto_awesome_outlined, color: AppColors.accentPurple),
+                tooltip: 'AI Engine Settings',
                 onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => const SecuritySettingsDialog(),
+                  Navigator.push(
+                    context,
+                    SmoothPageRoute(page: const AISettingsScreen()),
                   );
                 },
               ),
@@ -351,11 +353,39 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
         const SizedBox(height: AppSpacing.md),
         _buildAiFeatureCard(
           context,
-          title: 'Job Match & Resume Tailoring',
-          description: 'Match your resume against job postings and auto-tailor bullet points.',
+          title: 'Job Match & Keyword Analysis',
+          description: 'Extract skills, keyword density, and seniority alignment.',
           icon: Icons.work_outline_rounded,
           accentColor: AppColors.accentPurple,
           onTap: () => setState(() => _selectedIndex = 2),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _buildAiFeatureCard(
+          context,
+          title: 'Live AI Resume Tailoring',
+          description: 'Rewrite resume bullet points and summary for target job postings.',
+          icon: Icons.auto_awesome_rounded,
+          accentColor: Colors.amber,
+          onTap: () {
+            Navigator.push(
+              context,
+              SmoothPageRoute(page: const LiveResumeTailorScreen()),
+            );
+          },
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _buildAiFeatureCard(
+          context,
+          title: 'Product Tour & Feature Guide',
+          description: 'Replay interactive 3-step feature walkthrough.',
+          icon: Icons.explore_outlined,
+          accentColor: AppColors.primary,
+          onTap: () {
+            Navigator.push(
+              context,
+              SmoothPageRoute(page: const OnboardingScreen()),
+            );
+          },
         ),
       ],
     );
@@ -417,34 +447,27 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                         context,
                         SmoothPageRoute(page: const ResumePreviewScreen()),
                       );
-                    } else if (value == 'export_enc_json') {
-                      try {
-                        final exportService = ref.read(encryptedExportServiceProvider);
-                        final file = await exportService.exportEncryptedJsonFile(resume);
-                        if (context.mounted) {
-                          AppSnackBar.showSuccess(context, 'Exported encrypted JSON to ${file.path}');
-                        }
-                      } catch (e) {
-                        if (context.mounted) AppSnackBar.showError(context, 'Export failed: $e');
-                      }
-                    } else if (value == 'export_enc_pdf') {
-                      try {
-                        final exportService = ref.read(encryptedExportServiceProvider);
-                        final file = await exportService.exportProtectedPdfFile(resume);
-                        if (context.mounted) {
-                          AppSnackBar.showSuccess(context, 'Exported protected PDF to ${file.path}');
-                        }
-                      } catch (e) {
-                        if (context.mounted) AppSnackBar.showError(context, 'Export failed: $e');
-                      }
-                    } else if (value == 'cloud_sync') {
-                      final result = await ref.read(resumeRepositoryProvider).syncResumeToCloud(resume);
+                    } else if (value == 'duplicate') {
+                      final duplicateResume = Resume(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        title: '${resume.title} (Copy)',
+                        templateId: resume.templateId,
+                        personalInfo: resume.personalInfo,
+                        summary: resume.summary,
+                        experiences: resume.experiences,
+                        educationList: resume.educationList,
+                        projects: resume.projects,
+                        skills: resume.skills,
+                        certifications: resume.certifications,
+                        languages: resume.languages,
+                        customSections: resume.customSections,
+                        socialLinks: resume.socialLinks,
+                        createdAt: DateTime.now(),
+                        updatedAt: DateTime.now(),
+                      );
+                      await ref.read(resumesListProvider.notifier).saveResume(duplicateResume);
                       if (context.mounted) {
-                        if (result.isSuccess) {
-                          AppSnackBar.showSuccess(context, result.message);
-                        } else {
-                          AppSnackBar.showError(context, result.message);
-                        }
+                        AppSnackBar.showSuccess(context, 'Resume duplicated successfully');
                       }
                     } else if (value == 'delete') {
                       _confirmDelete(context, ref, resume);
@@ -457,19 +480,11 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                     ),
                     const PopupMenuItem(
                       value: 'preview',
-                      child: Row(children: [Icon(Icons.visibility_outlined, size: 18), SizedBox(width: 8), Text('Preview PDF')]),
+                      child: Row(children: [Icon(Icons.visibility_outlined, size: 18), SizedBox(width: 8), Text('Preview & Export PDF')]),
                     ),
                     const PopupMenuItem(
-                      value: 'export_enc_json',
-                      child: Row(children: [Icon(Icons.lock_outline, size: 18, color: Colors.blueAccent), SizedBox(width: 8), Text('Export Encrypted JSON')]),
-                    ),
-                    const PopupMenuItem(
-                      value: 'export_enc_pdf',
-                      child: Row(children: [Icon(Icons.picture_as_pdf, size: 18, color: Colors.amber), SizedBox(width: 8), Text('Export Protected PDF')]),
-                    ),
-                    const PopupMenuItem(
-                      value: 'cloud_sync',
-                      child: Row(children: [Icon(Icons.cloud_upload_outlined, size: 18, color: Colors.teal), SizedBox(width: 8), Text('Cloud Backup / Sync')]),
+                      value: 'duplicate',
+                      child: Row(children: [Icon(Icons.copy_outlined, size: 18), SizedBox(width: 8), Text('Duplicate')]),
                     ),
                     const PopupMenuItem(
                       value: 'delete',

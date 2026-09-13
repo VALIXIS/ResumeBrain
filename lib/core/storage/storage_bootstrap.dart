@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/repositories/resume_database_migrator.dart';
 import '../constants/app_constants.dart';
 
@@ -38,6 +39,8 @@ class StorageBootstrapService {
   Box? _resumesBox;
   Box? _analysisHistoryBox;
 
+  Box? _settingsBox;
+
   StorageStatus get status => _status;
   String? get errorMessage => _errorMessage;
   bool get isReady => _status == StorageStatus.ready;
@@ -45,10 +48,26 @@ class StorageBootstrapService {
   Box? get resumesBox => _resumesBox != null && _resumesBox!.isOpen ? _resumesBox : null;
   Box? get analysisHistoryBox =>
       _analysisHistoryBox != null && _analysisHistoryBox!.isOpen ? _analysisHistoryBox : null;
+  Box? get settingsBox => _settingsBox != null && _settingsBox!.isOpen ? _settingsBox : null;
+
+  bool get isOnboardingCompleted {
+    final hiveVal = _settingsBox?.get('onboarding_completed', defaultValue: false) == true;
+    return hiveVal;
+  }
+
+  Future<void> setOnboardingCompleted(bool completed) async {
+    if (_settingsBox != null && _settingsBox!.isOpen) {
+      await _settingsBox!.put('onboarding_completed', completed);
+    }
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('onboarding_completed', completed);
+    } catch (_) {}
+  }
 
   /// Centralized storage initialization. Runs ONCE asynchronously after runApp().
   Future<void> initializeStorage() async {
-    if (_status == StorageStatus.ready || _status == StorageStatus.initializing) {
+    if (_status == StorageStatus.ready) {
       return;
     }
 
@@ -60,7 +79,24 @@ class StorageBootstrapService {
       // 1. Single owner initialization of Hive for Flutter
       await Hive.initFlutter();
 
-      // 2. Open Resume box safely
+      // 2. Open Settings box safely
+      const settingsBoxName = 'app_settings_box';
+      if (Hive.isBoxOpen(settingsBoxName)) {
+        _settingsBox = Hive.box(settingsBoxName);
+      } else {
+        _settingsBox = await Hive.openBox(settingsBoxName);
+      }
+
+      // Sync from SharedPreferences if set there
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final prefsCompleted = prefs.getBool('onboarding_completed');
+        if (prefsCompleted != null) {
+          await _settingsBox?.put('onboarding_completed', prefsCompleted);
+        }
+      } catch (_) {}
+
+      // 3. Open Resume box safely
       StartupStages.logStage('RESUME_BOX_OPEN_START', 'Opening ${AppConstants.hiveResumeBox}');
       if (Hive.isBoxOpen(AppConstants.hiveResumeBox)) {
         _resumesBox = Hive.box(AppConstants.hiveResumeBox);
@@ -74,7 +110,7 @@ class StorageBootstrapService {
         await ResumeDatabaseMigrator.runMigrations(_resumesBox!);
       }
 
-      // 3. Open Analysis History box safely
+      // 4. Open Analysis History box safely
       const historyBoxName = 'analysis_history_box';
       StartupStages.logStage('HISTORY_BOX_OPEN_START', 'Opening $historyBoxName');
       if (Hive.isBoxOpen(historyBoxName)) {

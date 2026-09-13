@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/resume_models.dart';
 import '../data/repositories/resume_repository.dart';
+import '../features/ai/services/ai_key_storage_service.dart';
 import '../features/ai/services/ai_service.dart';
 import '../features/pdf/services/pdf_service.dart';
 import '../features/ai/services/hybrid_ai_provider.dart';
@@ -40,14 +41,21 @@ final resumeRepositoryProvider = Provider<ResumeRepository>((ref) {
   );
 });
 
+final aiKeyStorageServiceProvider = Provider<AIKeyStorageService>((ref) {
+  return AIKeyStorageService();
+});
+
 final aiServiceProvider = Provider<AIService>((ref) {
   const geminiKey = String.fromEnvironment('GEMINI_API_KEY');
   const groqKey = String.fromEnvironment('GROQ_API_KEY');
 
+  final keyStorage = ref.watch(aiKeyStorageServiceProvider);
+
   return ResumeBrainAIService(
-    provider: HybridAIProvider(
-      geminiApiKey: geminiKey,
-      groqApiKey: groqKey,
+    provider: DynamicAIProvider(
+      keyStorage: keyStorage,
+      defaultGeminiKey: geminiKey,
+      defaultGroqKey: groqKey,
     ),
   );
 });

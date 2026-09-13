@@ -210,15 +210,15 @@ void main() {
       expect(response.errorMessage, contains('Gemini AI Provider Error'));
     });
 
-    test('8. Handles missing or empty API keys by falling back to MockAIProvider', () async {
+    test('8. Handles missing or empty API keys by signaling offline via MockAIProvider', () async {
       final provider = GeminiAIProvider(apiKey: '');
       final service = ResumeBrainAIService(provider: provider);
 
       final response = await service.improveText('Worked on backend APIs.', 'experience');
 
-      expect(response.isSuccess, isTrue);
-      expect(response.outputText, contains('Architected and deployed'));
-      expect(response.suggestions, isNotEmpty);
+      // MockAIProvider now signals AI is offline instead of faking success
+      expect(response.isSuccess, isFalse);
+      expect(response.errorMessage, contains('AI offline'));
     });
   });
 
@@ -261,7 +261,7 @@ void main() {
       expect(results[1].outputText, equals('Tailored Java Output'));
     });
 
-    test('10. ProviderContainer state isolation across AI service instances', () async {
+    test('10. ProviderContainer state isolation across AI service instances — offline responses are non-null and safe', () async {
       final containerA = ProviderContainer(
         overrides: [
           aiServiceProvider.overrideWithValue(
@@ -283,8 +283,11 @@ void main() {
       final resA = await serviceA.improveText('Text A', 'summary');
       final resB = await serviceB.improveText('Text B', 'summary');
 
-      expect(resA.isSuccess, isTrue);
-      expect(resB.isSuccess, isTrue);
+      // MockAIProvider signals offline correctly; both containers return safe non-null responses
+      expect(resA, isNotNull);
+      expect(resB, isNotNull);
+      expect(resA.isSuccess, isFalse);
+      expect(resB.isSuccess, isFalse);
 
       containerA.dispose();
       containerB.dispose();

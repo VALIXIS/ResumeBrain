@@ -9,7 +9,8 @@ import '../../../core/widgets/state_widgets.dart';
 import '../../templates/presentation/template_selector_screen.dart';
 import '../models/pdf_export_config.dart';
 import '../widgets/pdf_export_customization_dialog.dart';
-import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/smooth_page_route.dart';
+import '../../home/presentation/home_dashboard_screen.dart';
 
 class ResumePreviewScreen extends ConsumerStatefulWidget {
   const ResumePreviewScreen({super.key});
@@ -59,8 +60,32 @@ class _ResumePreviewScreenState extends ConsumerState<ResumePreviewScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Back to Dashboard',
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                SmoothPageRoute(page: const HomeDashboardScreen()),
+              );
+            }
+          },
+        ),
         title: Text(resume.title, style: AppTypography.titleLarge),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.home_rounded, color: AppColors.primary),
+            tooltip: 'Go to Dashboard',
+            onPressed: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                SmoothPageRoute(page: const HomeDashboardScreen()),
+                (route) => false,
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.style_outlined, color: AppColors.accentPurple),
             tooltip: 'Switch Template',
@@ -89,7 +114,7 @@ class _ResumePreviewScreenState extends ConsumerState<ResumePreviewScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.share_outlined, color: AppColors.primary),
+            icon: const Icon(Icons.share_outlined, color: AppColors.accentTeal),
             tooltip: 'Share PDF',
             onPressed: () async {
               final pdfBytes = await pdfService.buildPdfBytes(
@@ -97,21 +122,6 @@ class _ResumePreviewScreenState extends ConsumerState<ResumePreviewScreen> {
                 config: _exportConfig,
               );
               await pdfService.sharePdf(resume, pdfBytes);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.lock_outline, color: Colors.amber),
-            tooltip: 'Export Protected Encrypted PDF (.resume.pdf.enc)',
-            onPressed: () async {
-              try {
-                final exportService = ref.read(encryptedExportServiceProvider);
-                final file = await exportService.exportProtectedPdfFile(resume, config: _exportConfig);
-                if (context.mounted) {
-                  AppSnackBar.showSuccess(context, 'Exported protected PDF to ${file.path}');
-                }
-              } catch (e) {
-                if (context.mounted) AppSnackBar.showError(context, 'Export failed: $e');
-              }
             },
           ),
         ],

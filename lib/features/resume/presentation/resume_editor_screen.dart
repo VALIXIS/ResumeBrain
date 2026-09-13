@@ -263,80 +263,92 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
             ],
           ),
         ),
-        body: TabBarView(
-          controller: _tabController,
+        body: Column(
           children: [
-            ResumeErrorBoundary(
-              sectionName: 'Personal Information',
-              child: RepaintBoundary(child: _buildPersonalInfoTab(resume)),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  ResumeErrorBoundary(
+                    sectionName: 'Personal Information',
+                    child: RepaintBoundary(child: _buildPersonalInfoTab(resume)),
+                  ),
+                  ResumeErrorBoundary(
+                    sectionName: 'Professional Summary',
+                    child: RepaintBoundary(child: _buildSummaryTab(resume)),
+                  ),
+                  ResumeErrorBoundary(
+                    sectionName: 'Work Experience',
+                    child: RepaintBoundary(child: _buildExperienceTab(resume)),
+                  ),
+                  ResumeErrorBoundary(
+                    sectionName: 'Education',
+                    child: RepaintBoundary(child: _buildEducationTab(resume)),
+                  ),
+                  ResumeErrorBoundary(
+                    sectionName: 'Skills Inventory',
+                    child: RepaintBoundary(child: _buildSkillsTab(resume)),
+                  ),
+                  ResumeErrorBoundary(
+                    sectionName: 'Showcase Projects',
+                    child: RepaintBoundary(child: _buildProjectsTab(resume)),
+                  ),
+                  const ResumeErrorBoundary(
+                    sectionName: 'Supplementary Sections',
+                    child: RepaintBoundary(child: SectionEditorTab()),
+                  ),
+                ],
+              ),
             ),
-            ResumeErrorBoundary(
-              sectionName: 'Professional Summary',
-              child: RepaintBoundary(child: _buildSummaryTab(resume)),
-            ),
-            ResumeErrorBoundary(
-              sectionName: 'Work Experience',
-              child: RepaintBoundary(child: _buildExperienceTab(resume)),
-            ),
-            ResumeErrorBoundary(
-              sectionName: 'Education',
-              child: RepaintBoundary(child: _buildEducationTab(resume)),
-            ),
-            ResumeErrorBoundary(
-              sectionName: 'Skills Inventory',
-              child: RepaintBoundary(child: _buildSkillsTab(resume)),
-            ),
-            ResumeErrorBoundary(
-              sectionName: 'Showcase Projects',
-              child: RepaintBoundary(child: _buildProjectsTab(resume)),
-            ),
-            const ResumeErrorBoundary(
-              sectionName: 'Supplementary Sections',
-              child: RepaintBoundary(child: SectionEditorTab()),
+            SafeArea(
+              top: false,
+              child: SizedBox(
+                height: 64,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 8),
+                  decoration: const BoxDecoration(
+                    color: AppColors.surface,
+                    border: Border(top: BorderSide(color: AppColors.surfaceBorder)),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: AppButton(
+                          text: 'Select Template',
+                          icon: Icons.palette_outlined,
+                          variant: AppButtonVariant.secondary,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const TemplateSelectorScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: AppButton(
+                          text: 'Preview PDF',
+                          icon: Icons.visibility_outlined,
+                          variant: AppButtonVariant.primary,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ResumePreviewScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ],
-        ),
-        bottomNavigationBar: Container(
-          padding: AppSpacing.paddingMd,
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            border: Border(top: BorderSide(color: AppColors.surfaceBorder)),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: AppButton(
-                  text: 'Select Template',
-                  icon: Icons.palette_outlined,
-                  variant: AppButtonVariant.secondary,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const TemplateSelectorScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: AppButton(
-                  text: 'Preview PDF',
-                  icon: Icons.visibility_outlined,
-                  variant: AppButtonVariant.primary,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ResumePreviewScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

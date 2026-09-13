@@ -1,6 +1,6 @@
 class AppConstants {
   static const String appName = 'Resume Brain';
-  static const String appVersion = '1.0.7';
+  static const String appVersion = '1.0.8';
   static const String companyName = 'VALIXIS';
   static const String packageName = 'com.valixis.resumebrain';
 

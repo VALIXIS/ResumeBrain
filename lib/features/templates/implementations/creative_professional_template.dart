@@ -293,7 +293,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                   ),
                                   pw.SizedBox(height: 1),
                                   pw.Text(
-                                    '${exp.company}${exp.location.isNotEmpty ? " • ${exp.location}" : ""}',
+                                    '${exp.company}${exp.location.isNotEmpty ? " | ${exp.location}" : ""}',
                                     style: pw.TextStyle(
                                       fontSize: 9,
                                       fontWeight: pw.FontWeight.bold,
@@ -352,7 +352,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                   ),
                                   pw.SizedBox(height: 1),
                                   pw.Text(
-                                    '${edu.institution}${edu.location.isNotEmpty ? " • ${edu.location}" : ""}',
+                                    '${edu.institution}${edu.location.isNotEmpty ? " | ${edu.location}" : ""}',
                                     style: pw.TextStyle(
                                       fontSize: 8.5,
                                       color: mutedTextColor,
@@ -380,7 +380,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                     children: [
                                       pw.Expanded(
                                         child: pw.Text(
-                                          '${proj.name}${proj.role.isNotEmpty ? " — ${proj.role}" : ""}',
+                                          '${proj.name}${proj.role.isNotEmpty ? " - ${proj.role}" : ""}',
                                           style: pw.TextStyle(
                                             fontSize: 10,
                                             fontWeight: pw.FontWeight.bold,

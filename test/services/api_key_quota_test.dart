@@ -56,7 +56,7 @@ void main() {
       quotaTracker = ApiKeyQuotaTracker();
     });
 
-    test('1. GeminiAIProvider selects MockAIProvider when key is empty or MOCK_KEY', () async {
+    test('1. GeminiAIProvider selects MockAIProvider when key is empty or MOCK_KEY — signals offline', () async {
       final emptyProvider = GeminiAIProvider(apiKey: '');
       final mockKeyProvider = GeminiAIProvider(apiKey: 'MOCK_KEY');
 
@@ -65,12 +65,13 @@ void main() {
       final emptyRes = await emptyProvider.processRequest(request);
       final mockRes = await mockKeyProvider.processRequest(request);
 
-      expect(emptyRes.isSuccess, isTrue);
-      expect(mockRes.isSuccess, isTrue);
-      expect(emptyRes.outputText, contains('Architected'));
+      // MockAIProvider now signals offline rather than faking success
+      expect(emptyRes.isSuccess, isFalse);
+      expect(mockRes.isSuccess, isFalse);
+      expect(emptyRes.errorMessage, contains('AI offline'));
     });
 
-    test('2. GroqAIProvider selects MockAIProvider when key is empty or MOCK_KEY', () async {
+    test('2. GroqAIProvider selects MockAIProvider when key is empty or MOCK_KEY — signals offline', () async {
       final emptyProvider = GroqAIProvider(apiKey: '');
       final mockKeyProvider = GroqAIProvider(apiKey: 'MOCK_KEY');
 
@@ -79,8 +80,9 @@ void main() {
       final emptyRes = await emptyProvider.processRequest(request);
       final mockRes = await mockKeyProvider.processRequest(request);
 
-      expect(emptyRes.isSuccess, isTrue);
-      expect(mockRes.isSuccess, isTrue);
+      // MockAIProvider now signals offline rather than faking success
+      expect(emptyRes.isSuccess, isFalse);
+      expect(mockRes.isSuccess, isFalse);
     });
 
     test('3. HybridAIProvider instantiates provider names correctly without throwing', () {

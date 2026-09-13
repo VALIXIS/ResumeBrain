@@ -34,7 +34,6 @@ class AppCard extends StatelessWidget {
 
     if (onTap != null) {
       return TapScaleWidget(
-        onTap: onTap,
         child: Material(
           color: Colors.transparent,
           borderRadius: AppRadius.borderLg,

@@ -142,8 +142,9 @@ void main() {
         'Seeking Senior Go & Distributed Systems Engineer.',
       );
 
-      expect(aiResponse.isSuccess, isTrue);
-      expect(aiResponse.outputText, isNotEmpty);
+      // MockAIProvider returns offline response when unconfigured
+      expect(aiResponse.isSuccess, isFalse);
+      expect(aiResponse.errorMessage, contains('AI offline'));
 
       // Verify currentResumeProvider state is 100% identical to initial state
       final stateAfter = container.read(currentResumeProvider);

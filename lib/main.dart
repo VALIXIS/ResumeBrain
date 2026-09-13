@@ -3,22 +3,44 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/storage/storage_bootstrap.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
-import 'core/widgets/privacy_lock_overlay.dart';
-import 'features/home/presentation/home_dashboard_screen.dart';
+import 'features/splash/presentation/splash_screen.dart';
 
 bool _firstFrameRendered = false;
 
-void main() {
+void main() async {
   // DIAGNOSTIC BOUNDARY 1: MAIN_ENTER
   StartupStages.logStage('MAIN_ENTER', 'main() entrypoint executed');
 
   // DIAGNOSTIC BOUNDARY 2: BINDING_READY
   WidgetsFlutterBinding.ensureInitialized();
   StartupStages.logStage('BINDING_READY', 'WidgetsFlutterBinding initialized');
+
+  // Safe Supabase Initialization if credentials provided
+  const supabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: 'https://qbvlzhjnqrwsoyvpomyt.supabase.co',
+  );
+  const supabaseAnonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+    defaultValue: 'sb_publishable_jc3oUrm_oQxntJSjbYncJg_0isWnl2m',
+  );
+
+  if (supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty) {
+    try {
+      await Supabase.initialize(
+        url: supabaseUrl,
+        publishableKey: supabaseAnonKey,
+      );
+      StartupStages.logStage('SUPABASE_INIT', 'Supabase client initialized');
+    } catch (e) {
+      StartupStages.logStage('SUPABASE_INIT_ERROR', 'Supabase init skipped: $e');
+    }
+  }
 
   // Production-safe global exception logging
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -33,14 +55,19 @@ void main() {
 
   GoogleFonts.config.allowRuntimeFetching = true;
 
-  // FIRST FRAME WATCHDOG (5 Seconds)
-  Timer(const Duration(seconds: 5), () {
+  Timer? watchdogTimer;
+  watchdogTimer = Timer(const Duration(seconds: 5), () {
     if (!_firstFrameRendered) {
       StartupStages.logStage(
         'FIRST_FRAME_TIMEOUT',
         'CRITICAL ALERT: Flutter has not rendered the first frame within 5000ms. Storage status: ${StorageBootstrapService().status}',
       );
     }
+  });
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    _firstFrameRendered = true;
+    watchdogTimer?.cancel();
   });
 
   // DIAGNOSTIC BOUNDARY 3: RUN_APP_CALLED
@@ -118,9 +145,7 @@ class _ResumeBrainAppState extends ConsumerState<ResumeBrainApp> with WidgetsBin
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
-      home: const PrivacyLockOverlay(
-        child: HomeDashboardScreen(),
-      ),
+      home: const SplashScreen(),
     );
   }
 }

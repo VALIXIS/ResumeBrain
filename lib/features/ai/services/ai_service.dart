@@ -58,54 +58,40 @@ class MockAIProvider implements AIProvider {
 
   @override
   Future<AIResponse> processRequest(AIRequest request) async {
-    // Simulate AI network delay
-    await Future.delayed(const Duration(milliseconds: 600));
-
+    // No real AI available — signal failure for scoring tasks so the
+    // AiAnalysisAdapter falls back to the content-dependent MockAnalysisEngine.
+    // Text-improvement and tailoring still provide basic offline tips.
     switch (request.taskType) {
       case AITaskType.textImprovement:
+        await Future.delayed(const Duration(milliseconds: 300));
         return AIResponse(
-          isSuccess: true,
-          outputText:
-              'Architected and deployed high-scalability production systems, reducing latency by 35% and improving overall system throughput.',
-          suggestions: [
-            'Quantify achievements with measurable metrics.',
-            'Use strong action verbs like Architected, Spearheaded, Orchestrated.',
-          ],
+          isSuccess: false,
+          outputText: '',
+          errorMessage: 'AI offline — configure a Gemini or Groq API key in AI Settings.',
         );
 
       case AITaskType.resumeAnalysis:
+        // Return failure → AiAnalysisAdapter will compute a real content-based score
+        // using MockAnalysisEngine.analyze() instead of serving a hardcoded value.
         return AIResponse(
-          isSuccess: true,
-          outputText:
-              'Strong professional structure with clear experience bullets. Highly ATS-friendly formatting.',
-          score: 88.5,
-          suggestions: [
-            'Add 2-3 additional skill tags relevant to current industry standards.',
-            'Include direct metrics in your most recent employment experience.',
-            'Ensure LinkedIn link is complete.',
-          ],
+          isSuccess: false,
+          outputText: '',
+          errorMessage: 'AI offline — using local ATS engine for scoring.',
         );
 
       case AITaskType.jobMatching:
+        // Return failure → caller falls back to local keyword-overlap matching.
         return AIResponse(
-          isSuccess: true,
-          outputText: '85% match for Senior Software Engineer position.',
-          score: 85.0,
-          suggestions: [
-            'Include cloud deployment keywords (Docker, AWS, Kubernetes).',
-            'Highlight leadership in cross-functional projects.',
-          ],
+          isSuccess: false,
+          outputText: '',
+          errorMessage: 'AI offline — using local keyword matcher for job scoring.',
         );
 
       case AITaskType.resumeTailoring:
         return AIResponse(
-          isSuccess: true,
-          outputText:
-              'Tailored summary and experience sections to emphasize targeted keywords from job description.',
-          suggestions: [
-            'Emphasized backend microservices experience.',
-            'Reordered skills to highlight primary requirements.',
-          ],
+          isSuccess: false,
+          outputText: '',
+          errorMessage: 'AI offline — configure an API key in AI Settings to use live tailoring.',
         );
     }
   }

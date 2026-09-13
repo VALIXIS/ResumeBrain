@@ -62,11 +62,15 @@ class _TapScaleWidgetState extends State<TapScaleWidget> with SingleTickerProvid
       );
     }
 
+    if (widget.onTap == null) {
+      return animatedChild;
+    }
+
     return Semantics(
       button: true,
-      enabled: widget.onTap != null,
+      enabled: true,
       child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
+        behavior: HitTestBehavior.translucent,
         onTap: widget.onTap,
         child: animatedChild,
       ),

@@ -29,7 +29,7 @@ class AppButton extends StatelessWidget {
     final isEnabled = !isLoading && onPressed != null;
 
     Widget child = Row(
-      mainAxisSize: MainAxisSize.min,
+      mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (isLoading) ...[
@@ -103,18 +103,17 @@ class AppButton extends StatelessWidget {
         break;
     }
 
-    Widget buttonWidget = Material(
-      color: decoration == null ? buttonColor : Colors.transparent,
-      borderRadius: AppRadius.borderMd,
-      child: InkWell(
-        onTap: isEnabled ? onPressed : null,
+    Widget buttonWidget = ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 48, maxHeight: 52, minWidth: 48),
+      child: Material(
+        color: decoration == null ? buttonColor : Colors.transparent,
         borderRadius: AppRadius.borderMd,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
+        child: InkWell(
+          onTap: isEnabled ? onPressed : null,
+          borderRadius: AppRadius.borderMd,
           child: Container(
             decoration: decoration,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             child: child,
           ),
         ),
@@ -122,7 +121,6 @@ class AppButton extends StatelessWidget {
     );
 
     buttonWidget = TapScaleWidget(
-      onTap: isEnabled ? onPressed : null,
       child: buttonWidget,
     );
 
@@ -130,7 +128,13 @@ class AppButton extends StatelessWidget {
       button: true,
       enabled: isEnabled,
       label: text,
-      child: isFullWidth ? SizedBox(width: double.infinity, child: buttonWidget) : buttonWidget,
+      child: isFullWidth
+          ? SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: FractionallySizedBox(widthFactor: 1.0, child: buttonWidget),
+            )
+          : buttonWidget,
     );
   }
 }
