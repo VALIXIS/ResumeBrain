@@ -12,17 +12,19 @@ import '../../../core/widgets/state_widgets.dart';
 import '../../../data/models/resume_models.dart';
 import '../models/resume_analysis_report.dart';
 import '../providers/analysis_provider.dart';
+import '../services/ats_engine.dart';
 import '../services/feedback_categorizer.dart';
+import '../widgets/ats_radar_chart.dart';
+import '../widgets/ats_recommendation_card.dart';
 import '../widgets/feedback_accordion_card.dart';
 import 'widgets/analysis_accessibility_helper.dart';
 import 'widgets/score_evolution_card.dart';
 import 'widgets/score_meter.dart';
 import 'widgets/section_grade_badge.dart';
-import 'widgets/suggestion_chip.dart';
 
 /// AnalysisResultsScreen displays complete ATS and structural analysis for a resume,
-/// including a circular score gauge, score evolution/history tracking, section grade badges,
-/// categorized feedback accordions, and actionable suggestion chips.
+/// including a circular score gauge, 4-axis ATS Radar Chart, Actionable Recommendation Cards,
+/// score evolution/history tracking, section grade badges, and categorized feedback accordions.
 /// Hardened for WCAG AAA contrast, 48x48 dp touch targets, 200% text scaling, and comprehensive Semantics.
 class AnalysisResultsScreen extends ConsumerStatefulWidget {
   final Resume? targetResume;
@@ -38,6 +40,8 @@ class AnalysisResultsScreen extends ConsumerStatefulWidget {
 }
 
 class _AnalysisResultsScreenState extends ConsumerState<AnalysisResultsScreen> {
+  AtsDimension? _selectedRadarDimension;
+
   Resume? _getResume() {
     return widget.targetResume ?? ref.watch(currentResumeProvider);
   }
@@ -51,6 +55,33 @@ class _AnalysisResultsScreenState extends ConsumerState<AnalysisResultsScreen> {
         ref.invalidate(currentResumeAnalysisProvider);
       }
     }
+  }
+
+  void _handleFixWithAi(BuildContext context, Resume resume, AtsRecommendation rec) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'AI Assistant: Applying fix for "${rec.title}"...',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: AppColors.primaryDark,
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'DISMISS',
+          textColor: AppColors.accentOrange,
+          onPressed: () {},
+        ),
+      ),
+    );
   }
 
   @override
@@ -68,7 +99,7 @@ class _AnalysisResultsScreenState extends ConsumerState<AnalysisResultsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Analysis Results'),
+        title: const Text('ATS Radar & Analysis'),
         actions: [
           if (resume != null)
             IconButton(
@@ -128,8 +159,16 @@ class _AnalysisResultsScreenState extends ConsumerState<AnalysisResultsScreen> {
     Resume resume,
     ResumeAnalysisReport report,
   ) {
+    final atsReport = ref.watch(atsScoreReportProvider(resume));
     final categories = report.categoryScores.entries.toList();
     final categorizedFeedback = FeedbackCategorizer.categorize(report);
+
+    // Filter recommendations by selected radar dimension if any
+    final recommendations = _selectedRadarDimension == null
+        ? atsReport.recommendations
+        : atsReport.recommendations
+            .where((r) => r.dimension == _selectedRadarDimension)
+            .toList();
 
     return SingleChildScrollView(
       padding: AppSpacing.screenPadding,
@@ -144,11 +183,114 @@ class _AnalysisResultsScreenState extends ConsumerState<AnalysisResultsScreen> {
           _buildScoreOverviewCard(report),
           const SizedBox(height: AppSpacing.lg),
 
-          // 3. Historical Score Evolution & Trend Card
+          // 3. RSM-03: Visual ATS 4-Axis Radar Chart Widget
+          Semantics(
+            header: true,
+            label: 'ATS 4-Axis Radar Chart Section',
+            child: AtsRadarChart(
+              report: atsReport,
+              selectedDimension: _selectedRadarDimension,
+              onDimensionSelected: (dimension) {
+                setState(() {
+                  _selectedRadarDimension = dimension;
+                });
+              },
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+
+          // 4. RSM-03: Actionable Recommendation Breakdown Cards
+          Semantics(
+            header: true,
+            label: 'Actionable ATS Recommendations Header. ${recommendations.length} items available.',
+            child: Row(
+              children: [
+                Icon(
+                  Icons.auto_fix_high_rounded,
+                  color: AnalysisA11y.purpleText(context),
+                  size: 22,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    _selectedRadarDimension != null
+                        ? '${_selectedRadarDimension!.displayName} Recommendations'
+                        : 'Actionable Recommendations',
+                    style: AppTypography.titleLarge.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                if (_selectedRadarDimension != null)
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedRadarDimension = null;
+                      });
+                    },
+                    child: const Text('Show All'),
+                  )
+                else
+                  Text(
+                    '${recommendations.length} items',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AnalysisA11y.textSecondary(context),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          if (recommendations.isEmpty)
+            AppCard(
+              color: AppColors.surfaceLight,
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.check_circle_outline_rounded,
+                    color: AnalysisA11y.successText(context),
+                    size: 28,
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
+                      _selectedRadarDimension != null
+                          ? 'Great job! No recommendations detected for ${_selectedRadarDimension!.displayName}.'
+                          : 'Outstanding! Your resume meets high ATS standards across all four dimensions.',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: recommendations.length,
+              separatorBuilder: (c, i) => const SizedBox(height: AppSpacing.sm),
+              itemBuilder: (context, index) {
+                final rec = recommendations[index];
+                return AtsRecommendationCard(
+                  recommendation: rec,
+                  initialExpanded: index == 0,
+                  onFixWithAi: (r) => _handleFixWithAi(context, resume, r),
+                );
+              },
+            ),
+
+          const SizedBox(height: AppSpacing.xl),
+
+          // 5. Historical Score Evolution & Trend Card
           ScoreEvolutionCard(report: report),
           const SizedBox(height: AppSpacing.xl),
 
-          // 4. Section Breakdown
+          // 6. Section Breakdown
           Semantics(
             header: true,
             label: 'Section Breakdown Header. ${categories.length} sections analyzed.',
@@ -196,7 +338,7 @@ class _AnalysisResultsScreenState extends ConsumerState<AnalysisResultsScreen> {
 
           const SizedBox(height: AppSpacing.xl),
 
-          // 5. Categorized Feedback Accordions (Formatting, Content Quality, Keywords)
+          // 7. Categorized Feedback Accordions
           Semantics(
             header: true,
             label: 'Categorized Feedback Header. ${categorizedFeedback.length} categories available.',
@@ -232,76 +374,6 @@ class _AnalysisResultsScreenState extends ConsumerState<AnalysisResultsScreen> {
               );
             },
           ),
-
-          const SizedBox(height: AppSpacing.xl),
-
-          // 6. Actionable Suggestions
-          Semantics(
-            header: true,
-            label: 'Actionable Suggestions Header. ${report.suggestions.length} items available.',
-            child: Row(
-              children: [
-                Icon(
-                  Icons.lightbulb_outline_rounded,
-                  color: AnalysisA11y.purpleText(context),
-                  size: 22,
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    'Actionable Suggestions',
-                    style: AppTypography.titleLarge.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Text(
-                  '${report.suggestions.length} items',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AnalysisA11y.textSecondary(context),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          if (report.suggestions.isEmpty)
-            AppCard(
-              color: AppColors.surfaceLight,
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.check_circle_outline_rounded,
-                    color: AnalysisA11y.successText(context),
-                    size: 28,
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Text(
-                      'Great job! No critical improvements needed for this resume.',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: report.suggestions.length,
-              separatorBuilder: (c, i) =>
-                  const SizedBox(height: AppSpacing.sm),
-              itemBuilder: (context, index) {
-                return SuggestionChipWidget(
-                  suggestion: report.suggestions[index],
-                );
-              },
-            ),
 
           const SizedBox(height: AppSpacing.xxl),
 
@@ -635,4 +707,3 @@ class _AnalysisResultsScreenState extends ConsumerState<AnalysisResultsScreen> {
     );
   }
 }
-
