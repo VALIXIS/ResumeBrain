@@ -1,7 +1,9 @@
+import '../implementations/academic_clean_template.dart';
 import '../implementations/academic_cv_template.dart';
 import '../implementations/creative_professional_template.dart';
 import '../implementations/executive_minimal_template.dart';
 import '../implementations/modern_classic_template.dart';
+import '../implementations/tech_modern_template.dart';
 import '../implementations/tech_specialist_template.dart';
 import '../models/resume_template.dart';
 
@@ -9,9 +11,11 @@ class TemplateRegistry {
   static final List<ResumeTemplate> _templates = [
     ModernClassicTemplate(),
     ExecutiveMinimalTemplate(),
-    CreativeProfessionalTemplate(),
+    TechModernTemplate(),
+    AcademicCleanTemplate(),
     TechSpecialistTemplate(),
     AcademicCvTemplate(),
+    CreativeProfessionalTemplate(),
   ];
 
   static List<ResumeTemplate> get allTemplates {
