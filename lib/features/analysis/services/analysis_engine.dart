@@ -1,5 +1,6 @@
 import '../../../data/models/resume_models.dart';
 import '../models/resume_analysis_report.dart';
+import 'ats_engine.dart';
 
 /// Contract/interface defining the operations for resume ATS analysis.
 abstract class AnalysisEngine {
@@ -7,76 +8,46 @@ abstract class AnalysisEngine {
   Future<ResumeAnalysisReport> analyze(Resume resume);
 }
 
-/// A deterministic mock implementation of [AnalysisEngine] for testing
-/// and offline ATS score calculations.
+/// A deterministic implementation of [AnalysisEngine] using [AtsEngine]
+/// for offline, production-grade ATS score calculations.
 class MockAnalysisEngine implements AnalysisEngine {
+  final AtsEngine _atsEngine;
+
+  MockAnalysisEngine({AtsEngine? atsEngine})
+      : _atsEngine = atsEngine ?? AtsEngine();
+
   @override
   Future<ResumeAnalysisReport> analyze(Resume resume) async {
-    // Simulate minor processing latency (similar to parsing/local checks)
-    await Future.delayed(const Duration(milliseconds: 100));
+    // Simulate minor processing latency
+    await Future.delayed(const Duration(milliseconds: 50));
 
-    final suggestions = <String>[];
-    
+    final atsReport = _atsEngine.analyze(resume);
+
     // 1. Contact Info Section (Max 20)
     int contactScore = 0;
-    if (resume.personalInfo.email.trim().isNotEmpty) {
+    if (resume.personalInfo.email.trim().isNotEmpty) contactScore += 5;
+    if (resume.personalInfo.phone.trim().isNotEmpty) contactScore += 5;
+    if (resume.personalInfo.location.trim().isNotEmpty) contactScore += 5;
+    if (resume.personalInfo.website.trim().isNotEmpty || resume.socialLinks.isNotEmpty) {
       contactScore += 5;
-    } else {
-      suggestions.add('Add your email address so recruiters can contact you.');
     }
 
-    if (resume.personalInfo.phone.trim().isNotEmpty) {
-      contactScore += 5;
-    } else {
-      suggestions.add('Include a phone number for direct contact.');
-    }
-
-    if (resume.personalInfo.location.trim().isNotEmpty) {
-      contactScore += 5;
-    } else {
-      suggestions.add('Include your location (city and state/country) to show local/relocation availability.');
-    }
-
-    final hasWebsite = resume.personalInfo.website.trim().isNotEmpty;
-    final hasSocials = resume.socialLinks.isNotEmpty;
-    if (hasWebsite || hasSocials) {
-      contactScore += 5;
-    } else {
-      suggestions.add('Consider adding links to your LinkedIn profile, GitHub, or personal website.');
-    }
-
-    // 2. Professional Summary Section (Max 10)
+    // 2. Summary Section (Max 10)
     int summaryScore = 0;
     final summaryText = resume.summary.summaryText.trim();
     if (summaryText.isNotEmpty) {
       summaryScore += 5;
-      if (summaryText.length > 50) {
-        summaryScore += 5;
-      } else {
-        suggestions.add('Expand your professional summary to at least 50 characters to better describe your background.');
-      }
-    } else {
-      suggestions.add('Create a professional summary to quickly highlight your value proposition.');
+      if (summaryText.length > 50) summaryScore += 5;
     }
 
     // 3. Work Experience Section (Max 25)
     int experienceScore = 0;
     if (resume.experiences.isNotEmpty) {
       experienceScore += 10;
-      if (resume.experiences.length >= 2) {
-        experienceScore += 10;
-      } else {
-        suggestions.add('Add more of your professional history to demonstrate career progression.');
-      }
-
-      final hasDetailedDesc = resume.experiences.any((e) => e.description.trim().length > 100);
-      if (hasDetailedDesc) {
+      if (resume.experiences.length >= 2) experienceScore += 10;
+      if (resume.experiences.any((e) => e.description.trim().length > 100)) {
         experienceScore += 5;
-      } else {
-        suggestions.add('Add more detail to your work experience descriptions (aim for >100 characters in descriptions, using action verbs and quantifying achievements).');
       }
-    } else {
-      suggestions.add('Add your work experiences to detail your career history.');
     }
 
     // 4. Skills Section (Max 15)
@@ -87,42 +58,20 @@ class MockAnalysisEngine implements AnalysisEngine {
         skillsScore += 15;
       } else if (skillCount >= 4) {
         skillsScore += 10;
-        suggestions.add('Add more relevant skills to ensure you cover primary keywords for your target role.');
       } else {
         skillsScore += 5;
-        suggestions.add('Expand your skills section (aim for 8+ skills) to rank better in ATS keyword matching.');
       }
-    } else {
-      suggestions.add('Include a list of key skills relevant to your target jobs.');
     }
 
     // 5. Education Section (Max 15)
     int educationScore = 0;
-    if (resume.educationList.isNotEmpty) {
-      educationScore += 15;
-    } else {
-      suggestions.add('Add your educational background to the resume.');
-    }
+    if (resume.educationList.isNotEmpty) educationScore += 15;
 
-    // 6. Other/Additional Sections: Projects, Certifications, Languages (Max 15)
+    // 6. Other/Additional Section (Max 15)
     int otherScore = 0;
-    if (resume.projects.isNotEmpty) {
-      otherScore += 5;
-    } else {
-      suggestions.add('Include projects to demonstrate hands-on experience and application of your skills.');
-    }
-
-    if (resume.certifications.isNotEmpty) {
-      otherScore += 5;
-    } else {
-      suggestions.add('List any relevant professional certifications to strengthen your credentials.');
-    }
-
-    if (resume.languages.isNotEmpty) {
-      otherScore += 5;
-    } else {
-      suggestions.add('Add languages you speak, indicating your proficiency level.');
-    }
+    if (resume.projects.isNotEmpty) otherScore += 5;
+    if (resume.certifications.isNotEmpty) otherScore += 5;
+    if (resume.languages.isNotEmpty) otherScore += 5;
 
     final overallScore = contactScore +
         summaryScore +
@@ -131,8 +80,14 @@ class MockAnalysisEngine implements AnalysisEngine {
         educationScore +
         otherScore;
 
-    // Construct normalized category scores (0-100)
-    final categoryScores = {
+    final categoryScores = <String, int>{
+      // Four core ATS dimensions for Radar Chart & RSM-03
+      AtsDimension.impactVerbs.key: atsReport.impactVerbsScore,
+      AtsDimension.formatting.key: atsReport.formattingScore,
+      AtsDimension.contactCompleteness.key: atsReport.contactCompletenessScore,
+      AtsDimension.keywordDensity.key: atsReport.keywordDensityScore,
+
+      // Section breakdown category scores
       'contactInfo': ((contactScore / 20) * 100).round(),
       'professionalSummary': ((summaryScore / 10) * 100).round(),
       'workExperience': ((experienceScore / 25) * 100).round(),
@@ -141,12 +96,19 @@ class MockAnalysisEngine implements AnalysisEngine {
       'additional': ((otherScore / 15) * 100).round(),
     };
 
+    final suggestions = atsReport.recommendations.map((r) => r.description).toList();
+
     return ResumeAnalysisReport(
       resumeId: resume.id,
-      overallScore: overallScore,
+      overallScore: overallScore.clamp(0, 100),
       categoryScores: categoryScores,
       suggestions: suggestions,
       timestamp: DateTime.now(),
     );
+  }
+
+  /// Direct access to full [AtsScoreReport] for ATS radar and recommendations.
+  AtsScoreReport analyzeAts(Resume resume) {
+    return _atsEngine.analyze(resume);
   }
 }

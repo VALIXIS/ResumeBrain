@@ -8,10 +8,23 @@ import '../models/score_evolution.dart';
 import '../services/ai_analysis_adapter.dart';
 import '../services/analysis_engine.dart';
 import '../services/analysis_history_service.dart';
+import '../services/ats_engine.dart';
+
+/// Provider exposing the standalone rule-based [AtsEngine].
+final atsEngineProvider = Provider<AtsEngine>((ref) {
+  return AtsEngine();
+});
+
+/// Synchronous provider computing the full 4-axis [AtsScoreReport] for a given [Resume].
+final atsScoreReportProvider = Provider.family<AtsScoreReport, Resume>((ref, resume) {
+  final engine = ref.watch(atsEngineProvider);
+  return engine.analyze(resume);
+});
 
 /// Provider exposing the deterministic [AnalysisEngine] fallback instance.
 final analysisEngineProvider = Provider<AnalysisEngine>((ref) {
-  return MockAnalysisEngine();
+  final atsEngine = ref.watch(atsEngineProvider);
+  return MockAnalysisEngine(atsEngine: atsEngine);
 });
 
 /// Provider exposing the [AnalysisHistoryService] for persisting score history.
