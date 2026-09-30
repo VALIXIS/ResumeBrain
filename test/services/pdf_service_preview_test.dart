@@ -79,7 +79,7 @@ void main() {
 
     test('3. Template Regression Test: All registered templates generate valid non-empty PDFs', () async {
       final templates = TemplateRegistry.allTemplates;
-      expect(templates.length, equals(5));
+      expect(templates.length, equals(7));
 
       for (final template in templates) {
         final pdfDoc = await template.generatePdf(sampleResume, PdfPageFormat.a4);

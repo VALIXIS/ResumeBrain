@@ -70,12 +70,14 @@ void main() {
       'TemplateRegistry returns all templates including Academic CV',
       () {
         final templates = TemplateRegistry.allTemplates;
-        expect(templates.length, 5);
+        expect(templates.length, 7);
         expect(
           templates.map((t) => t.id),
           containsAll([
             'modern_classic',
             'executive_minimal',
+            'tech_modern',
+            'academic_clean',
             'creative_professional',
             'tech_specialist',
             'academic_cv',
