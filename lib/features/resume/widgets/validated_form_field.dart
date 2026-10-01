@@ -116,6 +116,28 @@ class _ValidatedFormFieldState extends State<ValidatedFormField> {
 
   @override
   Widget build(BuildContext context) {
+    final currentText = widget.controller.text;
+    final String? rawErrorText = widget.validator != null ? widget.validator!(currentText) : null;
+    final bool hasText = currentText.trim().isNotEmpty;
+    final bool isValid = hasText && rawErrorText == null;
+    final bool hasError = rawErrorText != null && (hasText || _effectiveFocusNode.hasFocus);
+
+    // Build humanized validation icon for suffix slot
+    Widget? validationIcon = widget.suffixIcon;
+    if (validationIcon == null) {
+      if (isValid) {
+        validationIcon = const Padding(
+          padding: EdgeInsets.only(right: 12),
+          child: Icon(Icons.check_circle_rounded, color: AppColors.accentTeal, size: 20),
+        );
+      } else if (hasError) {
+        validationIcon = const Padding(
+          padding: EdgeInsets.only(right: 12),
+          child: Icon(Icons.error_outline_rounded, color: AppColors.accentRed, size: 20),
+        );
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -130,7 +152,7 @@ class _ValidatedFormFieldState extends State<ValidatedFormField> {
                       child: Text(
                         widget.label,
                         style: AppTypography.labelLarge.copyWith(
-                          color: AppColors.textPrimary,
+                          color: _effectiveFocusNode.hasFocus ? AppColors.primary : AppColors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -149,18 +171,39 @@ class _ValidatedFormFieldState extends State<ValidatedFormField> {
                   ],
                 ),
               ),
-              if (widget.maxLength != null) ...[
-                const SizedBox(width: 8),
-                Text(
-                  '$_charCount / ${widget.maxLength}',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: _charCount > widget.maxLength!
-                        ? AppColors.accentRed
-                        : AppColors.textMuted,
-                    fontSize: 11,
+              const SizedBox(width: 8),
+              // Real-time Character Counter Pill Badge
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: widget.maxLength != null && _charCount > widget.maxLength!
+                      ? AppColors.accentRed.withValues(alpha: 0.15)
+                      : _effectiveFocusNode.hasFocus
+                          ? AppColors.primary.withValues(alpha: 0.12)
+                          : AppColors.surfaceBorder.withValues(alpha: 0.5),
+                  borderRadius: AppRadius.borderSm,
+                  border: Border.all(
+                    color: _effectiveFocusNode.hasFocus
+                        ? AppColors.primary.withValues(alpha: 0.3)
+                        : Colors.transparent,
                   ),
                 ),
-              ],
+                child: Text(
+                  widget.maxLength != null
+                      ? '$_charCount / ${widget.maxLength}'
+                      : '$_charCount chars',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: widget.maxLength != null && _charCount > widget.maxLength!
+                        ? AppColors.accentRed
+                        : _effectiveFocusNode.hasFocus
+                            ? AppColors.primary
+                            : AppColors.textMuted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -186,9 +229,12 @@ class _ValidatedFormFieldState extends State<ValidatedFormField> {
             hintText: widget.hint,
             hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textMuted),
             prefixIcon: widget.prefixIcon,
-            suffixIcon: widget.suffixIcon,
+            suffixIcon: validationIcon,
+            suffixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
             filled: true,
-            fillColor: AppColors.surfaceLight,
+            fillColor: _effectiveFocusNode.hasFocus
+                ? AppColors.surfaceLight
+                : AppColors.surfaceLight.withValues(alpha: 0.7),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 14,
@@ -199,7 +245,11 @@ class _ValidatedFormFieldState extends State<ValidatedFormField> {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: AppRadius.borderMd,
-              borderSide: const BorderSide(color: AppColors.surfaceBorder),
+              borderSide: BorderSide(
+                color: isValid
+                    ? AppColors.accentTeal.withValues(alpha: 0.5)
+                    : AppColors.surfaceBorder,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: AppRadius.borderMd,
@@ -216,8 +266,9 @@ class _ValidatedFormFieldState extends State<ValidatedFormField> {
             errorStyle: AppTypography.bodySmall.copyWith(
               color: AppColors.accentRed,
               fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
-            counterText: '', // Hide default counter text since we render a custom header counter
+            counterText: '', // Custom header counter rendered above
           ),
         ),
       ],
