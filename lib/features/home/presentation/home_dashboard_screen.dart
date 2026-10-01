@@ -15,6 +15,7 @@ import '../../../core/widgets/state_widgets.dart';
 import '../../../data/models/resume_models.dart';
 import '../../ai/presentation/coming_soon_screen.dart';
 import '../../ai/presentation/ai_settings_screen.dart';
+import '../../ai/screens/cover_letter_generator_screen.dart';
 import '../../resume/presentation/live_resume_tailor_screen.dart';
 import '../../onboarding/presentation/onboarding_screen.dart';
 import '../../analysis/presentation/analysis_results_screen.dart';
@@ -370,6 +371,20 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
             Navigator.push(
               context,
               SmoothPageRoute(page: const LiveResumeTailorScreen()),
+            );
+          },
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _buildAiFeatureCard(
+          context,
+          title: 'AI Cover Letter & LinkedIn Outreach',
+          description: 'Personalized cover letters (3 tones) & <=300 char recruiter DMs with PDF export.',
+          icon: Icons.mark_email_read_outlined,
+          accentColor: AppColors.secondary,
+          onTap: () {
+            Navigator.push(
+              context,
+              SmoothPageRoute(page: const CoverLetterGeneratorScreen()),
             );
           },
         ),
