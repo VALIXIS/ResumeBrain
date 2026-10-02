@@ -15,6 +15,7 @@ import '../../../core/widgets/state_widgets.dart';
 import '../../../data/models/resume_models.dart';
 import '../../ai/presentation/coming_soon_screen.dart';
 import '../../ai/presentation/ai_settings_screen.dart';
+import '../../ai/screens/cover_letter_generator_screen.dart';
 import '../../resume/presentation/live_resume_tailor_screen.dart';
 import '../../resume/screens/translate_resume_screen.dart';
 import '../../onboarding/presentation/onboarding_screen.dart';
@@ -325,7 +326,32 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
             separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
             itemBuilder: (context, index) {
               final resume = resumes[index];
-              return _buildResumeCard(context, ref, resume);
+              return Dismissible(
+                key: ValueKey(resume.id),
+                direction: DismissDirection.endToStart,
+                confirmDismiss: (direction) async {
+                  _confirmDelete(context, ref, resume);
+                  return false;
+                },
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentRed.withValues(alpha: 0.15),
+                    borderRadius: AppRadius.borderMd,
+                    border: Border.all(color: AppColors.accentRed.withValues(alpha: 0.3)),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text('Delete Resume', style: TextStyle(color: AppColors.accentRed, fontWeight: FontWeight.bold)),
+                      SizedBox(width: 8),
+                      Icon(Icons.delete_sweep_rounded, color: AppColors.accentRed, size: 24),
+                    ],
+                  ),
+                ),
+                child: _buildResumeCard(context, ref, resume),
+              );
             },
           ),
       ],
@@ -391,6 +417,20 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
         const SizedBox(height: AppSpacing.md),
         _buildAiFeatureCard(
           context,
+          title: 'AI Cover Letter & LinkedIn Outreach',
+          description: 'Personalized cover letters (3 tones) & <=300 char recruiter DMs with PDF export.',
+          icon: Icons.mark_email_read_outlined,
+          accentColor: AppColors.secondary,
+          onTap: () {
+            Navigator.push(
+              context,
+              SmoothPageRoute(page: const CoverLetterGeneratorScreen()),
+            );
+          },
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _buildAiFeatureCard(
+          context,
           title: 'Product Tour & Feature Guide',
           description: 'Replay interactive 3-step feature walkthrough.',
           icon: Icons.explore_outlined,
@@ -407,9 +447,8 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
   }
 
   Widget _buildResumeCard(BuildContext context, WidgetRef ref, Resume resume) {
-    final dateFormat = DateFormat('MMM d, yyyy');
-
-    return AppCard(
+    return _AnimatedResumeCardItem(
+      resume: resume,
       onTap: () {
         ref.read(currentResumeProvider.notifier).setResume(resume);
         Navigator.push(
@@ -417,122 +456,45 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
           SmoothPageRoute(page: const ResumeEditorScreen()),
         );
       },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      resume.title.isNotEmpty ? resume.title : 'Untitled Resume',
-                      style: AppTypography.titleMedium,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (resume.personalInfo.fullName.isNotEmpty)
-                      Text(
-                        '${resume.personalInfo.fullName} • ${resume.personalInfo.jobTitle}',
-                        style: AppTypography.bodySmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                  ],
-                ),
-              ),
-              ConstrainedBox(
-                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-                child: PopupMenuButton<String>(
-                  tooltip: 'Options for ${resume.title}',
-                  icon: const Icon(Icons.more_vert_rounded, color: AppColors.textMuted),
-                  color: AppColors.surfaceLight,
-                  onSelected: (value) async {
-                    if (value == 'edit') {
-                      ref.read(currentResumeProvider.notifier).setResume(resume);
-                      Navigator.push(
-                        context,
-                        SmoothPageRoute(page: const ResumeEditorScreen()),
-                      );
-                    } else if (value == 'preview') {
-                      ref.read(currentResumeProvider.notifier).setResume(resume);
-                      Navigator.push(
-                        context,
-                        SmoothPageRoute(page: const ResumePreviewScreen()),
-                      );
-                    } else if (value == 'duplicate') {
-                      final duplicateResume = Resume(
-                        id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        title: '${resume.title} (Copy)',
-                        templateId: resume.templateId,
-                        personalInfo: resume.personalInfo,
-                        summary: resume.summary,
-                        experiences: resume.experiences,
-                        educationList: resume.educationList,
-                        projects: resume.projects,
-                        skills: resume.skills,
-                        certifications: resume.certifications,
-                        languages: resume.languages,
-                        customSections: resume.customSections,
-                        socialLinks: resume.socialLinks,
-                        createdAt: DateTime.now(),
-                        updatedAt: DateTime.now(),
-                      );
-                      await ref.read(resumesListProvider.notifier).saveResume(duplicateResume);
-                      if (context.mounted) {
-                        AppSnackBar.showSuccess(context, 'Resume duplicated successfully');
-                      }
-                    } else if (value == 'delete') {
-                      _confirmDelete(context, ref, resume);
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: Row(children: [Icon(Icons.edit_outlined, size: 18), SizedBox(width: 8), Text('Edit')]),
-                    ),
-                    const PopupMenuItem(
-                      value: 'preview',
-                      child: Row(children: [Icon(Icons.visibility_outlined, size: 18), SizedBox(width: 8), Text('Preview & Export PDF')]),
-                    ),
-                    const PopupMenuItem(
-                      value: 'duplicate',
-                      child: Row(children: [Icon(Icons.copy_outlined, size: 18), SizedBox(width: 8), Text('Duplicate')]),
-                    ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(children: [Icon(Icons.delete_outline, size: 18, color: AppColors.accentRed), SizedBox(width: 8), Text('Delete', style: TextStyle(color: AppColors.accentRed))]),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
-                  borderRadius: AppRadius.borderSm,
-                ),
-                child: Text(
-                  resume.templateId == 'modern_classic' ? 'Modern Classic' : 'Executive Minimal',
-                  style: AppTypography.labelSmall.copyWith(color: AppColors.primary),
-                ),
-              ),
-              const Spacer(),
-              Text(
-                'Updated ${dateFormat.format(resume.updatedAt)}',
-                style: AppTypography.bodySmall,
-              ),
-            ],
-          ),
-        ],
-      ),
+      onOptionSelected: (value) async {
+        if (value == 'edit') {
+          ref.read(currentResumeProvider.notifier).setResume(resume);
+          Navigator.push(
+            context,
+            SmoothPageRoute(page: const ResumeEditorScreen()),
+          );
+        } else if (value == 'preview') {
+          ref.read(currentResumeProvider.notifier).setResume(resume);
+          Navigator.push(
+            context,
+            SmoothPageRoute(page: const ResumePreviewScreen()),
+          );
+        } else if (value == 'duplicate') {
+          final duplicateResume = Resume(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            title: '${resume.title} (Copy)',
+            templateId: resume.templateId,
+            personalInfo: resume.personalInfo,
+            summary: resume.summary,
+            experiences: resume.experiences,
+            educationList: resume.educationList,
+            projects: resume.projects,
+            skills: resume.skills,
+            certifications: resume.certifications,
+            languages: resume.languages,
+            customSections: resume.customSections,
+            socialLinks: resume.socialLinks,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+          await ref.read(resumesListProvider.notifier).saveResume(duplicateResume);
+          if (context.mounted) {
+            AppSnackBar.showSuccess(context, 'Resume duplicated successfully');
+          }
+        } else if (value == 'delete') {
+          _confirmDelete(context, ref, resume);
+        }
+      },
     );
   }
 
@@ -808,6 +770,148 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
             onPressed: () => Navigator.of(context).pop(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AnimatedResumeCardItem extends StatefulWidget {
+  final Resume resume;
+  final VoidCallback onTap;
+  final PopupMenuItemSelected<String> onOptionSelected;
+
+  const _AnimatedResumeCardItem({
+    required this.resume,
+    required this.onTap,
+    required this.onOptionSelected,
+  });
+
+  @override
+  State<_AnimatedResumeCardItem> createState() => _AnimatedResumeCardItemState();
+}
+
+class _AnimatedResumeCardItemState extends State<_AnimatedResumeCardItem> {
+  bool _isHovered = false;
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormat = DateFormat('MMM d, yyyy');
+    final active = _isHovered || _isPressed;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.fastOutSlowIn,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: AppRadius.borderMd,
+        border: Border.all(
+          color: active ? AppColors.primary.withValues(alpha: 0.6) : AppColors.surfaceBorder,
+          width: active ? 1.5 : 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: active
+                ? AppColors.primary.withValues(alpha: 0.25)
+                : Colors.black.withValues(alpha: 0.03),
+            blurRadius: active ? 12 : 4,
+            offset: active ? const Offset(0, 4) : const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: AppRadius.borderMd,
+        child: InkWell(
+          borderRadius: AppRadius.borderMd,
+          onTap: widget.onTap,
+          onHighlightChanged: (h) => setState(() => _isPressed = h),
+          onHover: (h) => setState(() => _isHovered = h),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.resume.title.isNotEmpty ? widget.resume.title : 'Untitled Resume',
+                            style: AppTypography.titleMedium.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: active ? AppColors.primary : AppColors.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (widget.resume.personalInfo.fullName.isNotEmpty)
+                            Text(
+                              '${widget.resume.personalInfo.fullName} • ${widget.resume.personalInfo.jobTitle}',
+                              style: AppTypography.bodySmall,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
+                    ),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                      child: PopupMenuButton<String>(
+                        tooltip: 'Options for ${widget.resume.title}',
+                        icon: const Icon(Icons.more_vert_rounded, color: AppColors.textMuted),
+                        color: AppColors.surfaceLight,
+                        onSelected: widget.onOptionSelected,
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(children: [Icon(Icons.edit_outlined, size: 18), SizedBox(width: 8), Text('Edit')]),
+                          ),
+                          const PopupMenuItem(
+                            value: 'preview',
+                            child: Row(children: [Icon(Icons.visibility_outlined, size: 18), SizedBox(width: 8), Text('Preview & Export PDF')]),
+                          ),
+                          const PopupMenuItem(
+                            value: 'duplicate',
+                            child: Row(children: [Icon(Icons.copy_outlined, size: 18), SizedBox(width: 8), Text('Duplicate')]),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(children: [Icon(Icons.delete_outline, size: 18, color: AppColors.accentRed), SizedBox(width: 8), Text('Delete', style: TextStyle(color: AppColors.accentRed))]),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.15),
+                        borderRadius: AppRadius.borderSm,
+                      ),
+                      child: Text(
+                        widget.resume.templateId == 'modern_classic' ? 'Modern Classic' : 'Executive Minimal',
+                        style: AppTypography.labelSmall.copyWith(color: AppColors.primary),
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      'Updated ${dateFormat.format(widget.resume.updatedAt)}',
+                      style: AppTypography.bodySmall,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
