@@ -20,6 +20,7 @@ import '../widgets/resume_error_boundary.dart';
 import '../widgets/resume_validators.dart';
 import '../widgets/validated_form_field.dart';
 import 'section_editor_tab.dart';
+import '../screens/translate_resume_screen.dart';
 import '../../../core/widgets/security_settings_dialog.dart';
 
 class ResumeEditorScreen extends ConsumerStatefulWidget {
@@ -218,6 +219,18 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                   context,
                   MaterialPageRoute(
                     builder: (context) => const TemplateSelectorScreen(),
+                  ),
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.g_translate_rounded, color: AppColors.accentTeal),
+              tooltip: 'Translate Resume',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TranslateResumeScreen(),
                   ),
                 );
               },

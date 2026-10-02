@@ -17,6 +17,7 @@ import '../../ai/presentation/coming_soon_screen.dart';
 import '../../ai/presentation/ai_settings_screen.dart';
 import '../../ai/screens/cover_letter_generator_screen.dart';
 import '../../resume/presentation/live_resume_tailor_screen.dart';
+import '../../resume/screens/translate_resume_screen.dart';
 import '../../onboarding/presentation/onboarding_screen.dart';
 import '../../analysis/presentation/analysis_results_screen.dart';
 import '../../job_matching/presentation/job_description_input_screen.dart';
@@ -396,6 +397,20 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
             Navigator.push(
               context,
               SmoothPageRoute(page: const LiveResumeTailorScreen()),
+            );
+          },
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _buildAiFeatureCard(
+          context,
+          title: 'Multi-Language Resume Translation',
+          description: 'Translate full resume to Spanish, German, French & Japanese with 100% token preservation.',
+          icon: Icons.g_translate_rounded,
+          accentColor: AppColors.accentTeal,
+          onTap: () {
+            Navigator.push(
+              context,
+              SmoothPageRoute(page: const TranslateResumeScreen()),
             );
           },
         ),
