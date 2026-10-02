@@ -23,6 +23,7 @@ import '../../analysis/presentation/analysis_results_screen.dart';
 import '../../job_matching/presentation/job_description_input_screen.dart';
 import '../../pdf/presentation/resume_preview_screen.dart';
 import '../../resume/presentation/resume_editor_screen.dart';
+import '../../resume/screens/import_resume_screen.dart';
 import '../../templates/presentation/template_selector_screen.dart';
 
 import '../../../core/widgets/theme_toggle_widget.dart';
@@ -288,11 +289,31 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
             style: AppTypography.bodyMedium,
           ),
           const SizedBox(height: AppSpacing.md),
-          AppButton(
-            text: 'Create New Resume',
-            icon: Icons.add_rounded,
-            variant: AppButtonVariant.primary,
-            onPressed: () => _createNewResume(context, ref),
+          Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  text: 'Create Resume',
+                  icon: Icons.add_rounded,
+                  variant: AppButtonVariant.primary,
+                  onPressed: () => _createNewResume(context, ref),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: AppButton(
+                  text: 'Import PDF',
+                  icon: Icons.upload_file_rounded,
+                  variant: AppButtonVariant.secondary,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      SmoothPageRoute(page: const ImportResumeScreen()),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -367,6 +388,20 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
         Text(
           'Next-generation career tools powered by AI.',
           style: AppTypography.bodySmall,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _buildAiFeatureCard(
+          context,
+          title: 'Resume Importer & PDF Parser',
+          description: 'Extract text, sections, skills, and work history from PDF resumes in <5s.',
+          icon: Icons.upload_file_rounded,
+          accentColor: AppColors.accentRed,
+          onTap: () {
+            Navigator.push(
+              context,
+              SmoothPageRoute(page: const ImportResumeScreen()),
+            );
+          },
         ),
         const SizedBox(height: AppSpacing.md),
         _buildAiFeatureCard(
