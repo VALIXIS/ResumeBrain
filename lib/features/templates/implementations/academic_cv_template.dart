@@ -30,7 +30,7 @@ class AcademicCvTemplate implements ResumeTemplate {
     final pdf = pw.Document(theme: config?.themeData);
 
     final primaryColor = PdfColor.fromHex('#1B2A4A'); // Deep Navy Blue
-    final accentColor = config?.colorPalette.pdfColor ?? PdfColor.fromHex('#800020'); // Burgundy Accent
+    final accentColor = config?.resolvedPdfColor ?? PdfColor.fromHex('#800020'); // Burgundy Accent
     final textColor = PdfColor.fromHex('#1E293B'); // Slate 800
     final mutedTextColor = PdfColor.fromHex('#64748B'); // Slate 500
     final dividerColor = PdfColor.fromHex('#CBD5E1'); // Slate 300
@@ -42,7 +42,7 @@ class AcademicCvTemplate implements ResumeTemplate {
     pdf.addPage(
       pw.MultiPage(
         pageFormat: pageFormat,
-        margin: config?.marginOption.insets ?? const pw.EdgeInsets.all(36),
+        margin: config?.insets ?? const pw.EdgeInsets.all(36),
         header: (pw.Context context) {
           if (context.pageNumber == 1) {
             return pw.SizedBox();

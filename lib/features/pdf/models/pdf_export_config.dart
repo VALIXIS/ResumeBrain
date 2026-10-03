@@ -147,22 +147,49 @@ class PdfExportConfig {
   final PdfMarginOption marginOption;
   final PdfColorPalette colorPalette;
   final PdfFontFamily fontFamily;
+  final double? customMargin;
+  final double lineHeight;
+  final Color? customPrimaryColor;
 
   const PdfExportConfig({
     this.marginOption = PdfMarginOption.normal,
     this.colorPalette = PdfColorPalette.templateDefault,
     this.fontFamily = PdfFontFamily.helvetica,
+    this.customMargin,
+    this.lineHeight = 1.35,
+    this.customPrimaryColor,
   });
+
+  pw.EdgeInsets get insets {
+    if (customMargin != null) {
+      return pw.EdgeInsets.all(customMargin!);
+    }
+    return marginOption.insets;
+  }
+
+  PdfColor? get resolvedPdfColor {
+    if (customPrimaryColor != null) {
+      final c = customPrimaryColor!;
+      return PdfColor(c.r, c.g, c.b, c.a);
+    }
+    return colorPalette.pdfColor;
+  }
 
   PdfExportConfig copyWith({
     PdfMarginOption? marginOption,
     PdfColorPalette? colorPalette,
     PdfFontFamily? fontFamily,
+    double? customMargin,
+    double? lineHeight,
+    Color? customPrimaryColor,
   }) {
     return PdfExportConfig(
       marginOption: marginOption ?? this.marginOption,
       colorPalette: colorPalette ?? this.colorPalette,
       fontFamily: fontFamily ?? this.fontFamily,
+      customMargin: customMargin ?? this.customMargin,
+      lineHeight: lineHeight ?? this.lineHeight,
+      customPrimaryColor: customPrimaryColor ?? this.customPrimaryColor,
     );
   }
 

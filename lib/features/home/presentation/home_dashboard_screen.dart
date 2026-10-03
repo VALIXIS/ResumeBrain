@@ -25,6 +25,7 @@ import '../../job_matching/presentation/job_description_input_screen.dart';
 import '../../pdf/presentation/resume_preview_screen.dart';
 import '../../resume/presentation/resume_editor_screen.dart';
 import '../../resume/screens/import_resume_screen.dart';
+import '../../resume/screens/live_resume_editor_screen.dart';
 import '../../templates/presentation/template_selector_screen.dart';
 
 import '../../../core/widgets/theme_toggle_widget.dart';
@@ -439,6 +440,25 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
         const SizedBox(height: AppSpacing.md),
         _buildAiFeatureCard(
           context,
+          title: '3D Live Split-Screen Resume Studio',
+          description: 'Dual-pane live editor with instant vector PDF re-rendering and 3D floating style controls.',
+          icon: Icons.view_in_ar_rounded,
+          accentColor: AppColors.secondary,
+          onTap: () {
+            final current = ref.read(currentResumeProvider);
+            final resumesList = ref.read(resumesListProvider).value ?? [];
+            if (current == null && resumesList.isNotEmpty) {
+              ref.read(currentResumeProvider.notifier).setResume(resumesList.first);
+            }
+            Navigator.push(
+              context,
+              SmoothPageRoute(page: const LiveResumeEditorScreen()),
+            );
+          },
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _buildAiFeatureCard(
+          context,
           title: 'Multi-Language Resume Translation',
           description: 'Translate full resume to Spanish, German, French & Japanese with 100% token preservation.',
           icon: Icons.g_translate_rounded,
@@ -512,6 +532,12 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
           Navigator.push(
             context,
             SmoothPageRoute(page: const ResumeEditorScreen()),
+          );
+        } else if (value == 'live_studio') {
+          ref.read(currentResumeProvider.notifier).setResume(resume);
+          Navigator.push(
+            context,
+            SmoothPageRoute(page: const LiveResumeEditorScreen()),
           );
         } else if (value == 'preview') {
           ref.read(currentResumeProvider.notifier).setResume(resume);
@@ -919,6 +945,10 @@ class _AnimatedResumeCardItemState extends State<_AnimatedResumeCardItem> {
                           const PopupMenuItem(
                             value: 'edit',
                             child: Row(children: [Icon(Icons.edit_outlined, size: 18), SizedBox(width: 8), Text('Edit')]),
+                          ),
+                          const PopupMenuItem(
+                            value: 'live_studio',
+                            child: Row(children: [Icon(Icons.view_in_ar_rounded, size: 18, color: AppColors.secondary), SizedBox(width: 8), Text('3D Live Studio')]),
                           ),
                           const PopupMenuItem(
                             value: 'preview',

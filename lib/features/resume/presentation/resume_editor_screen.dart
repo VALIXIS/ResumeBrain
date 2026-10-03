@@ -21,6 +21,7 @@ import '../widgets/resume_validators.dart';
 import '../widgets/validated_form_field.dart';
 import 'section_editor_tab.dart';
 import '../screens/translate_resume_screen.dart';
+import '../screens/live_resume_editor_screen.dart';
 import '../../../core/widgets/security_settings_dialog.dart';
 
 class ResumeEditorScreen extends ConsumerStatefulWidget {
@@ -231,6 +232,18 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                   context,
                   MaterialPageRoute(
                     builder: (context) => const TranslateResumeScreen(),
+                  ),
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.view_in_ar_rounded, color: AppColors.secondary),
+              tooltip: '3D Live Studio',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LiveResumeEditorScreen(),
                   ),
                 );
               },

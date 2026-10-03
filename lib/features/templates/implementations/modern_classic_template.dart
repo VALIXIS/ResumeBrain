@@ -27,7 +27,7 @@ class ModernClassicTemplate implements ResumeTemplate {
     PdfExportConfig? config,
   }) async {
     final pdf = pw.Document(theme: config?.themeData);
-    final primaryColor = config?.colorPalette.pdfColor ?? PdfColor.fromHex('#2563EB'); // Royal Blue 600
+    final primaryColor = config?.resolvedPdfColor ?? PdfColor.fromHex('#2563EB'); // Royal Blue 600
     final nameColor = PdfColor.fromHex('#0F172A'); // Slate 900
     final textColor = PdfColor.fromHex('#1E293B'); // Slate 800
     final mutedTextColor = PdfColor.fromHex('#64748B'); // Slate 500
@@ -35,7 +35,7 @@ class ModernClassicTemplate implements ResumeTemplate {
     pdf.addPage(
       pw.MultiPage(
         pageFormat: pageFormat,
-        margin: config?.marginOption.insets ?? const pw.EdgeInsets.symmetric(horizontal: 36, vertical: 32),
+        margin: config?.insets ?? const pw.EdgeInsets.symmetric(horizontal: 36, vertical: 32),
         footer: (pw.Context context) {
           return pw.Container(
             alignment: pw.Alignment.centerRight,

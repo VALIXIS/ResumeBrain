@@ -41,7 +41,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
 
     final primaryColor = PdfColor.fromHex('#0F172A'); // Slate 900
     final accentColor =
-        config?.colorPalette.pdfColor ?? customAccentColor ?? PdfColor.fromHex('#0284C7'); // Tech Sky 600
+        config?.resolvedPdfColor ?? customAccentColor ?? PdfColor.fromHex('#0284C7'); // Tech Sky 600
     final secondaryAccent = PdfColor.fromHex('#2563EB'); // Royal Blue 600
     final textColor = PdfColor.fromHex('#1E293B'); // Slate 800
     final mutedTextColor = PdfColor.fromHex('#64748B'); // Slate 500
@@ -60,7 +60,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
     pdf.addPage(
       pw.MultiPage(
         pageFormat: pageFormat,
-        margin: config?.marginOption.insets ?? const pw.EdgeInsets.all(36),
+        margin: config?.insets ?? const pw.EdgeInsets.all(36),
         footer: (pw.Context context) {
           return pw.Container(
             alignment: pw.Alignment.centerRight,
