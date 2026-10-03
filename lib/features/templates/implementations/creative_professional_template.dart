@@ -33,7 +33,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
   }) async {
     final pdf = pw.Document(theme: config?.themeData);
 
-    final accentColor = config?.colorPalette.pdfColor ?? customAccentColor ?? PdfColor.fromHex('#0D9488'); // Rich Teal Accent
+    final accentColor = config?.resolvedPdfColor ?? customAccentColor ?? PdfColor.fromHex('#0D9488'); // Rich Teal Accent
     final primaryTextColor = PdfColor.fromHex('#0F172A'); // Slate 900
     final bodyTextColor = PdfColor.fromHex('#334155'); // Slate 700
     final mutedTextColor = PdfColor.fromHex('#64748B'); // Slate 500
@@ -42,7 +42,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
     pdf.addPage(
       pw.MultiPage(
         pageFormat: pageFormat,
-        margin: config?.marginOption.insets ?? const pw.EdgeInsets.all(32),
+        margin: config?.insets ?? const pw.EdgeInsets.all(32),
         footer: (pw.Context context) {
           return pw.Container(
             alignment: pw.Alignment.centerRight,

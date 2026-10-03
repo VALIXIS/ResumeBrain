@@ -8,7 +8,7 @@ import 'resume_ai_prompt_engine.dart';
 class SupabaseAIProvider implements AIProvider {
   final SupabaseClient? _client;
 
-  SupabaseAIProvider({SupabaseClient? client}) : _client = client;
+  SupabaseAIProvider({this._client});
 
   SupabaseClient? get _activeClient {
     if (_client != null) return _client;

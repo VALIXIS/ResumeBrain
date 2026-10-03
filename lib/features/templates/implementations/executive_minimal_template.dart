@@ -28,14 +28,14 @@ class ExecutiveMinimalTemplate implements ResumeTemplate {
   }) async {
     final pdf = pw.Document(theme: config?.themeData);
     final primaryColor = PdfColor.fromHex('#0F172A'); // Dark Navy
-    final accentColor = config?.colorPalette.pdfColor ?? PdfColor.fromHex('#2563EB'); // Royal Blue
+    final accentColor = config?.resolvedPdfColor ?? PdfColor.fromHex('#2563EB'); // Royal Blue
     final textColor = PdfColor.fromHex('#334155');
     final mutedTextColor = PdfColor.fromHex('#64748B');
 
     pdf.addPage(
       pw.MultiPage(
         pageFormat: pageFormat,
-        margin: config?.marginOption.insets ?? const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 36),
+        margin: config?.insets ?? const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 36),
         footer: (pw.Context context) {
           return pw.Container(
             alignment: pw.Alignment.centerRight,
