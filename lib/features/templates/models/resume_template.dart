@@ -16,3 +16,8 @@ abstract class ResumeTemplate {
     PdfExportConfig? config,
   });
 }
+
+/// Extension providing Executive template detection across all implementations
+extension ResumeTemplateExecutiveX on ResumeTemplate {
+  bool get isExecutive => id == 'executive_minimal' || id.contains('executive');
+}

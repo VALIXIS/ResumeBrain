@@ -15,6 +15,7 @@ import '../../../core/widgets/state_widgets.dart';
 import '../../../data/models/resume_models.dart';
 import '../../ai/presentation/coming_soon_screen.dart';
 import '../../ai/presentation/ai_settings_screen.dart';
+import '../../ai/presentation/ai_mock_interview_screen.dart';
 import '../../ai/screens/cover_letter_generator_screen.dart';
 import '../../resume/presentation/live_resume_tailor_screen.dart';
 import '../../resume/screens/translate_resume_screen.dart';
@@ -474,6 +475,20 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
             Navigator.push(
               context,
               SmoothPageRoute(page: const OnboardingScreen()),
+            );
+          },
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _buildAiFeatureCard(
+          context,
+          title: 'AI Mock Interview Coach',
+          description: 'Practice tailored interview questions with real-time AI scoring & rewarded token unlocks.',
+          icon: Icons.psychology_rounded,
+          accentColor: Colors.amber,
+          onTap: () {
+            Navigator.push(
+              context,
+              SmoothPageRoute(page: const AIMockInterviewScreen()),
             );
           },
         ),

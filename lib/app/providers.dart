@@ -13,6 +13,7 @@ import '../data/repositories/cloud_sync_adapter.dart';
 import '../data/repositories/supabase_cloud_sync_adapter.dart';
 import '../features/resume/services/encrypted_export_service.dart';
 import '../features/resume/services/resume_parser_service.dart';
+export '../features/monetization/services/ad_service.dart';
 
 // Security & Cloud Providers
 final resumeEncryptionServiceProvider = Provider<ResumeEncryptionService>((ref) {
