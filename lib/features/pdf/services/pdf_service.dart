@@ -7,6 +7,8 @@ import '../../../data/models/resume_models.dart';
 import '../../templates/services/template_registry.dart';
 import '../models/pdf_export_config.dart';
 
+import '../utils/pdf_text_sanitizer.dart';
+
 /// Production PDF Service handling PDF document compilation, file saving, and sharing.
 /// 
 /// **Day 7 Benchmark Performance Guarantees**:
@@ -19,9 +21,10 @@ class PdfService {
     PdfPageFormat pageFormat = PdfPageFormat.a4,
     PdfExportConfig? config,
   }) async {
-    final template = TemplateRegistry.getTemplateById(resume.templateId);
+    final sanitizedResume = PdfTextSanitizer.sanitizeResume(resume);
+    final template = TemplateRegistry.getTemplateById(sanitizedResume.templateId);
     final pdfDocument = await template.generatePdf(
-      resume,
+      sanitizedResume,
       pageFormat,
       config: config,
     );

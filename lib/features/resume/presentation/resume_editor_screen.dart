@@ -22,7 +22,6 @@ import '../widgets/validated_form_field.dart';
 import 'section_editor_tab.dart';
 import '../screens/translate_resume_screen.dart';
 import '../screens/live_resume_editor_screen.dart';
-import '../../../core/widgets/security_settings_dialog.dart';
 
 class ResumeEditorScreen extends ConsumerStatefulWidget {
   const ResumeEditorScreen({super.key});
@@ -109,28 +108,35 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
     // Sync text controllers when undo/redo or external mutations update the resume
     ref.listen<Resume?>(currentResumeProvider, (previous, next) {
       if (next != null) {
-        if (_titleCtrl.text != next.title) {
+        if (_titleCtrl.text != next.title && _titleCtrl.text.trim() != next.title.trim()) {
           _titleCtrl.text = next.title;
         }
-        if (_fullNameCtrl.text != next.personalInfo.fullName) {
+        if (_fullNameCtrl.text != next.personalInfo.fullName &&
+            _fullNameCtrl.text.trim() != next.personalInfo.fullName.trim()) {
           _fullNameCtrl.text = next.personalInfo.fullName;
         }
-        if (_jobTitleCtrl.text != next.personalInfo.jobTitle) {
+        if (_jobTitleCtrl.text != next.personalInfo.jobTitle &&
+            _jobTitleCtrl.text.trim() != next.personalInfo.jobTitle.trim()) {
           _jobTitleCtrl.text = next.personalInfo.jobTitle;
         }
-        if (_emailCtrl.text != next.personalInfo.email) {
+        if (_emailCtrl.text != next.personalInfo.email &&
+            _emailCtrl.text.trim() != next.personalInfo.email.trim()) {
           _emailCtrl.text = next.personalInfo.email;
         }
-        if (_phoneCtrl.text != next.personalInfo.phone) {
+        if (_phoneCtrl.text != next.personalInfo.phone &&
+            _phoneCtrl.text.trim() != next.personalInfo.phone.trim()) {
           _phoneCtrl.text = next.personalInfo.phone;
         }
-        if (_locationCtrl.text != next.personalInfo.location) {
+        if (_locationCtrl.text != next.personalInfo.location &&
+            _locationCtrl.text.trim() != next.personalInfo.location.trim()) {
           _locationCtrl.text = next.personalInfo.location;
         }
-        if (_websiteCtrl.text != next.personalInfo.website) {
+        if (_websiteCtrl.text != next.personalInfo.website &&
+            _websiteCtrl.text.trim() != next.personalInfo.website.trim()) {
           _websiteCtrl.text = next.personalInfo.website;
         }
-        if (_summaryCtrl.text != next.summary.summaryText) {
+        if (_summaryCtrl.text != next.summary.summaryText &&
+            _summaryCtrl.text.trim() != next.summary.summaryText.trim()) {
           _summaryCtrl.text = next.summary.summaryText;
         }
       }
@@ -213,18 +219,6 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               },
             ),
             IconButton(
-              icon: const Icon(Icons.style_outlined, color: AppColors.accentPurple),
-              tooltip: 'Templates',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const TemplateSelectorScreen(),
-                  ),
-                );
-              },
-            ),
-            IconButton(
               icon: const Icon(Icons.g_translate_rounded, color: AppColors.accentTeal),
               tooltip: 'Translate Resume',
               onPressed: () {
@@ -233,40 +227,6 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                   MaterialPageRoute(
                     builder: (context) => const TranslateResumeScreen(),
                   ),
-                );
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.view_in_ar_rounded, color: AppColors.secondary),
-              tooltip: '3D Live Studio',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const LiveResumeEditorScreen(),
-                  ),
-                );
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.picture_as_pdf_outlined, color: AppColors.primary),
-              tooltip: 'Preview PDF',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ResumePreviewScreen(),
-                  ),
-                );
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.shield_outlined, color: AppColors.primary),
-              tooltip: 'Security Settings',
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => const SecuritySettingsDialog(),
                 );
               },
             ),
@@ -332,15 +292,31 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                 height: 64,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 8),
-                  decoration: const BoxDecoration(
-                    color: AppColors.surface,
-                    border: Border(top: BorderSide(color: AppColors.surfaceBorder)),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
                   ),
                   child: Row(
                     children: [
                       Expanded(
                         child: AppButton(
-                          text: 'Select Template',
+                          text: '3D Studio',
+                          icon: Icons.view_in_ar_rounded,
+                          variant: AppButtonVariant.secondary,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LiveResumeEditorScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: AppButton(
+                          text: 'Template',
                           icon: Icons.palette_outlined,
                           variant: AppButtonVariant.secondary,
                           onPressed: () {
@@ -353,7 +329,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                           },
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.md),
+                      const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: AppButton(
                           text: 'Preview PDF',
@@ -488,12 +464,12 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
   void _savePersonalInfo() {
     _updateResumeWithHistory((r) => r.copyWith(
           personalInfo: PersonalInformation(
-            fullName: _fullNameCtrl.text.trim(),
-            jobTitle: _jobTitleCtrl.text.trim(),
-            email: _emailCtrl.text.trim(),
-            phone: _phoneCtrl.text.trim(),
-            location: _locationCtrl.text.trim(),
-            website: _websiteCtrl.text.trim(),
+            fullName: _fullNameCtrl.text,
+            jobTitle: _jobTitleCtrl.text,
+            email: _emailCtrl.text,
+            phone: _phoneCtrl.text,
+            location: _locationCtrl.text,
+            website: _websiteCtrl.text,
           ),
         ));
   }

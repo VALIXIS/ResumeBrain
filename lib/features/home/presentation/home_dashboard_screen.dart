@@ -14,7 +14,6 @@ import '../../../core/widgets/custom_card.dart';
 import '../../../core/widgets/state_widgets.dart';
 import '../../../data/models/resume_models.dart';
 import '../../ai/presentation/coming_soon_screen.dart';
-import '../../ai/presentation/ai_settings_screen.dart';
 import '../../ai/presentation/ai_mock_interview_screen.dart';
 import '../../ai/screens/cover_letter_generator_screen.dart';
 import '../../resume/presentation/live_resume_tailor_screen.dart';
@@ -24,9 +23,8 @@ import '../../analysis/presentation/analysis_results_screen.dart';
 import '../../job_matching/presentation/job_description_input_screen.dart';
 import '../../pdf/presentation/resume_preview_screen.dart';
 import '../../resume/presentation/resume_editor_screen.dart';
-import '../../resume/screens/import_resume_screen.dart';
-import '../../resume/screens/live_resume_editor_screen.dart';
 import '../../templates/presentation/template_selector_screen.dart';
+import '../../../core/theme/theme_provider.dart';
 
 import '../../../core/widgets/theme_toggle_widget.dart';
 import '../../../core/widgets/smooth_page_route.dart';
@@ -49,6 +47,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(themeModeProvider);
     StartupStages.logStage('HOME_BUILD_ENTER', 'HomeDashboardScreen build entered');
     final widget = LayoutBuilder(
       builder: (context, constraints) {
@@ -103,16 +102,6 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
               ],
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.auto_awesome_outlined, color: AppColors.accentPurple),
-                tooltip: 'AI Engine Settings',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    SmoothPageRoute(page: const AISettingsScreen()),
-                  );
-                },
-              ),
               ConstrainedBox(
                 constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                 child: IconButton(
@@ -265,7 +254,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
   // Component Helpers
   Widget _buildHeroCard(BuildContext context, WidgetRef ref) {
     return AppCard(
-      color: AppColors.surface,
+      color: Theme.of(context).cardColor,
       border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1.5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,31 +280,14 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
             style: AppTypography.bodyMedium,
           ),
           const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              Expanded(
-                child: AppButton(
-                  text: 'Create Resume',
-                  icon: Icons.add_rounded,
-                  variant: AppButtonVariant.primary,
-                  onPressed: () => _createNewResume(context, ref),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: AppButton(
-                  text: 'Import PDF',
-                  icon: Icons.upload_file_rounded,
-                  variant: AppButtonVariant.secondary,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      SmoothPageRoute(page: const ImportResumeScreen()),
-                    );
-                  },
-                ),
-              ),
-            ],
+          SizedBox(
+            width: double.infinity,
+            child: AppButton(
+              text: 'Create Resume',
+              icon: Icons.add_rounded,
+              variant: AppButtonVariant.primary,
+              onPressed: () => _createNewResume(context, ref),
+            ),
           ),
         ],
       ),
@@ -394,20 +366,6 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
         const SizedBox(height: AppSpacing.md),
         _buildAiFeatureCard(
           context,
-          title: 'Resume Importer & PDF Parser',
-          description: 'Extract text, sections, skills, and work history from PDF resumes in <5s.',
-          icon: Icons.upload_file_rounded,
-          accentColor: AppColors.accentRed,
-          onTap: () {
-            Navigator.push(
-              context,
-              SmoothPageRoute(page: const ImportResumeScreen()),
-            );
-          },
-        ),
-        const SizedBox(height: AppSpacing.md),
-        _buildAiFeatureCard(
-          context,
           title: 'AI Resume Analysis & ATS Score',
           description: 'Get deep feedback, keyword checks, and structural score.',
           icon: Icons.analytics_outlined,
@@ -434,25 +392,6 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
             Navigator.push(
               context,
               SmoothPageRoute(page: const LiveResumeTailorScreen()),
-            );
-          },
-        ),
-        const SizedBox(height: AppSpacing.md),
-        _buildAiFeatureCard(
-          context,
-          title: '3D Live Split-Screen Resume Studio',
-          description: 'Dual-pane live editor with instant vector PDF re-rendering and 3D floating style controls.',
-          icon: Icons.view_in_ar_rounded,
-          accentColor: AppColors.secondary,
-          onTap: () {
-            final current = ref.read(currentResumeProvider);
-            final resumesList = ref.read(resumesListProvider).value ?? [];
-            if (current == null && resumesList.isNotEmpty) {
-              ref.read(currentResumeProvider.notifier).setResume(resumesList.first);
-            }
-            Navigator.push(
-              context,
-              SmoothPageRoute(page: const LiveResumeEditorScreen()),
             );
           },
         ),
@@ -533,12 +472,6 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
             context,
             SmoothPageRoute(page: const ResumeEditorScreen()),
           );
-        } else if (value == 'live_studio') {
-          ref.read(currentResumeProvider.notifier).setResume(resume);
-          Navigator.push(
-            context,
-            SmoothPageRoute(page: const LiveResumeEditorScreen()),
-          );
         } else if (value == 'preview') {
           ref.read(currentResumeProvider.notifier).setResume(resume);
           Navigator.push(
@@ -583,7 +516,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
     VoidCallback? onTap,
   }) {
     return AppCard(
-      color: AppColors.surface.withValues(alpha: 0.6),
+      color: Theme.of(context).cardColor,
       onTap: onTap ??
           () {
             Navigator.push(
@@ -874,15 +807,18 @@ class _AnimatedResumeCardItemState extends State<_AnimatedResumeCardItem> {
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('MMM d, yyyy');
     final active = _isHovered || _isPressed;
+    final cardColor = Theme.of(context).cardColor;
+    final dividerColor = Theme.of(context).dividerColor;
+    final textColor = Theme.of(context).colorScheme.onSurface;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       curve: Curves.fastOutSlowIn,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: cardColor,
         borderRadius: AppRadius.borderMd,
         border: Border.all(
-          color: active ? AppColors.primary.withValues(alpha: 0.6) : AppColors.surfaceBorder,
+          color: active ? AppColors.primary.withValues(alpha: 0.6) : dividerColor,
           width: active ? 1.5 : 1.0,
         ),
         boxShadow: [
@@ -919,7 +855,7 @@ class _AnimatedResumeCardItemState extends State<_AnimatedResumeCardItem> {
                             widget.resume.title.isNotEmpty ? widget.resume.title : 'Untitled Resume',
                             style: AppTypography.titleMedium.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: active ? AppColors.primary : AppColors.textPrimary,
+                              color: active ? AppColors.primary : textColor,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -927,7 +863,9 @@ class _AnimatedResumeCardItemState extends State<_AnimatedResumeCardItem> {
                           if (widget.resume.personalInfo.fullName.isNotEmpty)
                             Text(
                               '${widget.resume.personalInfo.fullName} • ${widget.resume.personalInfo.jobTitle}',
-                              style: AppTypography.bodySmall,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: textColor.withValues(alpha: 0.7),
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -939,16 +877,12 @@ class _AnimatedResumeCardItemState extends State<_AnimatedResumeCardItem> {
                       child: PopupMenuButton<String>(
                         tooltip: 'Options for ${widget.resume.title}',
                         icon: const Icon(Icons.more_vert_rounded, color: AppColors.textMuted),
-                        color: AppColors.surfaceLight,
+                        color: cardColor,
                         onSelected: widget.onOptionSelected,
                         itemBuilder: (context) => [
                           const PopupMenuItem(
                             value: 'edit',
                             child: Row(children: [Icon(Icons.edit_outlined, size: 18), SizedBox(width: 8), Text('Edit')]),
-                          ),
-                          const PopupMenuItem(
-                            value: 'live_studio',
-                            child: Row(children: [Icon(Icons.view_in_ar_rounded, size: 18, color: AppColors.secondary), SizedBox(width: 8), Text('3D Live Studio')]),
                           ),
                           const PopupMenuItem(
                             value: 'preview',
@@ -984,7 +918,9 @@ class _AnimatedResumeCardItemState extends State<_AnimatedResumeCardItem> {
                     const Spacer(),
                     Text(
                       'Updated ${dateFormat.format(widget.resume.updatedAt)}',
-                      style: AppTypography.bodySmall,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: textColor.withValues(alpha: 0.6),
+                      ),
                     ),
                   ],
                 ),

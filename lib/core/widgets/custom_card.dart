@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 
 import 'tap_scale_widget.dart';
@@ -22,12 +21,20 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final effectiveColor = color ?? Theme.of(context).cardColor;
+    final effectiveBorder = border ??
+        Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1,
+        );
+
     Widget content = Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: color ?? AppColors.surface,
+        color: effectiveColor,
         borderRadius: AppRadius.borderLg,
-        border: border ?? Border.all(color: AppColors.surfaceBorder, width: 1),
+        border: effectiveBorder,
       ),
       child: child,
     );

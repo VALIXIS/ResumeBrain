@@ -127,18 +127,12 @@ class ResumeInputScrubber {
 
   /// Creates a formatter for name fields.
   static TextInputFormatter nameFormatter() {
-    return SafePatternFormatter(
-      disallowedPattern: _nameDisallowedRegex,
-      stripControlChars: true,
-    );
+    return const SafeControlCharacterFormatter();
   }
 
   /// Creates a formatter for title, company, institution, degree, and header fields.
   static TextInputFormatter titleFormatter() {
-    return SafePatternFormatter(
-      disallowedPattern: _titleDisallowedRegex,
-      stripControlChars: true,
-    );
+    return const SafeControlCharacterFormatter();
   }
 
   /// Creates a formatter for email fields.

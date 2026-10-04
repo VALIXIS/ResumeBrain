@@ -23,18 +23,13 @@ class TemplateSelectorScreen extends ConsumerStatefulWidget {
 }
 
 class _TemplateSelectorScreenState extends ConsumerState<TemplateSelectorScreen> {
-  late final PageController _carouselController;
-  int _currentCarouselIndex = 0;
-
   @override
   void initState() {
     super.initState();
-    _carouselController = PageController(viewportFraction: 0.86);
   }
 
   @override
   void dispose() {
-    _carouselController.dispose();
     super.dispose();
   }
 
@@ -236,69 +231,10 @@ class _TemplateSelectorScreenState extends ConsumerState<TemplateSelectorScreen>
             Text('Template Showcase', style: AppTypography.titleLarge),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'Swipe to preview designs. Executive templates can be unlocked for your active session by viewing a sponsored ad.',
+              'Select a professional resume template. Executive templates can be unlocked for your active session by viewing a sponsored ad.',
               style: AppTypography.bodySmall,
             ),
             const SizedBox(height: AppSpacing.md),
-
-            // 1. Template Selection Carousel
-            SizedBox(
-              height: 270,
-              child: PageView.builder(
-                controller: _carouselController,
-                itemCount: templates.length,
-                onPageChanged: (index) {
-                  setState(() => _currentCarouselIndex = index);
-                },
-                itemBuilder: (context, index) {
-                  final template = templates[index];
-                  final isSelected = template.id == selectedId;
-                  final isExecutive = template.isExecutive;
-                  final isUnlocked = !isExecutive || unlockedTemplates.contains(template.id);
-                  final isLocked = isExecutive && !isUnlocked;
-
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                    child: _buildCarouselCard(
-                      template: template,
-                      isSelected: isSelected,
-                      isExecutive: isExecutive,
-                      isLocked: isLocked,
-                      isUnlocked: isUnlocked,
-                      onTap: () => _handleTemplateTap(context, template, isLocked, isSelected),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Carousel Dots Indicator
-            Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(templates.length, (index) {
-                  final isActive = index == _currentCarouselIndex;
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: isActive ? 20 : 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: isActive ? AppColors.primary : AppColors.surfaceBorder,
-                      borderRadius: AppRadius.borderPill,
-                    ),
-                  );
-                }),
-              ),
-            ),
-
-            const SizedBox(height: AppSpacing.xl),
-
-            // 2. All Templates List View
-            Text('All Resume Formats', style: AppTypography.titleMedium),
-            const SizedBox(height: AppSpacing.sm),
 
             ListView.separated(
               shrinkWrap: true,
@@ -469,197 +405,5 @@ class _TemplateSelectorScreenState extends ConsumerState<TemplateSelectorScreen>
       ),
     );
   }
-
-  Widget _buildCarouselCard({
-    required ResumeTemplate template,
-    required bool isSelected,
-    required bool isExecutive,
-    required bool isLocked,
-    required bool isUnlocked,
-    required VoidCallback onTap,
-  }) {
-    return AppCard(
-      color: isSelected
-          ? AppColors.primary.withValues(alpha: 0.12)
-          : (isLocked ? const Color(0xFF261D10) : AppColors.surface),
-      border: Border.all(
-        color: isSelected
-            ? AppColors.primary
-            : (isLocked ? Colors.amber.withValues(alpha: 0.6) : AppColors.surfaceBorder),
-        width: isSelected || isLocked ? 2 : 1,
-      ),
-      onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top Row: Badges & Lock State
-          Row(
-            children: [
-              if (isExecutive)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: isLocked
-                        ? Colors.amber.withValues(alpha: 0.25)
-                        : AppColors.accentGreen.withValues(alpha: 0.25),
-                    borderRadius: AppRadius.borderSm,
-                    border: Border.all(
-                      color: isLocked ? Colors.amber : AppColors.accentGreen,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isLocked ? Icons.lock_rounded : Icons.lock_open_rounded,
-                        size: 13,
-                        color: isLocked ? Colors.amber : AppColors.accentGreen,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        isLocked ? 'EXECUTIVE • LOCKED' : 'EXECUTIVE • UNLOCKED',
-                        style: AppTypography.labelSmall.copyWith(
-                          color: isLocked ? Colors.amber : AppColors.accentGreen,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.accentTeal.withValues(alpha: 0.15),
-                    borderRadius: AppRadius.borderSm,
-                  ),
-                  child: Text(
-                    'FREE ATS TEMPLATE',
-                    style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.accentTeal,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 10,
-                    ),
-                  ),
-                ),
-              const Spacer(),
-              if (template.isAtsFriendly)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppColors.accentGreen.withValues(alpha: 0.2),
-                    borderRadius: AppRadius.borderSm,
-                  ),
-                  child: Text(
-                    'ATS 100%',
-                    style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.accentGreen,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 9,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // Central Icon Mockup Canvas
-          Expanded(
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: isLocked
-                        ? Colors.black.withValues(alpha: 0.3)
-                        : AppColors.surfaceLight,
-                    borderRadius: AppRadius.borderMd,
-                    border: Border.all(
-                      color: isLocked ? Colors.amber.withValues(alpha: 0.25) : AppColors.surfaceBorder,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        isLocked ? Icons.lock_outline_rounded : Icons.description_outlined,
-                        size: 44,
-                        color: isLocked
-                            ? Colors.amber
-                            : (isSelected ? AppColors.primary : AppColors.textMuted),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        template.name,
-                        style: AppTypography.titleMedium.copyWith(
-                          color: isLocked ? Colors.amber.shade200 : AppColors.textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (isLocked)
-                  Positioned(
-                    bottom: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.75),
-                        borderRadius: AppRadius.borderSm,
-                      ),
-                      child: Text(
-                        'Tap to Watch Ad & Unlock',
-                        style: AppTypography.labelSmall.copyWith(
-                          color: Colors.amber,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          Text(
-            template.description,
-            style: AppTypography.bodySmall,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-
-          const SizedBox(height: 12),
-
-          // Action Button
-          if (isSelected)
-            Row(
-              children: [
-                const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 18),
-                const SizedBox(width: 6),
-                Text('Active Template', style: AppTypography.labelLarge.copyWith(color: AppColors.primary)),
-              ],
-            )
-          else if (isLocked)
-            AppButton(
-              text: 'Watch Video Ad to Unlock (+1 Token)',
-              icon: Icons.play_circle_fill_rounded,
-              variant: AppButtonVariant.primary,
-              isFullWidth: true,
-              onPressed: onTap,
-            )
-          else
-            AppButton(
-              text: 'Apply Template',
-              variant: AppButtonVariant.outline,
-              isFullWidth: true,
-              onPressed: onTap,
-            ),
-        ],
-      ),
-    );
-  }
 }
+

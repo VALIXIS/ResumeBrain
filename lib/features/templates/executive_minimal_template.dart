@@ -2,6 +2,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../data/models/resume_models.dart';
 import '../pdf/models/pdf_export_config.dart';
+import '../pdf/utils/pdf_text_sanitizer.dart';
 import 'models/resume_template.dart';
 
 /// Executive Minimal Template
@@ -164,15 +165,47 @@ class ExecutiveMinimalTemplate implements ResumeTemplate {
             if (resume.summary.summaryText.isNotEmpty) ...[
               _buildSectionHeader('EXECUTIVE SUMMARY', primaryColor, serifBold),
               pw.SizedBox(height: 4),
-              pw.Text(
-                resume.summary.summaryText,
-                style: pw.TextStyle(
-                  font: serifFont,
-                  fontSize: 9.5,
-                  color: textColor,
-                  lineSpacing: 1.3,
+              if (PdfTextSanitizer.isBulletList(resume.summary.summaryText))
+                ...PdfTextSanitizer.extractBulletLines(resume.summary.summaryText).map((cleanBullet) {
+                  return pw.Padding(
+                    padding: const pw.EdgeInsets.only(bottom: 3),
+                    child: pw.Row(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Container(
+                          width: 3.5,
+                          height: 3.5,
+                          margin: const pw.EdgeInsets.only(top: 4.5, right: 6),
+                          decoration: pw.BoxDecoration(
+                            color: accentColor,
+                            shape: pw.BoxShape.circle,
+                          ),
+                        ),
+                        pw.Expanded(
+                          child: pw.Text(
+                            cleanBullet,
+                            style: pw.TextStyle(
+                              font: serifFont,
+                              fontSize: 9.5,
+                              color: textColor,
+                              lineSpacing: 1.3,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                })
+              else
+                pw.Text(
+                  PdfTextSanitizer.sanitize(resume.summary.summaryText),
+                  style: pw.TextStyle(
+                    font: serifFont,
+                    fontSize: 9.5,
+                    color: textColor,
+                    lineSpacing: 1.3,
+                  ),
                 ),
-              ),
               pw.SizedBox(height: 10),
             ],
 
@@ -246,11 +279,7 @@ class ExecutiveMinimalTemplate implements ResumeTemplate {
                   if (exp.location.isNotEmpty) exp.location,
                 ].where((s) => s.isNotEmpty).join(', ');
 
-                final bullets = exp.description
-                    .split('\n')
-                    .map((s) => s.trim().replaceAll(RegExp(r'^[•\-\*]\s*'), ''))
-                    .where((s) => s.isNotEmpty)
-                    .toList();
+                final bullets = PdfTextSanitizer.extractBulletLines(exp.description);
 
                 return pw.Container(
                   margin: const pw.EdgeInsets.only(bottom: 8),

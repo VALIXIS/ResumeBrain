@@ -2,6 +2,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../../data/models/resume_models.dart';
 import '../../pdf/models/pdf_export_config.dart';
+import '../../pdf/utils/pdf_text_sanitizer.dart';
 import '../models/resume_template.dart';
 
 class ModernClassicTemplate implements ResumeTemplate {
@@ -111,10 +112,13 @@ class ModernClassicTemplate implements ResumeTemplate {
             if (resume.summary.summaryText.isNotEmpty) ...[
               _buildSectionHeader('PROFESSIONAL SUMMARY', primaryColor),
               pw.SizedBox(height: 4),
-              pw.Text(
-                resume.summary.summaryText,
-                style: pw.TextStyle(fontSize: 9.5, color: textColor, lineSpacing: 1.35),
-              ),
+              if (PdfTextSanitizer.isBulletList(resume.summary.summaryText))
+                ..._buildBulletPoints(resume.summary.summaryText, textColor, primaryColor)
+              else
+                pw.Text(
+                  PdfTextSanitizer.sanitize(resume.summary.summaryText),
+                  style: pw.TextStyle(fontSize: 9.5, color: textColor, lineSpacing: 1.35),
+                ),
               pw.SizedBox(height: 8),
             ],
 
@@ -387,17 +391,17 @@ class ModernClassicTemplate implements ResumeTemplate {
   }
 
   List<pw.Widget> _buildBulletPoints(String text, PdfColor textColor, PdfColor bulletColor) {
-    final lines = text.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
-    if (lines.length <= 1 && !text.contains('- ') && !text.contains('* ')) {
+    final lines = PdfTextSanitizer.extractBulletLines(text);
+    if (lines.isEmpty) return [];
+    if (lines.length == 1 && !PdfTextSanitizer.isBulletList(text)) {
       return [
         pw.Text(
-          text,
+          lines.first,
           style: pw.TextStyle(fontSize: 9.5, color: textColor, lineSpacing: 1.3),
         ),
       ];
     }
-    return lines.map((line) {
-      final cleanLine = line.replaceFirst(RegExp(r'^[-*]\s*'), '');
+    return lines.map((cleanLine) {
       return pw.Padding(
         padding: const pw.EdgeInsets.only(bottom: 3),
         child: pw.Row(

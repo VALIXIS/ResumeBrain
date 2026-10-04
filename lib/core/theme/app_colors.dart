@@ -47,16 +47,33 @@ class AppColors {
   /// Modified by the theme provider during runtime changes.
   static bool isDarkMode = true;
 
+  // Explicit theme color constants
+  static const Color lightBackground = Color(0xFFF8FAFC);
+  static const Color lightSurface = Colors.white;
+  static const Color lightSurfaceLight = Color(0xFFF1F5F9);
+  static const Color lightSurfaceBorder = Color(0xFFE2E8F0);
+  static const Color lightTextPrimary = Color(0xFF0F172A);
+  static const Color lightTextSecondary = Color(0xFF475569);
+  static const Color lightTextMuted = Color(0xFF64748B);
+
+  static const Color darkBackground = Color(0xFF0A0E1A);
+  static const Color darkSurface = Color(0xFF13192B);
+  static const Color darkSurfaceLight = Color(0xFF1E293B);
+  static const Color darkSurfaceBorder = Color(0xFF334155);
+  static const Color darkTextPrimary = Color(0xFFF8FAFC);
+  static const Color darkTextSecondary = Color(0xFF94A3B8);
+  static const Color darkTextMuted = Color(0xFF64748B);
+
   // Static resolver functions
-  static Color _backgroundResolver() => isDarkMode ? const Color(0xFF0A0E1A) : const Color(0xFFF8FAFC);
-  static Color _surfaceResolver() => isDarkMode ? const Color(0xFF13192B) : Colors.white;
-  static Color _surfaceLightResolver() => isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9);
-  static Color _surfaceBorderResolver() => isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+  static Color _backgroundResolver() => isDarkMode ? darkBackground : lightBackground;
+  static Color _surfaceResolver() => isDarkMode ? darkSurface : lightSurface;
+  static Color _surfaceLightResolver() => isDarkMode ? darkSurfaceLight : lightSurfaceLight;
+  static Color _surfaceBorderResolver() => isDarkMode ? darkSurfaceBorder : lightSurfaceBorder;
   
-  static Color _textPrimaryResolver() => isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF0F172A);
-  static Color _textSecondaryResolver() => isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF475569);
-  static Color _textMutedResolver() => isDarkMode ? const Color(0xFF64748B) : const Color(0xFF64748B);
-  static Color _textDisabledResolver() => isDarkMode ? const Color(0xFF475569) : const Color(0xFF94A3B8);
+  static Color _textPrimaryResolver() => isDarkMode ? darkTextPrimary : lightTextPrimary;
+  static Color _textSecondaryResolver() => isDarkMode ? darkTextSecondary : lightTextSecondary;
+  static Color _textMutedResolver() => isDarkMode ? darkTextMuted : lightTextMuted;
+  static Color _textDisabledResolver() => isDarkMode ? darkTextSecondary : lightTextSecondary;
 
   // Dynamic colors defined as const using DynamicColor
   static const Color background = DynamicColor(0xFF0A0E1A, _backgroundResolver);

@@ -158,14 +158,37 @@ class _LiveResumeEditorScreenState extends ConsumerState<LiveResumeEditorScreen>
     // Sync controllers on external/history update
     ref.listen<Resume?>(currentResumeProvider, (previous, next) {
       if (next != null) {
-        if (_titleCtrl.text != next.title) _titleCtrl.text = next.title;
-        if (_fullNameCtrl.text != next.personalInfo.fullName) _fullNameCtrl.text = next.personalInfo.fullName;
-        if (_jobTitleCtrl.text != next.personalInfo.jobTitle) _jobTitleCtrl.text = next.personalInfo.jobTitle;
-        if (_emailCtrl.text != next.personalInfo.email) _emailCtrl.text = next.personalInfo.email;
-        if (_phoneCtrl.text != next.personalInfo.phone) _phoneCtrl.text = next.personalInfo.phone;
-        if (_locationCtrl.text != next.personalInfo.location) _locationCtrl.text = next.personalInfo.location;
-        if (_websiteCtrl.text != next.personalInfo.website) _websiteCtrl.text = next.personalInfo.website;
-        if (_summaryCtrl.text != next.summary.summaryText) _summaryCtrl.text = next.summary.summaryText;
+        if (_titleCtrl.text != next.title && _titleCtrl.text.trim() != next.title.trim()) {
+          _titleCtrl.text = next.title;
+        }
+        if (_fullNameCtrl.text != next.personalInfo.fullName &&
+            _fullNameCtrl.text.trim() != next.personalInfo.fullName.trim()) {
+          _fullNameCtrl.text = next.personalInfo.fullName;
+        }
+        if (_jobTitleCtrl.text != next.personalInfo.jobTitle &&
+            _jobTitleCtrl.text.trim() != next.personalInfo.jobTitle.trim()) {
+          _jobTitleCtrl.text = next.personalInfo.jobTitle;
+        }
+        if (_emailCtrl.text != next.personalInfo.email &&
+            _emailCtrl.text.trim() != next.personalInfo.email.trim()) {
+          _emailCtrl.text = next.personalInfo.email;
+        }
+        if (_phoneCtrl.text != next.personalInfo.phone &&
+            _phoneCtrl.text.trim() != next.personalInfo.phone.trim()) {
+          _phoneCtrl.text = next.personalInfo.phone;
+        }
+        if (_locationCtrl.text != next.personalInfo.location &&
+            _locationCtrl.text.trim() != next.personalInfo.location.trim()) {
+          _locationCtrl.text = next.personalInfo.location;
+        }
+        if (_websiteCtrl.text != next.personalInfo.website &&
+            _websiteCtrl.text.trim() != next.personalInfo.website.trim()) {
+          _websiteCtrl.text = next.personalInfo.website;
+        }
+        if (_summaryCtrl.text != next.summary.summaryText &&
+            _summaryCtrl.text.trim() != next.summary.summaryText.trim()) {
+          _summaryCtrl.text = next.summary.summaryText;
+        }
       }
     });
 
@@ -887,12 +910,12 @@ class _LiveResumeEditorScreenState extends ConsumerState<LiveResumeEditorScreen>
   void _savePersonalInfo() {
     _updateResumeWithHistory((r) => r.copyWith(
           personalInfo: PersonalInformation(
-            fullName: _fullNameCtrl.text.trim(),
-            jobTitle: _jobTitleCtrl.text.trim(),
-            email: _emailCtrl.text.trim(),
-            phone: _phoneCtrl.text.trim(),
-            location: _locationCtrl.text.trim(),
-            website: _websiteCtrl.text.trim(),
+            fullName: _fullNameCtrl.text,
+            jobTitle: _jobTitleCtrl.text,
+            email: _emailCtrl.text,
+            phone: _phoneCtrl.text,
+            location: _locationCtrl.text,
+            website: _websiteCtrl.text,
           ),
         ));
   }
