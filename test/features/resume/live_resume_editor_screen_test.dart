@@ -5,9 +5,8 @@ import 'package:resume_brain/app/providers.dart';
 import 'package:resume_brain/data/models/resume_models.dart';
 import 'package:resume_brain/data/repositories/cloud_sync_adapter.dart';
 import 'package:resume_brain/data/repositories/resume_repository.dart';
-import 'package:printing/printing.dart';
 import 'package:resume_brain/features/pdf/models/pdf_export_config.dart';
-import 'package:resume_brain/features/resume/screens/live_resume_editor_screen.dart';
+import 'package:resume_brain/features/resume/presentation/resume_editor_screen.dart';
 
 class InMemoryLiveResumeRepository implements ResumeRepository {
   final Map<String, Resume> _resumes = {};
@@ -51,7 +50,7 @@ class InMemoryLiveResumeRepository implements ResumeRepository {
 }
 
 void main() {
-  group('LiveResumeEditorScreen & PdfExportConfig Tests', () {
+  group('ResumeEditorScreen Navigation & PdfExportConfig Tests', () {
     late Resume sampleResume;
     late InMemoryLiveResumeRepository fakeRepo;
 
@@ -101,97 +100,64 @@ void main() {
       expect(config.resolvedPdfColor, isNotNull);
     });
 
-    testWidgets('LiveResumeEditorScreen renders dual panes on wide screen (desktop/tablet)', (tester) async {
-      tester.view.physicalSize = const Size(1200, 900);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
+    testWidgets('ResumeEditorScreen renders Preview, Template, and Next bottom buttons', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
             resumeRepositoryProvider.overrideWithValue(fakeRepo),
+            currentResumeProvider.overrideWith((ref) {
+              final notifier = CurrentResumeNotifier(ref);
+              notifier.setResume(sampleResume);
+              return notifier;
+            }),
           ],
-          child: MaterialApp(
-            home: LiveResumeEditorScreen(resumeId: sampleResume.id),
+          child: const MaterialApp(
+            home: ResumeEditorScreen(),
           ),
         ),
       );
 
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
 
-      // Check AppBar badge
-      expect(find.text('3D STUDIO'), findsOneWidget);
+      // Verify the 3 bottom bar options exist
+      expect(find.text('Preview'), findsOneWidget);
+      expect(find.text('Template'), findsOneWidget);
+      expect(find.text('Next'), findsOneWidget);
 
-      // In wide mode, both form pane tabs and PdfPreview canvas should exist
-      expect(find.byType(TabBar), findsOneWidget);
-      expect(find.byType(PdfPreview), findsOneWidget);
+      // Verify 3D Studio button is removed
+      expect(find.text('3D Studio'), findsNothing);
     });
 
-    testWidgets('LiveResumeEditorScreen renders toggle view on mobile screen', (tester) async {
-      tester.view.physicalSize = const Size(400, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
+    testWidgets('Tapping Next button in ResumeEditorScreen advances to the next section', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
             resumeRepositoryProvider.overrideWithValue(fakeRepo),
+            currentResumeProvider.overrideWith((ref) {
+              final notifier = CurrentResumeNotifier(ref);
+              notifier.setResume(sampleResume);
+              return notifier;
+            }),
           ],
-          child: MaterialApp(
-            home: LiveResumeEditorScreen(resumeId: sampleResume.id),
+          child: const MaterialApp(
+            home: ResumeEditorScreen(),
           ),
         ),
       );
 
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
 
-      // On mobile, the responsive bottom bar buttons are present
-      expect(find.text('Styling'), findsOneWidget);
-      expect(find.text('Live Preview'), findsOneWidget);
-    });
+      // Find the Next button and tap it
+      final nextButton = find.widgetWithText(ElevatedButton, 'Next');
+      if (nextButton.evaluate().isNotEmpty) {
+        await tester.tap(nextButton);
+      } else {
+        await tester.tap(find.text('Next'));
+      }
+      await tester.pumpAndSettle();
 
-    testWidgets('LiveResumeEditorScreen toggles 3D customizer floating panel', (tester) async {
-      tester.view.physicalSize = const Size(1200, 900);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            resumeRepositoryProvider.overrideWithValue(fakeRepo),
-          ],
-          child: MaterialApp(
-            home: LiveResumeEditorScreen(resumeId: sampleResume.id),
-          ),
-        ),
-      );
-
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
-
-      // The customization pill icon button is present
-      final customizePill = find.byTooltip('3D Styling Studio');
-      expect(customizePill, findsOneWidget);
-
-      // Tap to open styling controls
-      await tester.tap(customizePill);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 250));
-
-      expect(find.text('Live Styling Controls'), findsOneWidget);
-      expect(find.text('FONT FAMILY'), findsOneWidget);
-      expect(find.text('PRIMARY ACCENT COLOR'), findsOneWidget);
+      // Verify we are now on the Summary tab
+      expect(find.text('Professional Summary'), findsWidgets);
     });
   });
 }

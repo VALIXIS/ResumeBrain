@@ -21,7 +21,6 @@ import '../widgets/resume_validators.dart';
 import '../widgets/validated_form_field.dart';
 import 'section_editor_tab.dart';
 import '../screens/translate_resume_screen.dart';
-import '../screens/live_resume_editor_screen.dart';
 
 class ResumeEditorScreen extends ConsumerStatefulWidget {
   const ResumeEditorScreen({super.key});
@@ -52,9 +51,25 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 7, vsync: this);
+    _tabController.addListener(() {
+      if (mounted) setState(() {});
+    });
     final resume = ref.read(currentResumeProvider);
     ref.read(resumeHistoryProvider.notifier).initializeWithResume(resume);
     _loadCurrentResumeData();
+  }
+
+  void _nextSection() {
+    if (_tabController.index < _tabController.length - 1) {
+      _tabController.animateTo(_tabController.index + 1);
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const ResumePreviewScreen(),
+        ),
+      );
+    }
   }
 
   void _loadCurrentResumeData() {
@@ -300,14 +315,14 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                     children: [
                       Expanded(
                         child: AppButton(
-                          text: '3D Studio',
-                          icon: Icons.view_in_ar_rounded,
+                          text: 'Preview',
+                          icon: Icons.visibility_outlined,
                           variant: AppButtonVariant.secondary,
                           onPressed: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const LiveResumeEditorScreen(),
+                                builder: (context) => const ResumePreviewScreen(),
                               ),
                             );
                           },
@@ -332,17 +347,10 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: AppButton(
-                          text: 'Preview PDF',
-                          icon: Icons.visibility_outlined,
+                          text: 'Next',
+                          icon: Icons.arrow_forward_rounded,
                           variant: AppButtonVariant.primary,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ResumePreviewScreen(),
-                              ),
-                            );
-                          },
+                          onPressed: _nextSection,
                         ),
                       ),
                     ],
