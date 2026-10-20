@@ -1,5 +1,8 @@
+import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import '../../../app/providers.dart';
 import '../../../data/models/resume_models.dart';
@@ -8,6 +11,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/state_widgets.dart';
 import '../../templates/presentation/template_selector_screen.dart';
 import '../models/pdf_export_config.dart';
+import '../services/pdf_service.dart';
 import '../widgets/pdf_export_customization_dialog.dart';
 import '../../../core/widgets/smooth_page_route.dart';
 import '../../home/presentation/home_dashboard_screen.dart';
@@ -20,7 +24,63 @@ class ResumePreviewScreen extends ConsumerStatefulWidget {
 }
 
 class _ResumePreviewScreenState extends ConsumerState<ResumePreviewScreen> {
-  PdfExportConfig _exportConfig = const PdfExportConfig();
+  PdfExportConfig _activeConfig = const PdfExportConfig();
+  PdfExportConfig _pendingConfig = const PdfExportConfig();
+  Timer? _debounceTimer;
+  final TransformationController _transformationController = TransformationController();
+
+  Uint8List? _cachedPdfBytes;
+  String? _cacheKey;
+
+  /// Optimized rasterization scale factor: 150 DPI delivers razor-sharp retina
+  /// rendering while avoiding GPU texture memory bloat and frame drops during pinch-to-zoom.
+  static const double _optimizedDpi = 150.0;
+  static const Duration _debounceDuration = Duration(milliseconds: 300);
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    _transformationController.dispose();
+    super.dispose();
+  }
+
+  /// Debounces PDF regeneration when preview options or customization settings change.
+  void _onExportConfigChanged(PdfExportConfig newConfig) {
+    _pendingConfig = newConfig;
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(_debounceDuration, () {
+      if (mounted) {
+        setState(() {
+          _activeConfig = _pendingConfig;
+        });
+      }
+    });
+  }
+
+  /// Builds and caches the PDF document bytes, debouncing duplicate generation passes.
+  Future<Uint8List> _buildDebouncedPdf(
+    PdfPageFormat format,
+    Resume resume,
+    PdfService pdfService,
+  ) async {
+    final key = '${resume.id}_${resume.templateId}_${_activeConfig.fontFamily}_'
+        '${_activeConfig.marginOption}_${_activeConfig.colorPalette}_'
+        '${format.width}x${format.height}';
+
+    if (_cachedPdfBytes != null && _cacheKey == key) {
+      return _cachedPdfBytes!;
+    }
+
+    final bytes = await pdfService.buildPdfBytes(
+      resume,
+      pageFormat: format,
+      config: _activeConfig,
+    );
+
+    _cachedPdfBytes = bytes;
+    _cacheKey = key;
+    return bytes;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,13 +163,11 @@ class _ResumePreviewScreenState extends ConsumerState<ResumePreviewScreen> {
               final result = await showDialog<PdfExportConfig>(
                 context: context,
                 builder: (context) => PdfExportCustomizationDialog(
-                  initialConfig: _exportConfig,
+                  initialConfig: _pendingConfig,
                 ),
               );
               if (result != null) {
-                setState(() {
-                  _exportConfig = result;
-                });
+                _onExportConfigChanged(result);
               }
             },
           ),
@@ -117,27 +175,77 @@ class _ResumePreviewScreenState extends ConsumerState<ResumePreviewScreen> {
             icon: const Icon(Icons.share_outlined, color: AppColors.accentTeal),
             tooltip: 'Share PDF',
             onPressed: () async {
-              final pdfBytes = await pdfService.buildPdfBytes(
-                resume,
-                config: _exportConfig,
-              );
+              final pdfBytes = _cachedPdfBytes ??
+                  await pdfService.buildPdfBytes(
+                    resume,
+                    config: _activeConfig,
+                  );
               await pdfService.sharePdf(resume, pdfBytes);
             },
           ),
         ],
       ),
-      body: PdfPreview(
-        build: (format) => pdfService.buildPdfBytes(
-          resume,
-          pageFormat: format,
-          config: _exportConfig,
-        ),
+      body: PdfPreview.builder(
+        build: (format) => _buildDebouncedPdf(format, resume, pdfService),
         allowPrinting: true,
         allowSharing: true,
         canChangeOrientation: false,
         canChangePageFormat: false,
+        dpi: _optimizedDpi,
         pdfFileName: '${resume.title}.pdf',
         loadingWidget: const LoadingStateWidget(message: 'Compiling PDF document...'),
+        pagesBuilder: (context, pages) {
+          return GestureDetector(
+            onDoubleTap: () {
+              if (_transformationController.value != Matrix4.identity()) {
+                _transformationController.value = Matrix4.identity();
+              }
+            },
+            child: InteractiveViewer(
+              transformationController: _transformationController,
+              minScale: 0.75,
+              maxScale: 4.0,
+              panEnabled: true,
+              scaleEnabled: true,
+              clipBehavior: Clip.none,
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                child: Center(
+                  child: Column(
+                    children: pages.map((page) {
+                      // Hardware-accelerated layer caching via RepaintBoundary prevents frame drops during zoom
+                      return RepaintBoundary(
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x26000000),
+                                offset: Offset(0, 4),
+                                blurRadius: 10,
+                              ),
+                            ],
+                          ),
+                          child: AspectRatio(
+                            aspectRatio: page.aspectRatio,
+                            child: Image(
+                              image: page.image,
+                              fit: BoxFit.contain,
+                              filterQuality: FilterQuality.medium,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
