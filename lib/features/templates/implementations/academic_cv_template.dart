@@ -42,7 +42,8 @@ class AcademicCvTemplate implements ResumeTemplate {
     pdf.addPage(
       pw.MultiPage(
         pageFormat: pageFormat,
-        margin: config?.marginOption.insets ?? const pw.EdgeInsets.all(36),
+        margin: config?.marginOption.insets ??
+            const pw.EdgeInsets.symmetric(horizontal: 36, vertical: 32),
         header: (pw.Context context) {
           if (context.pageNumber == 1) {
             return pw.SizedBox();
@@ -59,7 +60,7 @@ class AcademicCvTemplate implements ResumeTemplate {
                 pw.Text(
                   candidateName,
                   style: pw.TextStyle(
-                    fontSize: 8.5,
+                    fontSize: 9.5,
                     fontWeight: pw.FontWeight.bold,
                     color: textColor,
                   ),
@@ -67,7 +68,7 @@ class AcademicCvTemplate implements ResumeTemplate {
                 pw.Text(
                   'Curriculum Vitae',
                   style: pw.TextStyle(
-                    fontSize: 8.5,
+                    fontSize: 9.5,
                     color: mutedTextColor,
                   ),
                 ),
@@ -87,11 +88,11 @@ class AcademicCvTemplate implements ResumeTemplate {
               children: [
                 pw.Text(
                   candidateName,
-                  style: pw.TextStyle(fontSize: 8, color: mutedTextColor),
+                  style: pw.TextStyle(fontSize: 9.5, color: mutedTextColor),
                 ),
                 pw.Text(
                   'Page ${context.pageNumber} of ${context.pagesCount}',
-                  style: pw.TextStyle(fontSize: 8, color: mutedTextColor),
+                  style: pw.TextStyle(fontSize: 9.5, color: mutedTextColor),
                 ),
               ],
             ),
@@ -133,27 +134,27 @@ class AcademicCvTemplate implements ResumeTemplate {
                       if (resume.personalInfo.email.isNotEmpty)
                         pw.Text(
                           resume.personalInfo.email,
-                          style: pw.TextStyle(fontSize: 9, color: textColor),
+                          style: pw.TextStyle(fontSize: 9.5, color: textColor),
                         ),
                       if (resume.personalInfo.phone.isNotEmpty)
                         pw.Text(
                           resume.personalInfo.phone,
-                          style: pw.TextStyle(fontSize: 9, color: textColor),
+                          style: pw.TextStyle(fontSize: 9.5, color: textColor),
                         ),
                       if (resume.personalInfo.location.isNotEmpty)
                         pw.Text(
                           resume.personalInfo.location,
-                          style: pw.TextStyle(fontSize: 9, color: textColor),
+                          style: pw.TextStyle(fontSize: 9.5, color: textColor),
                         ),
                       if (resume.personalInfo.website.isNotEmpty)
                         pw.Text(
                           resume.personalInfo.website,
-                          style: pw.TextStyle(fontSize: 9, color: textColor),
+                          style: pw.TextStyle(fontSize: 9.5, color: textColor),
                         ),
                       ...resume.socialLinks.map(
                         (link) => pw.Text(
                           '${link.platform}: ${link.url}',
-                          style: pw.TextStyle(fontSize: 9, color: textColor),
+                          style: pw.TextStyle(fontSize: 9.5, color: textColor),
                         ),
                       ),
                     ],
@@ -170,7 +171,11 @@ class AcademicCvTemplate implements ResumeTemplate {
               pw.SizedBox(height: 4),
               pw.Text(
                 resume.summary.summaryText,
-                style: pw.TextStyle(fontSize: 9.5, color: textColor, lineSpacing: 2),
+                style: pw.TextStyle(
+                  fontSize: 9.5,
+                  color: textColor,
+                  lineSpacing: 1.35,
+                ),
               ),
               pw.SizedBox(height: 12),
             ],
@@ -180,38 +185,59 @@ class AcademicCvTemplate implements ResumeTemplate {
               _buildSectionHeader('EDUCATION', accentColor),
               pw.SizedBox(height: 6),
               ...resume.educationList.map((edu) {
-                return pw.Container(
-                  margin: const pw.EdgeInsets.only(bottom: 8),
-                  child: pw.Row(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Expanded(
-                        child: pw.Column(
+                return pw.Wrap(
+                  children: [
+                    pw.ConstrainedBox(
+                      constraints:
+                          const pw.BoxConstraints(minWidth: double.infinity),
+                      child: pw.Container(
+                        margin: const pw.EdgeInsets.only(bottom: 8),
+                        child: pw.Row(
                           crossAxisAlignment: pw.CrossAxisAlignment.start,
                           children: [
-                            pw.Text(
-                              '${edu.degree}${edu.fieldOfStudy.isNotEmpty ? " in ${edu.fieldOfStudy}" : ""}',
-                              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: textColor),
-                            ),
-                            pw.Text(
-                              '${edu.institution}${edu.location.isNotEmpty ? " | ${edu.location}" : ""}',
-                              style: pw.TextStyle(fontSize: 9, color: primaryColor),
-                            ),
-                            if (edu.gpa.isNotEmpty)
-                              pw.Text(
-                                'GPA: ${edu.gpa}',
-                                style: pw.TextStyle(fontSize: 8.5, color: mutedTextColor),
+                            pw.Expanded(
+                              child: pw.Column(
+                                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                children: [
+                                  pw.Text(
+                                    '${edu.degree}${edu.fieldOfStudy.isNotEmpty ? " in ${edu.fieldOfStudy}" : ""}',
+                                    style: pw.TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: pw.FontWeight.bold,
+                                      color: textColor,
+                                    ),
+                                  ),
+                                  pw.Text(
+                                    '${edu.institution}${edu.location.isNotEmpty ? " | ${edu.location}" : ""}',
+                                    style: pw.TextStyle(
+                                      fontSize: 9.5,
+                                      color: primaryColor,
+                                    ),
+                                  ),
+                                  if (edu.gpa.isNotEmpty)
+                                    pw.Text(
+                                      'GPA: ${edu.gpa}',
+                                      style: pw.TextStyle(
+                                        fontSize: 9.5,
+                                        color: mutedTextColor,
+                                      ),
+                                    ),
+                                ],
                               ),
+                            ),
+                            pw.SizedBox(width: 12),
+                            pw.Text(
+                              '${edu.startDate}${edu.endDate.isNotEmpty ? " - ${edu.endDate}" : ""}',
+                              style: pw.TextStyle(
+                                fontSize: 9.5,
+                                color: mutedTextColor,
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                      pw.SizedBox(width: 12),
-                      pw.Text(
-                        '${edu.startDate}${edu.endDate.isNotEmpty ? " - ${edu.endDate}" : ""}',
-                        style: pw.TextStyle(fontSize: 8.5, color: mutedTextColor),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 );
               }),
               pw.SizedBox(height: 10),
@@ -219,48 +245,75 @@ class AcademicCvTemplate implements ResumeTemplate {
 
             // Academic & Professional Experience
             if (resume.experiences.isNotEmpty) ...[
-              _buildSectionHeader('ACADEMIC & PROFESSIONAL APPOINTMENTS', accentColor),
+              _buildSectionHeader(
+                'ACADEMIC & PROFESSIONAL APPOINTMENTS',
+                accentColor,
+              ),
               pw.SizedBox(height: 6),
               ...resume.experiences.map((exp) {
-                return pw.Container(
-                  margin: const pw.EdgeInsets.only(bottom: 10),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Row(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Expanded(
-                            child: pw.Column(
+                return pw.Wrap(
+                  children: [
+                    pw.ConstrainedBox(
+                      constraints:
+                          const pw.BoxConstraints(minWidth: double.infinity),
+                      child: pw.Container(
+                        margin: const pw.EdgeInsets.only(bottom: 10),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Row(
                               crossAxisAlignment: pw.CrossAxisAlignment.start,
                               children: [
-                                pw.Text(
-                                  exp.position,
-                                  style: pw.TextStyle(fontSize: 10.5, fontWeight: pw.FontWeight.bold, color: textColor),
+                                pw.Expanded(
+                                  child: pw.Column(
+                                    crossAxisAlignment:
+                                        pw.CrossAxisAlignment.start,
+                                    children: [
+                                      pw.Text(
+                                        exp.position,
+                                        style: pw.TextStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: pw.FontWeight.bold,
+                                          color: textColor,
+                                        ),
+                                      ),
+                                      pw.Text(
+                                        '${exp.company}${exp.location.isNotEmpty ? " | ${exp.location}" : ""}',
+                                        style: pw.TextStyle(
+                                          fontSize: 9.5,
+                                          color: primaryColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
+                                pw.SizedBox(width: 12),
                                 pw.Text(
-                                  '${exp.company}${exp.location.isNotEmpty ? " | ${exp.location}" : ""}',
-                                  style: pw.TextStyle(fontSize: 9, color: primaryColor),
+                                  '${exp.startDate} - ${exp.isCurrent ? 'Present' : exp.endDate}',
+                                  style: pw.TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: pw.FontWeight.bold,
+                                    color: mutedTextColor,
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
-                          pw.SizedBox(width: 12),
-                          pw.Text(
-                            '${exp.startDate} - ${exp.isCurrent ? 'Present' : exp.endDate}',
-                            style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: mutedTextColor),
-                          ),
-                        ],
-                      ),
-                      if (exp.description.isNotEmpty) ...[
-                        pw.SizedBox(height: 3),
-                        pw.Text(
-                          exp.description,
-                          style: pw.TextStyle(fontSize: 9, color: textColor, lineSpacing: 1.5),
+                            if (exp.description.isNotEmpty) ...[
+                              pw.SizedBox(height: 3),
+                              pw.Text(
+                                exp.description,
+                                style: pw.TextStyle(
+                                  fontSize: 9.5,
+                                  color: textColor,
+                                  lineSpacing: 1.35,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
-                      ],
-                    ],
-                  ),
+                      ),
+                    ),
+                  ],
                 );
               }),
               pw.SizedBox(height: 10),
@@ -268,7 +321,10 @@ class AcademicCvTemplate implements ResumeTemplate {
 
             // Research Projects & Initiatives
             if (resume.projects.isNotEmpty) ...[
-              _buildSectionHeader('RESEARCH PROJECTS & INITIATIVES', accentColor),
+              _buildSectionHeader(
+                'RESEARCH PROJECTS & INITIATIVES',
+                accentColor,
+              ),
               pw.SizedBox(height: 6),
               ...resume.projects.map((proj) {
                 return pw.Container(
@@ -282,14 +338,21 @@ class AcademicCvTemplate implements ResumeTemplate {
                           pw.Expanded(
                             child: pw.Text(
                               '${proj.name}${proj.role.isNotEmpty ? " - ${proj.role}" : ""}',
-                              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: textColor),
+                              style: pw.TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: pw.FontWeight.bold,
+                                color: textColor,
+                              ),
                             ),
                           ),
                           if (proj.link.isNotEmpty) ...[
                             pw.SizedBox(width: 8),
                             pw.Text(
                               proj.link,
-                              style: pw.TextStyle(fontSize: 8, color: accentColor),
+                              style: pw.TextStyle(
+                                fontSize: 9.5,
+                                color: accentColor,
+                              ),
                             ),
                           ],
                         ],
@@ -298,14 +361,21 @@ class AcademicCvTemplate implements ResumeTemplate {
                         pw.SizedBox(height: 2),
                         pw.Text(
                           proj.description,
-                          style: pw.TextStyle(fontSize: 8.5, color: textColor),
+                          style: pw.TextStyle(
+                            fontSize: 9.5,
+                            color: textColor,
+                            lineSpacing: 1.35,
+                          ),
                         ),
                       ],
                       if (proj.technologies.isNotEmpty) ...[
                         pw.SizedBox(height: 2),
                         pw.Text(
                           'Methodology/Tools: ${proj.technologies}',
-                          style: pw.TextStyle(fontSize: 8, color: mutedTextColor),
+                          style: pw.TextStyle(
+                            fontSize: 9.5,
+                            color: mutedTextColor,
+                          ),
                         ),
                       ],
                     ],
@@ -317,13 +387,18 @@ class AcademicCvTemplate implements ResumeTemplate {
 
             // Custom Sections (Publications, Teaching, Awards, Conferences, References, etc.)
             ...resume.customSections.map((section) {
-              if (section.title.trim().isEmpty || section.items.isEmpty) return pw.SizedBox();
+              if (section.title.trim().isEmpty || section.items.isEmpty) {
+                return pw.SizedBox();
+              }
               return pw.Container(
                 margin: const pw.EdgeInsets.only(bottom: 10),
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    _buildSectionHeader(section.title.toUpperCase(), accentColor),
+                    _buildSectionHeader(
+                      section.title.toUpperCase(),
+                      accentColor,
+                    ),
                     pw.SizedBox(height: 4),
                     ...section.items.map((item) {
                       if (item.trim().isEmpty) return pw.SizedBox();
@@ -332,11 +407,22 @@ class AcademicCvTemplate implements ResumeTemplate {
                         child: pw.Row(
                           crossAxisAlignment: pw.CrossAxisAlignment.start,
                           children: [
-                            pw.Text('- ', style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: accentColor)),
+                            pw.Text(
+                              '- ',
+                              style: pw.TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: pw.FontWeight.bold,
+                                color: accentColor,
+                              ),
+                            ),
                             pw.Expanded(
                               child: pw.Text(
                                 item,
-                                style: pw.TextStyle(fontSize: 9, color: textColor),
+                                style: pw.TextStyle(
+                                  fontSize: 9.5,
+                                  color: textColor,
+                                  lineSpacing: 1.35,
+                                ),
                               ),
                             ),
                           ],
@@ -353,8 +439,11 @@ class AcademicCvTemplate implements ResumeTemplate {
               _buildSectionHeader('SKILLS & AREAS OF EXPERTISE', accentColor),
               pw.SizedBox(height: 4),
               pw.Text(
-                resume.skills.map((s) => '${s.name}${s.level.isNotEmpty ? " (${s.level})" : ""}').join('  |  '),
-                style: pw.TextStyle(fontSize: 9, color: textColor),
+                resume.skills
+                    .map((s) =>
+                        '${s.name}${s.level.isNotEmpty ? " (${s.level})" : ""}')
+                    .join('  |  '),
+                style: pw.TextStyle(fontSize: 9.5, color: textColor),
               ),
               pw.SizedBox(height: 10),
             ],
@@ -372,13 +461,20 @@ class AcademicCvTemplate implements ResumeTemplate {
                       pw.Expanded(
                         child: pw.Text(
                           '${cert.name}${cert.issuingOrganization.isNotEmpty ? " - ${cert.issuingOrganization}" : ""}',
-                          style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: textColor),
+                          style: pw.TextStyle(
+                            fontSize: 10,
+                            fontWeight: pw.FontWeight.bold,
+                            color: textColor,
+                          ),
                         ),
                       ),
                       if (cert.issueDate.isNotEmpty)
                         pw.Text(
                           cert.issueDate,
-                          style: pw.TextStyle(fontSize: 8.5, color: mutedTextColor),
+                          style: pw.TextStyle(
+                            fontSize: 9.5,
+                            color: mutedTextColor,
+                          ),
                         ),
                     ],
                   ),
@@ -392,8 +488,10 @@ class AcademicCvTemplate implements ResumeTemplate {
               _buildSectionHeader('LANGUAGES', accentColor),
               pw.SizedBox(height: 4),
               pw.Text(
-                resume.languages.map((l) => '${l.name} (${l.proficiency})').join('  |  '),
-                style: pw.TextStyle(fontSize: 9, color: textColor),
+                resume.languages
+                    .map((l) => '${l.name} (${l.proficiency})')
+                    .join('  |  '),
+                style: pw.TextStyle(fontSize: 9.5, color: textColor),
               ),
               pw.SizedBox(height: 10),
             ],
@@ -412,7 +510,7 @@ class AcademicCvTemplate implements ResumeTemplate {
         pw.Text(
           title,
           style: pw.TextStyle(
-            fontSize: 10.5,
+            fontSize: 13,
             fontWeight: pw.FontWeight.bold,
             color: color,
             letterSpacing: 1.1,

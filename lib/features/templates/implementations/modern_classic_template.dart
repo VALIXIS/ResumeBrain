@@ -72,7 +72,7 @@ class ModernClassicTemplate implements ResumeTemplate {
                   pw.Text(
                     resume.personalInfo.fullName.isNotEmpty ? resume.personalInfo.fullName : 'Your Full Name',
                     style: pw.TextStyle(
-                      fontSize: 24,
+                      fontSize: 20,
                       fontWeight: pw.FontWeight.bold,
                       color: nameColor,
                       letterSpacing: 0.5,
@@ -138,7 +138,7 @@ class ModernClassicTemplate implements ResumeTemplate {
                     child: pw.Text(
                       skill.name,
                       style: pw.TextStyle(
-                        fontSize: 9,
+                        fontSize: 9.5,
                         fontWeight: pw.FontWeight.bold,
                         color: PdfColor.fromHex('#0F172A'),
                       ),
@@ -184,7 +184,7 @@ class ModernClassicTemplate implements ResumeTemplate {
                           if (dateRange.isNotEmpty)
                             pw.Text(
                               dateRange,
-                              style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: mutedTextColor),
+                              style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: mutedTextColor),
                             ),
                         ],
                       ),
@@ -250,7 +250,7 @@ class ModernClassicTemplate implements ResumeTemplate {
                             ],
                             if (edu.gpa.isNotEmpty) ...[
                               pw.SizedBox(height: 1),
-                              pw.Text('GPA: ${edu.gpa}', style: pw.TextStyle(fontSize: 8.5, color: mutedTextColor)),
+                              pw.Text('GPA: ${edu.gpa}', style: pw.TextStyle(fontSize: 9.5, color: mutedTextColor)),
                             ],
                           ],
                         ),
@@ -258,7 +258,7 @@ class ModernClassicTemplate implements ResumeTemplate {
                       if (dateRange.isNotEmpty)
                         pw.Text(
                           dateRange,
-                          style: pw.TextStyle(fontSize: 9, color: mutedTextColor),
+                          style: pw.TextStyle(fontSize: 9.5, color: mutedTextColor),
                         ),
                     ],
                   ),
@@ -289,7 +289,7 @@ class ModernClassicTemplate implements ResumeTemplate {
                         pw.SizedBox(height: 1.5),
                         pw.Text(
                           'Technologies: ${proj.technologies}',
-                          style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: primaryColor),
+                          style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: primaryColor),
                         ),
                       ],
                       if (proj.description.isNotEmpty) ...[
@@ -322,7 +322,7 @@ class ModernClassicTemplate implements ResumeTemplate {
                               padding: const pw.EdgeInsets.only(bottom: 3),
                               child: pw.Text(
                                 '${c.name}${c.issuingOrganization.isNotEmpty ? " (${c.issuingOrganization})" : ""}',
-                                style: pw.TextStyle(fontSize: 9, color: textColor),
+                                style: pw.TextStyle(fontSize: 9.5, color: textColor),
                               ),
                             ),
                           ),
@@ -343,7 +343,7 @@ class ModernClassicTemplate implements ResumeTemplate {
                               padding: const pw.EdgeInsets.only(bottom: 3),
                               child: pw.Text(
                                 '${l.name}${l.proficiency.isNotEmpty ? " - ${l.proficiency}" : ""}',
-                                style: pw.TextStyle(fontSize: 9, color: textColor),
+                                style: pw.TextStyle(fontSize: 9.5, color: textColor),
                               ),
                             ),
                           ),
@@ -375,7 +375,7 @@ class ModernClassicTemplate implements ResumeTemplate {
           pw.Text(
             title,
             style: pw.TextStyle(
-              fontSize: 10.5,
+              fontSize: 13,
               fontWeight: pw.FontWeight.bold,
               color: color,
               letterSpacing: 1.1,
