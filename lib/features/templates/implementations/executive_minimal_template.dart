@@ -125,41 +125,48 @@ class ExecutiveMinimalTemplate implements ResumeTemplate {
                   if (exp.location.isNotEmpty) exp.location,
                 ].where((s) => s.isNotEmpty).join('  |  ');
 
-                return pw.Container(
-                  margin: const pw.EdgeInsets.only(bottom: 10),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Expanded(
-                            child: pw.Text(
-                              exp.position.isNotEmpty ? exp.position : 'Position',
-                              style: pw.TextStyle(fontSize: 10.5, fontWeight: pw.FontWeight.bold, color: primaryColor),
+                return pw.Wrap(
+                  children: [
+                    pw.ConstrainedBox(
+                      constraints: const pw.BoxConstraints(minWidth: double.infinity),
+                      child: pw.Container(
+                        margin: const pw.EdgeInsets.only(bottom: 10),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Row(
+                              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: pw.CrossAxisAlignment.start,
+                              children: [
+                                pw.Expanded(
+                                  child: pw.Text(
+                                    exp.position.isNotEmpty ? exp.position : 'Position',
+                                    style: pw.TextStyle(fontSize: 10.5, fontWeight: pw.FontWeight.bold, color: primaryColor),
+                                  ),
+                                ),
+                                if (dateRange.isNotEmpty)
+                                  pw.Text(
+                                    dateRange,
+                                    style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: mutedTextColor),
+                                  ),
+                              ],
                             ),
-                          ),
-                          if (dateRange.isNotEmpty)
-                            pw.Text(
-                              dateRange,
-                              style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: mutedTextColor),
-                            ),
-                        ],
-                      ),
-                      if (companyText.isNotEmpty) ...[
-                        pw.SizedBox(height: 1.5),
-                        pw.Text(
-                          companyText,
-                          style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: accentColor),
+                            if (companyText.isNotEmpty) ...[
+                              pw.SizedBox(height: 1.5),
+                              pw.Text(
+                                companyText,
+                                style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: accentColor),
+                              ),
+                            ],
+                            if (exp.description.isNotEmpty) ...[
+                              pw.SizedBox(height: 3),
+                              ..._buildBulletPoints(exp.description, textColor, accentColor),
+                            ],
+                          ],
                         ),
-                      ],
-                      if (exp.description.isNotEmpty) ...[
-                        pw.SizedBox(height: 3),
-                        ..._buildBulletPoints(exp.description, textColor, accentColor),
-                      ],
-                    ],
-                  ),
+                      ),
+                    ),
+                  ],
                 );
               }),
               pw.SizedBox(height: 8),
@@ -179,25 +186,32 @@ class ExecutiveMinimalTemplate implements ResumeTemplate {
                     ? (edu.fieldOfStudy.isNotEmpty ? '${edu.degree} in ${edu.fieldOfStudy}' : edu.degree)
                     : (edu.institution.isNotEmpty ? edu.institution : 'Degree');
 
-                return pw.Container(
-                  margin: const pw.EdgeInsets.only(bottom: 6),
-                  child: pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Expanded(
-                        child: pw.Text(
-                          '$title (${edu.institution})',
-                          style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: textColor),
+                return pw.Wrap(
+                  children: [
+                    pw.ConstrainedBox(
+                      constraints: const pw.BoxConstraints(minWidth: double.infinity),
+                      child: pw.Container(
+                        margin: const pw.EdgeInsets.only(bottom: 6),
+                        child: pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Expanded(
+                              child: pw.Text(
+                                '$title (${edu.institution})',
+                                style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: textColor),
+                              ),
+                            ),
+                            if (dateRange.isNotEmpty)
+                              pw.Text(
+                                dateRange,
+                                style: pw.TextStyle(fontSize: 9, color: mutedTextColor),
+                              ),
+                          ],
                         ),
                       ),
-                      if (dateRange.isNotEmpty)
-                        pw.Text(
-                          dateRange,
-                          style: pw.TextStyle(fontSize: 9, color: mutedTextColor),
-                        ),
-                    ],
-                  ),
+                    ),
+                  ],
                 );
               }),
               pw.SizedBox(height: 8),

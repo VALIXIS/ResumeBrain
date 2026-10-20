@@ -170,41 +170,48 @@ class ModernClassicTemplate implements ResumeTemplate {
                   if (exp.location.isNotEmpty) exp.location,
                 ].where((s) => s.isNotEmpty).join('  |  ');
 
-                return pw.Container(
-                  margin: const pw.EdgeInsets.only(bottom: 10),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Expanded(
-                            child: pw.Text(
-                              exp.position.isNotEmpty ? exp.position : 'Role / Position',
-                              style: pw.TextStyle(fontSize: 10.5, fontWeight: pw.FontWeight.bold, color: textColor),
+                return pw.Wrap(
+                  children: [
+                    pw.ConstrainedBox(
+                      constraints: const pw.BoxConstraints(minWidth: double.infinity),
+                      child: pw.Container(
+                        margin: const pw.EdgeInsets.only(bottom: 10),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Row(
+                              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: pw.CrossAxisAlignment.start,
+                              children: [
+                                pw.Expanded(
+                                  child: pw.Text(
+                                    exp.position.isNotEmpty ? exp.position : 'Role / Position',
+                                    style: pw.TextStyle(fontSize: 10.5, fontWeight: pw.FontWeight.bold, color: textColor),
+                                  ),
+                                ),
+                                if (dateRange.isNotEmpty)
+                                  pw.Text(
+                                    dateRange,
+                                    style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: mutedTextColor),
+                                  ),
+                              ],
                             ),
-                          ),
-                          if (dateRange.isNotEmpty)
-                            pw.Text(
-                              dateRange,
-                              style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: mutedTextColor),
-                            ),
-                        ],
-                      ),
-                      if (companyRow.isNotEmpty) ...[
-                        pw.SizedBox(height: 1.5),
-                        pw.Text(
-                          companyRow,
-                          style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: primaryColor),
+                            if (companyRow.isNotEmpty) ...[
+                              pw.SizedBox(height: 1.5),
+                              pw.Text(
+                                companyRow,
+                                style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: primaryColor),
+                              ),
+                            ],
+                            if (exp.description.isNotEmpty) ...[
+                              pw.SizedBox(height: 4),
+                              ..._buildBulletPoints(exp.description, textColor, primaryColor),
+                            ],
+                          ],
                         ),
-                      ],
-                      if (exp.description.isNotEmpty) ...[
-                        pw.SizedBox(height: 4),
-                        ..._buildBulletPoints(exp.description, textColor, primaryColor),
-                      ],
-                    ],
-                  ),
+                      ),
+                    ),
+                  ],
                 );
               }),
               pw.SizedBox(height: 8),
@@ -231,41 +238,48 @@ class ModernClassicTemplate implements ResumeTemplate {
                   if (edu.location.isNotEmpty) edu.location,
                 ].where((s) => s.isNotEmpty).join('  |  ');
 
-                return pw.Container(
-                  margin: const pw.EdgeInsets.only(bottom: 8),
-                  child: pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Expanded(
-                        child: pw.Column(
+                return pw.Wrap(
+                  children: [
+                    pw.ConstrainedBox(
+                      constraints: const pw.BoxConstraints(minWidth: double.infinity),
+                      child: pw.Container(
+                        margin: const pw.EdgeInsets.only(bottom: 8),
+                        child: pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: pw.CrossAxisAlignment.start,
                           children: [
-                            pw.Text(
-                              degreeTitle,
-                              style: pw.TextStyle(fontSize: 10.5, fontWeight: pw.FontWeight.bold, color: textColor),
-                            ),
-                            if (institutionRow.isNotEmpty) ...[
-                              pw.SizedBox(height: 1.5),
-                              pw.Text(
-                                institutionRow,
-                                style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: primaryColor),
+                            pw.Expanded(
+                              child: pw.Column(
+                                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                children: [
+                                  pw.Text(
+                                    degreeTitle,
+                                    style: pw.TextStyle(fontSize: 10.5, fontWeight: pw.FontWeight.bold, color: textColor),
+                                  ),
+                                  if (institutionRow.isNotEmpty) ...[
+                                    pw.SizedBox(height: 1.5),
+                                    pw.Text(
+                                      institutionRow,
+                                      style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: primaryColor),
+                                    ),
+                                  ],
+                                  if (edu.gpa.isNotEmpty) ...[
+                                    pw.SizedBox(height: 1),
+                                    pw.Text('GPA: ${edu.gpa}', style: pw.TextStyle(fontSize: 8.5, color: mutedTextColor)),
+                                  ],
+                                ],
                               ),
-                            ],
-                            if (edu.gpa.isNotEmpty) ...[
-                              pw.SizedBox(height: 1),
-                              pw.Text('GPA: ${edu.gpa}', style: pw.TextStyle(fontSize: 8.5, color: mutedTextColor)),
-                            ],
+                            ),
+                            if (dateRange.isNotEmpty)
+                              pw.Text(
+                                dateRange,
+                                style: pw.TextStyle(fontSize: 9, color: mutedTextColor),
+                              ),
                           ],
                         ),
                       ),
-                      if (dateRange.isNotEmpty)
-                        pw.Text(
-                          dateRange,
-                          style: pw.TextStyle(fontSize: 9, color: mutedTextColor),
-                        ),
-                    ],
-                  ),
+                    ),
+                  ],
                 );
               }),
               pw.SizedBox(height: 8),

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 import '../../../data/models/resume_models.dart';
 import '../../templates/services/template_registry.dart';
@@ -16,6 +17,25 @@ import '../utils/pdf_text_sanitizer.dart';
 /// - Long Resumes (3+ pages): ~11ms - 14ms compilation latency.
 /// - Memory & Byte Stability: Deterministic byte output with zero memory retention across repeated build cycles.
 class PdfService {
+  /// Wraps a single resume block (e.g. experience or education entry) in a keep-together
+  /// [pw.Wrap] block with tight layout constraints (full width) to ensure the full block
+  /// is pushed intact to page 2 (or the next page) if space on the current page is insufficient.
+  static pw.Widget keepTogether(pw.Widget child) {
+    return pw.Wrap(
+      children: [
+        pw.ConstrainedBox(
+          constraints: const pw.BoxConstraints(minWidth: double.infinity),
+          child: child,
+        ),
+      ],
+    );
+  }
+
+  /// Wraps a collection of items in keep-together [pw.Wrap] blocks with tight layout constraints.
+  static List<pw.Widget> wrapKeepTogether(List<pw.Widget> children) {
+    return children.map((c) => keepTogether(c)).toList();
+  }
+
   Future<Uint8List> buildPdfBytes(
     Resume resume, {
     PdfPageFormat pageFormat = PdfPageFormat.a4,

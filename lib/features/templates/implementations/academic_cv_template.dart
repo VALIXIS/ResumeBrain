@@ -180,38 +180,45 @@ class AcademicCvTemplate implements ResumeTemplate {
               _buildSectionHeader('EDUCATION', accentColor),
               pw.SizedBox(height: 6),
               ...resume.educationList.map((edu) {
-                return pw.Container(
-                  margin: const pw.EdgeInsets.only(bottom: 8),
-                  child: pw.Row(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Expanded(
-                        child: pw.Column(
+                return pw.Wrap(
+                  children: [
+                    pw.ConstrainedBox(
+                      constraints: const pw.BoxConstraints(minWidth: double.infinity),
+                      child: pw.Container(
+                        margin: const pw.EdgeInsets.only(bottom: 8),
+                        child: pw.Row(
                           crossAxisAlignment: pw.CrossAxisAlignment.start,
                           children: [
-                            pw.Text(
-                              '${edu.degree}${edu.fieldOfStudy.isNotEmpty ? " in ${edu.fieldOfStudy}" : ""}',
-                              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: textColor),
-                            ),
-                            pw.Text(
-                              '${edu.institution}${edu.location.isNotEmpty ? " | ${edu.location}" : ""}',
-                              style: pw.TextStyle(fontSize: 9, color: primaryColor),
-                            ),
-                            if (edu.gpa.isNotEmpty)
-                              pw.Text(
-                                'GPA: ${edu.gpa}',
-                                style: pw.TextStyle(fontSize: 8.5, color: mutedTextColor),
+                            pw.Expanded(
+                              child: pw.Column(
+                                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                children: [
+                                  pw.Text(
+                                    '${edu.degree}${edu.fieldOfStudy.isNotEmpty ? " in ${edu.fieldOfStudy}" : ""}',
+                                    style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: textColor),
+                                  ),
+                                  pw.Text(
+                                    '${edu.institution}${edu.location.isNotEmpty ? " | ${edu.location}" : ""}',
+                                    style: pw.TextStyle(fontSize: 9, color: primaryColor),
+                                  ),
+                                  if (edu.gpa.isNotEmpty)
+                                    pw.Text(
+                                      'GPA: ${edu.gpa}',
+                                      style: pw.TextStyle(fontSize: 8.5, color: mutedTextColor),
+                                    ),
+                                ],
                               ),
+                            ),
+                            pw.SizedBox(width: 12),
+                            pw.Text(
+                              '${edu.startDate}${edu.endDate.isNotEmpty ? " - ${edu.endDate}" : ""}',
+                              style: pw.TextStyle(fontSize: 8.5, color: mutedTextColor),
+                            ),
                           ],
                         ),
                       ),
-                      pw.SizedBox(width: 12),
-                      pw.Text(
-                        '${edu.startDate}${edu.endDate.isNotEmpty ? " - ${edu.endDate}" : ""}',
-                        style: pw.TextStyle(fontSize: 8.5, color: mutedTextColor),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 );
               }),
               pw.SizedBox(height: 10),
@@ -222,45 +229,52 @@ class AcademicCvTemplate implements ResumeTemplate {
               _buildSectionHeader('ACADEMIC & PROFESSIONAL APPOINTMENTS', accentColor),
               pw.SizedBox(height: 6),
               ...resume.experiences.map((exp) {
-                return pw.Container(
-                  margin: const pw.EdgeInsets.only(bottom: 10),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Row(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Expanded(
-                            child: pw.Column(
+                return pw.Wrap(
+                  children: [
+                    pw.ConstrainedBox(
+                      constraints: const pw.BoxConstraints(minWidth: double.infinity),
+                      child: pw.Container(
+                        margin: const pw.EdgeInsets.only(bottom: 10),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Row(
                               crossAxisAlignment: pw.CrossAxisAlignment.start,
                               children: [
-                                pw.Text(
-                                  exp.position,
-                                  style: pw.TextStyle(fontSize: 10.5, fontWeight: pw.FontWeight.bold, color: textColor),
+                                pw.Expanded(
+                                  child: pw.Column(
+                                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                    children: [
+                                      pw.Text(
+                                        exp.position,
+                                        style: pw.TextStyle(fontSize: 10.5, fontWeight: pw.FontWeight.bold, color: textColor),
+                                      ),
+                                      pw.Text(
+                                        '${exp.company}${exp.location.isNotEmpty ? " | ${exp.location}" : ""}',
+                                        style: pw.TextStyle(fontSize: 9, color: primaryColor),
+                                      ),
+                                    ],
+                                  ),
                                 ),
+                                pw.SizedBox(width: 12),
                                 pw.Text(
-                                  '${exp.company}${exp.location.isNotEmpty ? " | ${exp.location}" : ""}',
-                                  style: pw.TextStyle(fontSize: 9, color: primaryColor),
+                                  '${exp.startDate} - ${exp.isCurrent ? 'Present' : exp.endDate}',
+                                  style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: mutedTextColor),
                                 ),
                               ],
                             ),
-                          ),
-                          pw.SizedBox(width: 12),
-                          pw.Text(
-                            '${exp.startDate} - ${exp.isCurrent ? 'Present' : exp.endDate}',
-                            style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: mutedTextColor),
-                          ),
-                        ],
-                      ),
-                      if (exp.description.isNotEmpty) ...[
-                        pw.SizedBox(height: 3),
-                        pw.Text(
-                          exp.description,
-                          style: pw.TextStyle(fontSize: 9, color: textColor, lineSpacing: 1.5),
+                            if (exp.description.isNotEmpty) ...[
+                              pw.SizedBox(height: 3),
+                              pw.Text(
+                                exp.description,
+                                style: pw.TextStyle(fontSize: 9, color: textColor, lineSpacing: 1.5),
+                              ),
+                            ],
+                          ],
                         ),
-                      ],
-                    ],
-                  ),
+                      ),
+                    ),
+                  ],
                 );
               }),
               pw.SizedBox(height: 10),
