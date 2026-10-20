@@ -38,19 +38,20 @@ class TechModernTemplate implements ResumeTemplate {
   }) async {
     final pdf = pw.Document(theme: config?.themeData);
 
-    // Color tokens
-    final primaryColor = PdfColor.fromHex('#0F172A'); // Slate 900
-    final accentColor = config?.colorPalette.pdfColor ??
+    // Predefined Executive Color Palette
+    final palette = config?.colorPalette.executivePalette;
+    final primaryColor = palette?.primary ?? PdfColor.fromHex('#0F172A'); // Slate 900
+    final accentColor = palette?.accent ??
         customAccentColor ??
-        PdfColor.fromHex('#2563EB'); // Tech Blue 600
-    final secondaryAccent = PdfColor.fromHex('#0284C7'); // Sky Blue 600
-    final textColor = PdfColor.fromHex('#1E293B'); // Slate 800
-    final mutedTextColor = PdfColor.fromHex('#64748B'); // Slate 500
+        PdfColor.fromHex('#1E40AF'); // Corporate Blue 800
+    final secondaryAccent = palette?.secondaryAccent ?? PdfColor.fromHex('#0369A1'); // Deep Cyan 700
+    final textColor = palette?.text ?? PdfColor.fromHex('#1E293B'); // Slate 800
+    final mutedTextColor = palette?.mutedText ?? PdfColor.fromHex('#475569'); // Slate 600
 
     // Badge styling tokens
-    final badgeBg = PdfColor.fromHex('#EFF6FF'); // Blue 50
-    final badgeBorder = PdfColor.fromHex('#BFDBFE'); // Blue 200
-    final badgeText = PdfColor.fromHex('#1D4ED8'); // Blue 700
+    final badgeBg = palette?.badgeBackground ?? PdfColor.fromHex('#EFF6FF'); // Blue 50
+    final badgeBorder = palette?.badgeBorder ?? PdfColor.fromHex('#BFDBFE'); // Blue 200
+    final badgeText = palette?.badgeText ?? PdfColor.fromHex('#1E3A8A'); // Blue 900
 
     final linkBadgeBg = PdfColor.fromHex('#F8FAFC'); // Slate 50
     final linkBadgeBorder = PdfColor.fromHex('#CBD5E1'); // Slate 300

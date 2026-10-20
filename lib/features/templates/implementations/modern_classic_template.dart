@@ -27,10 +27,14 @@ class ModernClassicTemplate implements ResumeTemplate {
     PdfExportConfig? config,
   }) async {
     final pdf = pw.Document(theme: config?.themeData);
-    final primaryColor = config?.colorPalette.pdfColor ?? PdfColor.fromHex('#2563EB'); // Royal Blue 600
-    final nameColor = PdfColor.fromHex('#0F172A'); // Slate 900
-    final textColor = PdfColor.fromHex('#1E293B'); // Slate 800
-    final mutedTextColor = PdfColor.fromHex('#64748B'); // Slate 500
+    final palette = config?.colorPalette.executivePalette;
+    final primaryColor = palette?.accent ?? PdfColor.fromHex('#1E3A8A'); // Executive Navy 900
+    final nameColor = palette?.primary ?? PdfColor.fromHex('#0F172A'); // Slate 900
+    final textColor = palette?.text ?? PdfColor.fromHex('#1E293B'); // Slate 800
+    final mutedTextColor = palette?.mutedText ?? PdfColor.fromHex('#475569'); // Slate 600
+    final badgeBg = palette?.badgeBackground ?? PdfColor.fromHex('#F1F5F9');
+    final badgeBorder = palette?.badgeBorder ?? PdfColor.fromHex('#CBD5E1');
+    final badgeText = palette?.badgeText ?? PdfColor.fromHex('#0F172A');
 
     pdf.addPage(
       pw.MultiPage(
@@ -131,16 +135,16 @@ class ModernClassicTemplate implements ResumeTemplate {
                   return pw.Container(
                     padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                     decoration: pw.BoxDecoration(
-                      color: PdfColor.fromHex('#F1F5F9'), // Slate 100
+                      color: badgeBg,
                       borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
-                      border: pw.Border.all(color: PdfColor.fromHex('#CBD5E1'), width: 0.75),
+                      border: pw.Border.all(color: badgeBorder, width: 0.75),
                     ),
                     child: pw.Text(
                       skill.name,
                       style: pw.TextStyle(
                         fontSize: 9.5,
                         fontWeight: pw.FontWeight.bold,
-                        color: PdfColor.fromHex('#0F172A'),
+                        color: badgeText,
                       ),
                     ),
                   );

@@ -39,23 +39,24 @@ class TechSpecialistTemplate implements ResumeTemplate {
   }) async {
     final pdf = pw.Document(theme: config?.themeData);
 
-    final primaryColor = PdfColor.fromHex('#0F172A'); // Slate 900
+    final palette = config?.colorPalette.executivePalette;
+    final primaryColor = palette?.primary ?? PdfColor.fromHex('#0F172A'); // Slate 900
     final accentColor =
-        config?.colorPalette.pdfColor ?? customAccentColor ?? PdfColor.fromHex('#0284C7'); // Tech Sky 600
-    final secondaryAccent = PdfColor.fromHex('#2563EB'); // Royal Blue 600
-    final textColor = PdfColor.fromHex('#1E293B'); // Slate 800
-    final mutedTextColor = PdfColor.fromHex('#64748B'); // Slate 500
-    final dividerColor = PdfColor.fromHex('#E2E8F0'); // Slate 200
+        palette?.accent ?? customAccentColor ?? PdfColor.fromHex('#0369A1'); // Deep Sky 700
+    final secondaryAccent = palette?.secondaryAccent ?? PdfColor.fromHex('#1E40AF'); // Corporate Blue 800
+    final textColor = palette?.text ?? PdfColor.fromHex('#1E293B'); // Slate 800
+    final mutedTextColor = palette?.mutedText ?? PdfColor.fromHex('#475569'); // Slate 600
+    final dividerColor = palette?.divider ?? PdfColor.fromHex('#CBD5E1'); // Slate 300
 
     // Skill badge colors
-    final badgeBgColor = PdfColor.fromHex('#F1F5F9'); // Slate 100
-    final badgeBorderColor = PdfColor.fromHex('#CBD5E1'); // Slate 300
-    final badgeTextColor = PdfColor.fromHex('#0F172A'); // Slate 900
+    final badgeBgColor = palette?.badgeBackground ?? PdfColor.fromHex('#F1F5F9'); // Slate 100
+    final badgeBorderColor = palette?.badgeBorder ?? PdfColor.fromHex('#CBD5E1'); // Slate 300
+    final badgeTextColor = palette?.badgeText ?? PdfColor.fromHex('#0F172A'); // Slate 900
 
     // Tech stack tag colors
-    final techStackBgColor = PdfColor.fromHex('#E0F2FE'); // Sky 100
-    final techStackBorderColor = PdfColor.fromHex('#BAE6FD'); // Sky 300
-    final techStackTextColor = PdfColor.fromHex('#0369A1'); // Sky 700
+    final techStackBgColor = palette?.badgeBackground ?? PdfColor.fromHex('#EFF6FF'); // Blue 50
+    final techStackBorderColor = palette?.badgeBorder ?? PdfColor.fromHex('#BFDBFE'); // Blue 200
+    final techStackTextColor = palette?.secondaryAccent ?? PdfColor.fromHex('#0369A1'); // Sky 700
 
     pdf.addPage(
       pw.MultiPage(
@@ -675,7 +676,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
           ],
         ),
         pw.SizedBox(height: 3),
-        pw.Container(height: 1, color: PdfColor.fromHex('#E2E8F0')),
+        pw.Container(height: 0.75, color: PdfColor.fromHex('#CBD5E1')),
       ],
     );
   }
