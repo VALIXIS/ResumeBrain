@@ -29,11 +29,12 @@ class AcademicCvTemplate implements ResumeTemplate {
   }) async {
     final pdf = pw.Document(theme: config?.themeData);
 
-    final primaryColor = PdfColor.fromHex('#1B2A4A'); // Deep Navy Blue
-    final accentColor = config?.colorPalette.pdfColor ?? PdfColor.fromHex('#800020'); // Burgundy Accent
-    final textColor = PdfColor.fromHex('#1E293B'); // Slate 800
-    final mutedTextColor = PdfColor.fromHex('#64748B'); // Slate 500
-    final dividerColor = PdfColor.fromHex('#CBD5E1'); // Slate 300
+    final palette = config?.colorPalette.executivePalette;
+    final primaryColor = palette?.primary ?? PdfColor.fromHex('#1B2A4A'); // Deep Navy Blue
+    final accentColor = palette?.accent ?? PdfColor.fromHex('#701A28'); // Burgundy Accent
+    final textColor = palette?.text ?? PdfColor.fromHex('#1E293B'); // Slate 800
+    final mutedTextColor = palette?.mutedText ?? PdfColor.fromHex('#475569'); // Slate 600
+    final dividerColor = palette?.divider ?? PdfColor.fromHex('#CBD5E1'); // Slate 300
 
     final candidateName = resume.personalInfo.fullName.isNotEmpty
         ? resume.personalInfo.fullName

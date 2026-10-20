@@ -33,11 +33,12 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
   }) async {
     final pdf = pw.Document(theme: config?.themeData);
 
-    final accentColor = config?.colorPalette.pdfColor ?? customAccentColor ?? PdfColor.fromHex('#0D9488'); // Rich Teal Accent
-    final primaryTextColor = PdfColor.fromHex('#0F172A'); // Slate 900
-    final bodyTextColor = PdfColor.fromHex('#334155'); // Slate 700
-    final mutedTextColor = PdfColor.fromHex('#64748B'); // Slate 500
-    final dividerColor = PdfColor.fromHex('#E2E8F0');
+    final palette = config?.colorPalette.executivePalette;
+    final accentColor = palette?.accent ?? customAccentColor ?? PdfColor.fromHex('#115E59'); // Deep Teal Accent
+    final primaryTextColor = palette?.primary ?? PdfColor.fromHex('#0F172A'); // Slate 900
+    final bodyTextColor = palette?.text ?? PdfColor.fromHex('#1E293B'); // Slate 800
+    final mutedTextColor = palette?.mutedText ?? PdfColor.fromHex('#475569'); // Slate 600
+    final dividerColor = palette?.divider ?? PdfColor.fromHex('#CBD5E1'); // Slate 300
 
     pdf.addPage(
       pw.MultiPage(

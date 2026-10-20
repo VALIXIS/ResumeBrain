@@ -38,14 +38,15 @@ class ExecutiveMinimalTemplate implements ResumeTemplate {
   }) async {
     final pdf = pw.Document(theme: config?.themeData);
 
-    // Color Palette
-    final primaryColor = PdfColor.fromHex('#0F172A'); // Rich Charcoal / Slate 900
-    final accentColor = config?.colorPalette.pdfColor ??
+    // Predefined Executive Color Palette
+    final palette = config?.colorPalette.executivePalette;
+    final primaryColor = palette?.primary ?? PdfColor.fromHex('#0F172A'); // Rich Charcoal / Slate 900
+    final accentColor = palette?.accent ??
         customAccentColor ??
         PdfColor.fromHex('#1E3A8A'); // Deep Executive Navy / Blue 900
-    final textColor = PdfColor.fromHex('#1E293B'); // Slate 800
-    final mutedTextColor = PdfColor.fromHex('#475569'); // Slate 600
-    final dividerColor = PdfColor.fromHex('#94A3B8'); // Slate 400
+    final textColor = palette?.text ?? PdfColor.fromHex('#1E293B'); // Slate 800
+    final mutedTextColor = palette?.mutedText ?? PdfColor.fromHex('#475569'); // Slate 600
+    final dividerColor = palette?.divider ?? PdfColor.fromHex('#94A3B8'); // Slate 400
 
     final serifFont = pw.Font.times();
     final serifBold = pw.Font.timesBold();
