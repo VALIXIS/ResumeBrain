@@ -94,4 +94,12 @@ class AppSnackBar {
   static void showError(BuildContext context, String message) {
     show(context, message: message, variant: AppSnackBarVariant.error);
   }
+
+  static void showInfo(BuildContext context, String message) {
+    show(context, message: message, variant: AppSnackBarVariant.info);
+  }
+
+  static void showWarning(BuildContext context, String message) {
+    show(context, message: message, variant: AppSnackBarVariant.warning);
+  }
 }

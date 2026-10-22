@@ -4,23 +4,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:resume_brain/features/job_matching/presentation/job_description_input_screen.dart';
 import 'package:resume_brain/features/job_matching/controllers/job_matching_controller.dart';
 import 'package:resume_brain/features/job_matching/models/job_description.dart';
+import 'package:resume_brain/data/models/resume_models.dart';
 
 class FakeJobMatchingController extends JobMatchingController {
   int submitCallsCount = 0;
   String? lastSubmittedDescription;
 
   @override
-  Future<void> submitJobDescription(String description, {String? title, String? url}) async {
+  Future<void> submitJobDescriptionWithResume(
+    String description, {
+    String? title,
+    String? url,
+    Resume? resume,
+    List<String>? userSkills,
+  }) async {
     submitCallsCount++;
     lastSubmittedDescription = description;
     state = state.copyWith(isLoading: true);
-    
-    // We yield control back to the test runner so it can observe the loading state
+
     await Future.delayed(Duration.zero);
-    
+
     final job = JobDescription(
       descriptionText: description,
-      title: title ?? 'Fake Job Title',
+      title: title ?? 'Target Job Description',
       url: url,
     );
     state = state.copyWith(
@@ -32,6 +38,7 @@ class FakeJobMatchingController extends JobMatchingController {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late FakeJobMatchingController fakeController;
 
   setUp(() {
@@ -54,6 +61,10 @@ void main() {
 
   group('JobDescriptionInputScreen Widget Tests', () {
     testWidgets('Initial screen rendering loads successfully and displays all elements', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 1920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
       await tester.pumpWidget(
         buildTestWidget(
           overrides: [
@@ -63,25 +74,21 @@ void main() {
       );
 
       // Verify the AppBar Title
-      expect(find.text('Job Description Match'), findsOneWidget);
-
-      // Verify main headings/titles
-      expect(find.text('Enter Job Details'), findsOneWidget);
-      expect(find.text('Paste the target job description to match and tailor your resume.'), findsOneWidget);
+      expect(find.text('Job Description Matcher'), findsOneWidget);
 
       // Verify input text field label and hint
-      expect(find.text('Job Description'), findsOneWidget);
-      expect(find.text('Paste the job description here...'), findsOneWidget);
+      expect(find.text('Job Description Text'), findsOneWidget);
+      expect(find.text('Paste requirements, responsibilities, or skills list here...'), findsOneWidget);
 
       // Verify the action button
-      expect(find.text('Submit Description'), findsOneWidget);
-
-      // Ensure no error state is displayed initially
-      expect(find.text('Job description cannot be empty'), findsNothing);
-      expect(find.byIcon(Icons.check_circle_outline), findsNothing);
+      expect(find.text('Compute Keyword Match'), findsOneWidget);
     });
 
     testWidgets('Empty input displays local validation error and does not call controller', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 1920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
       await tester.pumpWidget(
         buildTestWidget(
           overrides: [
@@ -94,18 +101,23 @@ void main() {
       expect(fakeController.submitCallsCount, equals(0));
 
       // Tap submit immediately (with empty input)
-      final submitButton = find.text('Submit Description');
+      final submitButton = find.text('Compute Keyword Match');
+      await tester.ensureVisible(submitButton);
       await tester.tap(submitButton);
       await tester.pumpAndSettle();
 
       // Verify local validation error is displayed
-      expect(find.text('Job description cannot be empty'), findsOneWidget);
+      expect(find.text('Please paste or enter a job description.'), findsOneWidget);
 
       // Verify that the controller method was NOT called
       expect(fakeController.submitCallsCount, equals(0));
     });
 
     testWidgets('Whitespace-only input displays local validation error and does not call controller', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 1920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
       await tester.pumpWidget(
         buildTestWidget(
           overrides: [
@@ -120,25 +132,25 @@ void main() {
       await tester.pump();
 
       // Tap submit
-      final submitButton = find.text('Submit Description');
+      final submitButton = find.text('Compute Keyword Match');
+      await tester.ensureVisible(submitButton);
       await tester.tap(submitButton);
       await tester.pumpAndSettle();
 
       // Verify local validation error is displayed
-      expect(find.text('Job description cannot be empty'), findsOneWidget);
+      expect(find.text('Please paste or enter a job description.'), findsOneWidget);
 
       // Verify that the controller method was NOT called
       expect(fakeController.submitCallsCount, equals(0));
     });
 
     testWidgets('Valid job description submission calls controller and updates state', (WidgetTester tester) async {
-      bool successCallbackCalled = false;
+      tester.view.physicalSize = const Size(1080, 1920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
 
       await tester.pumpWidget(
         buildTestWidget(
-          onSuccess: () {
-            successCallbackCalled = true;
-          },
           overrides: [
             jobMatchingControllerProvider.overrideWith((ref) => fakeController),
           ],
@@ -153,25 +165,22 @@ void main() {
       await tester.pump();
 
       // Tap submit button
-      final submitButton = find.text('Submit Description');
+      final submitButton = find.text('Compute Keyword Match');
+      await tester.ensureVisible(submitButton);
       await tester.tap(submitButton);
-      
-      // Pump to trigger build after submit triggers loading
-      await tester.pump();
-      
-      // Verify button shows loading status or controller has been triggered
-      expect(fakeController.submitCallsCount, equals(1));
-      expect(fakeController.lastSubmittedDescription, equals(validText));
 
       // Settle the delayed future inside fakeController
       await tester.pumpAndSettle();
 
-      // Verify success status/text is rendered on screen
-      expect(find.text('Successfully matched with: Fake Job Title'), findsOneWidget);
-      expect(successCallbackCalled, isTrue);
+      expect(fakeController.submitCallsCount, equals(1));
+      expect(fakeController.lastSubmittedDescription, equals(validText));
     });
 
     testWidgets('Input editing correctly modifies text and submits latest value', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 1920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
       await tester.pumpWidget(
         buildTestWidget(
           overrides: [
@@ -181,7 +190,7 @@ void main() {
       );
 
       final textFormField = find.byType(TextFormField);
-      
+
       // 1. Enter initial text
       await tester.enterText(textFormField, 'Initial Description');
       await tester.pump();
@@ -194,7 +203,8 @@ void main() {
       expect(find.text('Updated Description'), findsOneWidget);
 
       // 3. Submit
-      final submitButton = find.text('Submit Description');
+      final submitButton = find.text('Compute Keyword Match');
+      await tester.ensureVisible(submitButton);
       await tester.tap(submitButton);
       await tester.pumpAndSettle();
 

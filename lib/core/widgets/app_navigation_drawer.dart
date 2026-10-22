@@ -220,9 +220,9 @@ class AppNavigationDrawer extends StatelessWidget {
       return Container(
         width: 240,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: Theme.of(context).cardColor,
           border: Border(
-            right: BorderSide(color: AppColors.surfaceBorder, width: 1),
+            right: BorderSide(color: Theme.of(context).dividerColor, width: 1),
           ),
         ),
         child: drawerContent,
@@ -230,7 +230,7 @@ class AppNavigationDrawer extends StatelessWidget {
     }
 
     return Drawer(
-      backgroundColor: AppColors.surface,
+      backgroundColor: Theme.of(context).cardColor,
       elevation: 16,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.horizontal(right: Radius.circular(AppRadius.lg)),

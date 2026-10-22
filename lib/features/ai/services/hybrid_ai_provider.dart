@@ -87,12 +87,12 @@ class DynamicAIProvider implements AIProvider {
         return await OpenAIProvider(apiKey: openaiKey).processRequest(request);
       }
 
-      return HybridAIProvider(
+      return await HybridAIProvider(
         geminiApiKey: effectiveGemini,
         groqApiKey: effectiveGroq,
       ).processRequest(request);
     } catch (_) {
-      return HybridAIProvider(
+      return await HybridAIProvider(
         geminiApiKey: defaultGeminiKey,
         groqApiKey: defaultGroqKey,
       ).processRequest(request);

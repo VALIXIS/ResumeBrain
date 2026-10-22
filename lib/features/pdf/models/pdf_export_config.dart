@@ -450,7 +450,7 @@ class PdfContactIcons {
   static const locationSvg =
       '<svg viewBox="0 0 24 24" fill="none" stroke="#COLOR" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
   static const websiteSvg =
-      '<svg viewBox="0 0 24 24" fill="none" stroke="#COLOR" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+      '<svg viewBox="0 0 24 24" fill="none" stroke="#COLOR" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"/></svg>';
   static const linkSvg =
       '<svg viewBox="0 0 24 24" fill="none" stroke="#COLOR" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
 
@@ -493,6 +493,9 @@ class PdfExportConfig {
   final PdfMarginOption marginOption;
   final PdfColorPalette colorPalette;
   final PdfFontFamily fontFamily;
+  final double? customMargin;
+  final double lineHeight;
+  final Color? customPrimaryColor;
   final bool showPageNumbers;
   final PdfContactIconStyle contactIconStyle;
   final PdfDateFormat dateFormat;
@@ -501,10 +504,28 @@ class PdfExportConfig {
     this.marginOption = PdfMarginOption.normal,
     this.colorPalette = PdfColorPalette.templateDefault,
     this.fontFamily = PdfFontFamily.helvetica,
+    this.customMargin,
+    this.lineHeight = 1.35,
+    this.customPrimaryColor,
     this.showPageNumbers = true,
     this.contactIconStyle = PdfContactIconStyle.icon,
     this.dateFormat = PdfDateFormat.monthYear,
   });
+
+  pw.EdgeInsets get insets {
+    if (customMargin != null) {
+      return pw.EdgeInsets.all(customMargin!);
+    }
+    return marginOption.insets;
+  }
+
+  PdfColor? get resolvedPdfColor {
+    if (customPrimaryColor != null) {
+      final c = customPrimaryColor!;
+      return PdfColor(c.r, c.g, c.b, c.a);
+    }
+    return colorPalette.pdfColor;
+  }
 
   /// Formats a raw date string according to [PdfDateFormat]:
   /// - [PdfDateFormat.monthYear]: e.g., 'Jan 2024', 'May 2022'
@@ -614,6 +635,9 @@ class PdfExportConfig {
     PdfMarginOption? marginOption,
     PdfColorPalette? colorPalette,
     PdfFontFamily? fontFamily,
+    double? customMargin,
+    double? lineHeight,
+    Color? customPrimaryColor,
     bool? showPageNumbers,
     PdfContactIconStyle? contactIconStyle,
     PdfDateFormat? dateFormat,
@@ -622,6 +646,9 @@ class PdfExportConfig {
       marginOption: marginOption ?? this.marginOption,
       colorPalette: colorPalette ?? this.colorPalette,
       fontFamily: fontFamily ?? this.fontFamily,
+      customMargin: customMargin ?? this.customMargin,
+      lineHeight: lineHeight ?? this.lineHeight,
+      customPrimaryColor: customPrimaryColor ?? this.customPrimaryColor,
       showPageNumbers: showPageNumbers ?? this.showPageNumbers,
       contactIconStyle: contactIconStyle ?? this.contactIconStyle,
       dateFormat: dateFormat ?? this.dateFormat,
@@ -643,6 +670,9 @@ class PdfExportConfig {
           marginOption == other.marginOption &&
           colorPalette == other.colorPalette &&
           fontFamily == other.fontFamily &&
+          customMargin == other.customMargin &&
+          lineHeight == other.lineHeight &&
+          customPrimaryColor == other.customPrimaryColor &&
           showPageNumbers == other.showPageNumbers &&
           contactIconStyle == other.contactIconStyle &&
           dateFormat == other.dateFormat;
@@ -652,6 +682,9 @@ class PdfExportConfig {
         marginOption,
         colorPalette,
         fontFamily,
+        customMargin,
+        lineHeight,
+        customPrimaryColor,
         showPageNumbers,
         contactIconStyle,
         dateFormat,
@@ -660,6 +693,7 @@ class PdfExportConfig {
   @override
   String toString() =>
       'PdfExportConfig(margin: $marginOption, palette: $colorPalette, '
-      'font: $fontFamily, pageNumbers: $showPageNumbers, '
+      'font: $fontFamily, customMargin: $customMargin, lineHeight: $lineHeight, '
+      'customColor: $customPrimaryColor, pageNumbers: $showPageNumbers, '
       'contactIcons: $contactIconStyle, dateFormat: $dateFormat)';
 }

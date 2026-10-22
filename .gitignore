@@ -48,3 +48,4 @@ api_keys.json
 test_hive_tmp/
 .kotlin/
 **/android/.kotlin/
+.gemini/
