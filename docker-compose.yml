@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  resumebrain-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: resumebrain-app
+    ports:
+      - "8086:80"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
