@@ -33,23 +33,25 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
   }) async {
     final pdf = pw.Document(theme: config?.themeData);
 
-    final accentColor = config?.resolvedPdfColor ?? customAccentColor ?? PdfColor.fromHex('#0D9488'); // Rich Teal Accent
-    final primaryTextColor = PdfColor.fromHex('#0F172A'); // Slate 900
-    final bodyTextColor = PdfColor.fromHex('#334155'); // Slate 700
-    final mutedTextColor = PdfColor.fromHex('#64748B'); // Slate 500
-    final dividerColor = PdfColor.fromHex('#E2E8F0');
+    final palette = config?.colorPalette.executivePalette;
+    final accentColor = palette?.accent ?? customAccentColor ?? PdfColor.fromHex('#115E59'); // Deep Teal Accent
+    final primaryTextColor = palette?.primary ?? PdfColor.fromHex('#0F172A'); // Slate 900
+    final bodyTextColor = palette?.text ?? PdfColor.fromHex('#1E293B'); // Slate 800
+    final mutedTextColor = palette?.mutedText ?? PdfColor.fromHex('#475569'); // Slate 600
+    final dividerColor = palette?.divider ?? PdfColor.fromHex('#CBD5E1'); // Slate 300
 
     pdf.addPage(
       pw.MultiPage(
         pageFormat: pageFormat,
-        margin: config?.insets ?? const pw.EdgeInsets.all(32),
+        margin: config?.marginOption.insets ??
+            const pw.EdgeInsets.symmetric(horizontal: 36, vertical: 32),
         footer: (pw.Context context) {
           return pw.Container(
             alignment: pw.Alignment.centerRight,
             margin: const pw.EdgeInsets.only(top: 10),
             child: pw.Text(
               'Page ${context.pageNumber} of ${context.pagesCount}',
-              style: pw.TextStyle(fontSize: 8.5, color: mutedTextColor),
+              style: pw.TextStyle(fontSize: 9.5, color: mutedTextColor),
             ),
           );
         },
@@ -121,7 +123,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                     pw.Text(
                                       skill.level,
                                       style: pw.TextStyle(
-                                        fontSize: 8,
+                                        fontSize: 9.5,
                                         color: mutedTextColor,
                                       ),
                                     ),
@@ -146,7 +148,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                     child: pw.Text(
                                       lang.name,
                                       style: pw.TextStyle(
-                                        fontSize: 9,
+                                        fontSize: 9.5,
                                         fontWeight: pw.FontWeight.bold,
                                         color: bodyTextColor,
                                       ),
@@ -155,7 +157,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                   pw.Text(
                                     lang.proficiency,
                                     style: pw.TextStyle(
-                                      fontSize: 8,
+                                      fontSize: 9.5,
                                       color: mutedTextColor,
                                     ),
                                   ),
@@ -179,7 +181,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                   pw.Text(
                                     cert.name,
                                     style: pw.TextStyle(
-                                      fontSize: 9,
+                                      fontSize: 10,
                                       fontWeight: pw.FontWeight.bold,
                                       color: bodyTextColor,
                                     ),
@@ -188,7 +190,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                     pw.Text(
                                       cert.issuingOrganization,
                                       style: pw.TextStyle(
-                                        fontSize: 8,
+                                        fontSize: 9.5,
                                         color: mutedTextColor,
                                       ),
                                     ),
@@ -217,7 +219,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                               ? resume.personalInfo.fullName
                               : 'Your Full Name',
                           style: pw.TextStyle(
-                            fontSize: 24,
+                            fontSize: 21,
                             fontWeight: pw.FontWeight.bold,
                             color: primaryTextColor,
                             letterSpacing: 0.5,
@@ -228,7 +230,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                           pw.Text(
                             resume.personalInfo.jobTitle,
                             style: pw.TextStyle(
-                              fontSize: 13,
+                              fontSize: 12,
                               fontWeight: pw.FontWeight.bold,
                               color: accentColor,
                               letterSpacing: 0.5,
@@ -251,7 +253,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                             style: pw.TextStyle(
                               fontSize: 9.5,
                               color: bodyTextColor,
-                              lineSpacing: 2,
+                              lineSpacing: 1.35,
                             ),
                           ),
                           pw.SizedBox(height: 16),
@@ -288,7 +290,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                             pw.Text(
                                               '${exp.startDate} - ${exp.isCurrent ? 'Present' : exp.endDate}',
                                               style: pw.TextStyle(
-                                                fontSize: 8.5,
+                                                fontSize: 9.5,
                                                 fontWeight: pw.FontWeight.bold,
                                                 color: mutedTextColor,
                                               ),
@@ -299,7 +301,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                         pw.Text(
                                           '${exp.company}${exp.location.isNotEmpty ? " | ${exp.location}" : ""}',
                                           style: pw.TextStyle(
-                                            fontSize: 9,
+                                            fontSize: 9.5,
                                             fontWeight: pw.FontWeight.bold,
                                             color: accentColor,
                                           ),
@@ -309,9 +311,9 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                           pw.Text(
                                             exp.description,
                                             style: pw.TextStyle(
-                                              fontSize: 9,
+                                              fontSize: 9.5,
                                               color: bodyTextColor,
-                                              lineSpacing: 1.5,
+                                              lineSpacing: 1.35,
                                             ),
                                           ),
                                         ],
@@ -346,7 +348,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                               child: pw.Text(
                                                 '${edu.degree}${edu.fieldOfStudy.isNotEmpty ? " in ${edu.fieldOfStudy}" : ""}',
                                                 style: pw.TextStyle(
-                                                  fontSize: 10,
+                                                  fontSize: 10.5,
                                                   fontWeight: pw.FontWeight.bold,
                                                   color: primaryTextColor,
                                                 ),
@@ -355,7 +357,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                             pw.Text(
                                               '${edu.startDate} - ${edu.endDate}',
                                               style: pw.TextStyle(
-                                                fontSize: 8.5,
+                                                fontSize: 9.5,
                                                 color: mutedTextColor,
                                               ),
                                             ),
@@ -365,7 +367,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                         pw.Text(
                                           '${edu.institution}${edu.location.isNotEmpty ? " | ${edu.location}" : ""}',
                                           style: pw.TextStyle(
-                                            fontSize: 8.5,
+                                            fontSize: 9.5,
                                             color: mutedTextColor,
                                           ),
                                         ),
@@ -396,7 +398,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                         child: pw.Text(
                                           '${proj.name}${proj.role.isNotEmpty ? " - ${proj.role}" : ""}',
                                           style: pw.TextStyle(
-                                            fontSize: 10,
+                                            fontSize: 10.5,
                                             fontWeight: pw.FontWeight.bold,
                                             color: primaryTextColor,
                                           ),
@@ -406,7 +408,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                         pw.Text(
                                           proj.link,
                                           style: pw.TextStyle(
-                                            fontSize: 8,
+                                            fontSize: 9.5,
                                             color: accentColor,
                                           ),
                                         ),
@@ -417,8 +419,9 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                     pw.Text(
                                       proj.description,
                                       style: pw.TextStyle(
-                                        fontSize: 8.5,
+                                        fontSize: 9.5,
                                         color: bodyTextColor,
+                                        lineSpacing: 1.35,
                                       ),
                                     ),
                                   ],
@@ -427,7 +430,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                     pw.Text(
                                       'Tech: ${proj.technologies}',
                                       style: pw.TextStyle(
-                                        fontSize: 8,
+                                        fontSize: 9.5,
                                         fontWeight: pw.FontWeight.bold,
                                         color: mutedTextColor,
                                       ),
@@ -459,7 +462,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
         pw.Text(
           title,
           style: pw.TextStyle(
-            fontSize: 9.5,
+            fontSize: 12.5,
             fontWeight: pw.FontWeight.bold,
             color: color,
             letterSpacing: 1.2,
@@ -488,7 +491,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
           pw.Text(
             label.toUpperCase(),
             style: pw.TextStyle(
-              fontSize: 7.5,
+              fontSize: 9.5,
               fontWeight: pw.FontWeight.bold,
               color: mutedColor,
             ),
@@ -496,7 +499,7 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
           pw.Text(
             value,
             style: pw.TextStyle(
-              fontSize: 8.5,
+              fontSize: 9.5,
               color: textColor,
             ),
           ),
@@ -511,14 +514,14 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
       children: [
         pw.Container(
           width: 3,
-          height: 11,
+          height: 13,
           color: accentColor,
         ),
         pw.SizedBox(width: 6),
         pw.Text(
           title,
           style: pw.TextStyle(
-            fontSize: 10.5,
+            fontSize: 13,
             fontWeight: pw.FontWeight.bold,
             color: textColor,
             letterSpacing: 1.1,
