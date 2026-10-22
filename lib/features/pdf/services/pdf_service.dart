@@ -124,6 +124,75 @@ class PdfService {
     );
   }
 
+  /// Formats a date string dynamically based on [PdfDateFormat].
+  static String formatDate(String date, [PdfDateFormat format = PdfDateFormat.monthYear]) =>
+      PdfExportConfig.formatDate(date, format);
+
+  /// Formats a start/end date range dynamically based on [PdfDateFormat].
+  static String formatDateRange({
+    String? startDate,
+    String? endDate,
+    bool isCurrent = false,
+    PdfDateFormat format = PdfDateFormat.monthYear,
+  }) =>
+      PdfExportConfig.formatDateRange(
+        startDate: startDate,
+        endDate: endDate,
+        isCurrent: isCurrent,
+        format: format,
+      );
+
+  /// Dynamically formats contact items for [resume] according to [style].
+  /// In [PdfContactIconStyle.text] mode, includes explicit labels ('Email: ...', 'Phone: ...').
+  /// In [PdfContactIconStyle.icon] mode, returns clean values for compact/icon rendering.
+  static List<String> formatContactList(
+    Resume resume, {
+    PdfContactIconStyle style = PdfContactIconStyle.icon,
+  }) {
+    final isText = style == PdfContactIconStyle.text;
+    final items = <String>[];
+
+    if (resume.personalInfo.email.isNotEmpty) {
+      items.add(isText ? 'Email: ${resume.personalInfo.email}' : resume.personalInfo.email);
+    }
+    if (resume.personalInfo.phone.isNotEmpty) {
+      items.add(isText ? 'Phone: ${resume.personalInfo.phone}' : resume.personalInfo.phone);
+    }
+    if (resume.personalInfo.location.isNotEmpty) {
+      items.add(isText ? 'Location: ${resume.personalInfo.location}' : resume.personalInfo.location);
+    }
+    if (resume.personalInfo.website.isNotEmpty) {
+      items.add(isText ? 'Website: ${resume.personalInfo.website}' : resume.personalInfo.website);
+    }
+    for (final s in resume.socialLinks.where((l) => l.url.isNotEmpty)) {
+      items.add('${s.platform}: ${s.url}');
+    }
+
+    return items;
+  }
+
+  /// Renders a footer page number widget honoring [showPageNumbers].
+  /// When disabled, returns a zero-size [pw.SizedBox.shrink()].
+  static pw.Widget buildFooterPageNumber(
+    pw.Context context, {
+    required bool showPageNumbers,
+    required PdfColor color,
+    pw.Font? font,
+    double fontSize = 8.5,
+  }) {
+    if (!showPageNumbers) {
+      return pw.SizedBox.shrink();
+    }
+    return pw.Text(
+      'Page ${context.pageNumber} of ${context.pagesCount}',
+      style: pw.TextStyle(
+        font: font,
+        fontSize: fontSize,
+        color: color,
+      ),
+    );
+  }
+
   /// Normalizes and formats an external profile/website URL ensuring a valid web scheme.
   static String sanitizeUrl(String rawUrl) {
     final trimmed = rawUrl.trim();

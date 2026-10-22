@@ -74,10 +74,13 @@ class TechModernTemplate implements ResumeTemplate {
                       : 'Tech Resume',
                   style: pw.TextStyle(fontSize: 8.5, color: mutedTextColor),
                 ),
-                pw.Text(
-                  'Page ${context.pageNumber} of ${context.pagesCount}',
-                  style: pw.TextStyle(fontSize: 8.5, color: mutedTextColor),
-                ),
+                if (config?.showPageNumbers ?? true)
+                  pw.Text(
+                    'Page ${context.pageNumber} of ${context.pagesCount}',
+                    style: pw.TextStyle(fontSize: 8.5, color: mutedTextColor),
+                  )
+                else
+                  pw.SizedBox.shrink(),
               ],
             ),
           );
@@ -143,16 +146,20 @@ class TechModernTemplate implements ResumeTemplate {
                     children: [
                       if (resume.personalInfo.email.isNotEmpty)
                         _buildContactChip('Email', resume.personalInfo.email,
-                            linkBadgeBg, linkBadgeBorder, textColor),
+                            linkBadgeBg, linkBadgeBorder, textColor,
+                            style: config?.contactIconStyle ?? PdfContactIconStyle.icon),
                       if (resume.personalInfo.phone.isNotEmpty)
                         _buildContactChip('Phone', resume.personalInfo.phone,
-                            linkBadgeBg, linkBadgeBorder, textColor),
+                            linkBadgeBg, linkBadgeBorder, textColor,
+                            style: config?.contactIconStyle ?? PdfContactIconStyle.icon),
                       if (resume.personalInfo.location.isNotEmpty)
                         _buildContactChip('Location',
-                            resume.personalInfo.location, linkBadgeBg, linkBadgeBorder, textColor),
+                            resume.personalInfo.location, linkBadgeBg, linkBadgeBorder, textColor,
+                            style: config?.contactIconStyle ?? PdfContactIconStyle.icon),
                       if (resume.personalInfo.website.isNotEmpty)
                         _buildContactChip('Portfolio',
-                            resume.personalInfo.website, badgeBg, badgeBorder, badgeText),
+                            resume.personalInfo.website, badgeBg, badgeBorder, badgeText,
+                            style: config?.contactIconStyle ?? PdfContactIconStyle.icon),
                       ...resume.socialLinks
                           .where((s) => s.url.isNotEmpty)
                           .map((s) {
@@ -162,7 +169,8 @@ class TechModernTemplate implements ResumeTemplate {
                                 ? 'LinkedIn'
                                 : s.platform);
                         return _buildContactChip(prefix, s.url, badgeBg,
-                            badgeBorder, badgeText);
+                            badgeBorder, badgeText,
+                            style: config?.contactIconStyle ?? PdfContactIconStyle.icon);
                       }),
                     ],
                   ),
@@ -204,13 +212,12 @@ class TechModernTemplate implements ResumeTemplate {
                             'WORK EXPERIENCE', accentColor),
                         pw.SizedBox(height: 6),
                         ...resume.experiences.map((exp) {
-                          final dateRange = [
-                            if (exp.startDate.isNotEmpty) exp.startDate,
-                            if (exp.isCurrent)
-                              'Present'
-                            else if (exp.endDate.isNotEmpty)
-                              exp.endDate,
-                          ].join(' - ');
+                          final dateRange = PdfExportConfig.formatDateRange(
+                            startDate: exp.startDate,
+                            endDate: exp.endDate,
+                            isCurrent: exp.isCurrent,
+                            format: config?.dateFormat ?? PdfDateFormat.monthYear,
+                          );
 
                           final bullets = exp.description
                               .split('\n')
@@ -467,10 +474,11 @@ class TechModernTemplate implements ResumeTemplate {
                         _buildSectionHeading('EDUCATION', accentColor),
                         pw.SizedBox(height: 6),
                         ...resume.educationList.map((edu) {
-                          final dateRange = [
-                            if (edu.startDate.isNotEmpty) edu.startDate,
-                            if (edu.endDate.isNotEmpty) edu.endDate,
-                          ].join(' - ');
+                          final dateRange = PdfExportConfig.formatDateRange(
+                            startDate: edu.startDate,
+                            endDate: edu.endDate,
+                            format: config?.dateFormat ?? PdfDateFormat.monthYear,
+                          );
 
                           return pw.Wrap(
                             children: [
@@ -681,8 +689,9 @@ class TechModernTemplate implements ResumeTemplate {
     String value,
     PdfColor bg,
     PdfColor border,
-    PdfColor textCol,
-  ) {
+    PdfColor textCol, {
+    PdfContactIconStyle style = PdfContactIconStyle.icon,
+  }) {
     return pw.Container(
       padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: pw.BoxDecoration(
@@ -692,15 +701,21 @@ class TechModernTemplate implements ResumeTemplate {
       ),
       child: pw.Row(
         mainAxisSize: pw.MainAxisSize.min,
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
         children: [
-          pw.Text(
-            '$label: ',
-            style: pw.TextStyle(
-              fontSize: 9.5,
-              fontWeight: pw.FontWeight.bold,
-              color: textCol,
-            ),
-          ),
+          if (style == PdfContactIconStyle.text)
+            pw.Text(
+              '$label: ',
+              style: pw.TextStyle(
+                fontSize: 9.5,
+                fontWeight: pw.FontWeight.bold,
+                color: textCol,
+              ),
+            )
+          else ...[
+            PdfContactIcons.getIcon(label, color: textCol, size: 8),
+            pw.SizedBox(width: 3.5),
+          ],
           pw.Text(
             value,
             style: pw.TextStyle(

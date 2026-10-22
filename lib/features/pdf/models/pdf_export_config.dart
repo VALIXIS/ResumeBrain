@@ -407,26 +407,224 @@ enum PdfFontFamily {
   }
 }
 
+enum PdfContactIconStyle {
+  icon,
+  text;
+
+  String get displayName {
+    switch (this) {
+      case PdfContactIconStyle.icon:
+        return 'Icons';
+      case PdfContactIconStyle.text:
+        return 'Text Labels';
+    }
+  }
+
+  bool get isIcon => this == PdfContactIconStyle.icon;
+  bool get isText => this == PdfContactIconStyle.text;
+}
+
+enum PdfDateFormat {
+  monthYear,
+  numericMonthYear;
+
+  String get displayName {
+    switch (this) {
+      case PdfDateFormat.monthYear:
+        return 'Month YYYY (e.g. Jan 2024)';
+      case PdfDateFormat.numericMonthYear:
+        return 'MM/YYYY (e.g. 01/2024)';
+    }
+  }
+
+  bool get isNumeric => this == PdfDateFormat.numericMonthYear;
+  bool get isMonthYear => this == PdfDateFormat.monthYear;
+}
+
+/// Vector contact icons engineered for PDF export without external font dependencies.
+class PdfContactIcons {
+  static const emailSvg =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="#COLOR" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>';
+  static const phoneSvg =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="#COLOR" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>';
+  static const locationSvg =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="#COLOR" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+  static const websiteSvg =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="#COLOR" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+  static const linkSvg =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="#COLOR" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+
+  static pw.Widget getIcon(String type, {PdfColor color = PdfColors.black, double size = 8.5}) {
+    final hex = color.toHex().replaceAll('#', '');
+    String svg;
+    switch (type.toLowerCase()) {
+      case 'email':
+      case 'mail':
+        svg = emailSvg.replaceAll('#COLOR', '#$hex');
+        break;
+      case 'phone':
+      case 'tel':
+      case 'mobile':
+        svg = phoneSvg.replaceAll('#COLOR', '#$hex');
+        break;
+      case 'location':
+      case 'address':
+      case 'city':
+        svg = locationSvg.replaceAll('#COLOR', '#$hex');
+        break;
+      case 'website':
+      case 'web':
+      case 'portfolio':
+        svg = websiteSvg.replaceAll('#COLOR', '#$hex');
+        break;
+      default:
+        svg = linkSvg.replaceAll('#COLOR', '#$hex');
+        break;
+    }
+    return pw.SvgImage(
+      svg: svg,
+      width: size,
+      height: size,
+    );
+  }
+}
+
 class PdfExportConfig {
   final PdfMarginOption marginOption;
   final PdfColorPalette colorPalette;
   final PdfFontFamily fontFamily;
+  final bool showPageNumbers;
+  final PdfContactIconStyle contactIconStyle;
+  final PdfDateFormat dateFormat;
 
   const PdfExportConfig({
     this.marginOption = PdfMarginOption.normal,
     this.colorPalette = PdfColorPalette.templateDefault,
     this.fontFamily = PdfFontFamily.helvetica,
+    this.showPageNumbers = true,
+    this.contactIconStyle = PdfContactIconStyle.icon,
+    this.dateFormat = PdfDateFormat.monthYear,
   });
+
+  /// Formats a raw date string according to [PdfDateFormat]:
+  /// - [PdfDateFormat.monthYear]: e.g., 'Jan 2024', 'May 2022'
+  /// - [PdfDateFormat.numericMonthYear]: e.g., '01/2024', '05/2022'
+  /// Gracefully handles 'Present', 'Current', empty strings, 4-digit years ('2021'),
+  /// full/abbreviated month names ('January 2021', 'Jan 2021'),
+  /// and ISO or slash dates ('2021-01', '01/2021').
+  static String formatDate(String rawDate, [PdfDateFormat format = PdfDateFormat.monthYear]) {
+    final trimmed = rawDate.trim();
+    if (trimmed.isEmpty) return '';
+    if (trimmed.toLowerCase() == 'present' || trimmed.toLowerCase() == 'current') {
+      return 'Present';
+    }
+
+    const shortMonths = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+
+    // 1. Check if it's only a 4-digit year e.g. "2021"
+    if (RegExp(r'^\d{4}$').hasMatch(trimmed)) {
+      return trimmed;
+    }
+
+    int? month;
+    int? year;
+
+    // 2. Match MM/YYYY or MM-YYYY e.g. "01/2021" or "1/2021"
+    final mYearMatch = RegExp(r'^(\d{1,2})[/-](\d{4})$').firstMatch(trimmed);
+    if (mYearMatch != null) {
+      month = int.tryParse(mYearMatch.group(1)!);
+      year = int.tryParse(mYearMatch.group(2)!);
+    }
+
+    // 3. Match YYYY/MM or YYYY-MM e.g. "2021-01" or "2021/1"
+    if (month == null) {
+      final yMonthMatch = RegExp(r'^(\d{4})[/-](\d{1,2})$').firstMatch(trimmed);
+      if (yMonthMatch != null) {
+        year = int.tryParse(yMonthMatch.group(1)!);
+        month = int.tryParse(yMonthMatch.group(2)!);
+      }
+    }
+
+    // 4. Match Month Name + Year e.g. "Jan 2021", "January 2021", "Jan. 2021"
+    if (month == null) {
+      final nameYearMatch = RegExp(r'^([A-Za-z]+)\.?\s+(\d{4})$').firstMatch(trimmed);
+      if (nameYearMatch != null) {
+        final namePart = nameYearMatch.group(1)!.toLowerCase();
+        year = int.tryParse(nameYearMatch.group(2)!);
+        for (int i = 0; i < shortMonths.length; i++) {
+          if (namePart.startsWith(shortMonths[i].toLowerCase())) {
+            month = i + 1;
+            break;
+          }
+        }
+      }
+    }
+
+    // 5. Try standard DateTime parse
+    if (month == null) {
+      final dt = DateTime.tryParse(trimmed);
+      if (dt != null) {
+        month = dt.month;
+        year = dt.year;
+      }
+    }
+
+    // If successfully parsed month and year:
+    if (month != null && year != null && month >= 1 && month <= 12) {
+      if (format == PdfDateFormat.numericMonthYear) {
+        return '${month.toString().padLeft(2, '0')}/$year';
+      } else {
+        return '${shortMonths[month - 1]} $year';
+      }
+    }
+
+    // Fallback: return trimmed original string
+    return trimmed;
+  }
+
+  /// Formats a date range e.g. '01/2021 - Present' or 'Jan 2021 - May 2023'
+  static String formatDateRange({
+    String? startDate,
+    String? endDate,
+    bool isCurrent = false,
+    PdfDateFormat format = PdfDateFormat.monthYear,
+  }) {
+    final start = (startDate != null && startDate.trim().isNotEmpty)
+        ? formatDate(startDate, format)
+        : '';
+    final end = isCurrent
+        ? 'Present'
+        : (endDate != null && endDate.trim().isNotEmpty)
+            ? formatDate(endDate, format)
+            : '';
+
+    if (start.isNotEmpty && end.isNotEmpty) {
+      return '$start - $end';
+    } else if (start.isNotEmpty) {
+      return start;
+    } else {
+      return end;
+    }
+  }
 
   PdfExportConfig copyWith({
     PdfMarginOption? marginOption,
     PdfColorPalette? colorPalette,
     PdfFontFamily? fontFamily,
+    bool? showPageNumbers,
+    PdfContactIconStyle? contactIconStyle,
+    PdfDateFormat? dateFormat,
   }) {
     return PdfExportConfig(
       marginOption: marginOption ?? this.marginOption,
       colorPalette: colorPalette ?? this.colorPalette,
       fontFamily: fontFamily ?? this.fontFamily,
+      showPageNumbers: showPageNumbers ?? this.showPageNumbers,
+      contactIconStyle: contactIconStyle ?? this.contactIconStyle,
+      dateFormat: dateFormat ?? this.dateFormat,
     );
   }
 
@@ -436,4 +634,32 @@ class PdfExportConfig {
       bold: fontFamily.boldFont,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PdfExportConfig &&
+          runtimeType == other.runtimeType &&
+          marginOption == other.marginOption &&
+          colorPalette == other.colorPalette &&
+          fontFamily == other.fontFamily &&
+          showPageNumbers == other.showPageNumbers &&
+          contactIconStyle == other.contactIconStyle &&
+          dateFormat == other.dateFormat;
+
+  @override
+  int get hashCode => Object.hash(
+        marginOption,
+        colorPalette,
+        fontFamily,
+        showPageNumbers,
+        contactIconStyle,
+        dateFormat,
+      );
+
+  @override
+  String toString() =>
+      'PdfExportConfig(margin: $marginOption, palette: $colorPalette, '
+      'font: $fontFamily, pageNumbers: $showPageNumbers, '
+      'contactIcons: $contactIconStyle, dateFormat: $dateFormat)';
 }

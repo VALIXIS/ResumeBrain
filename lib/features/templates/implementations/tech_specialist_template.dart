@@ -63,6 +63,9 @@ class TechSpecialistTemplate implements ResumeTemplate {
         pageFormat: pageFormat,
         margin: config?.marginOption.insets ?? const pw.EdgeInsets.symmetric(horizontal: 36, vertical: 32),
         footer: (pw.Context context) {
+          if (!(config?.showPageNumbers ?? true)) {
+            return pw.SizedBox.shrink();
+          }
           return pw.Container(
             alignment: pw.Alignment.centerRight,
             margin: const pw.EdgeInsets.only(top: 10),
@@ -137,6 +140,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                           resume.personalInfo.email,
                           mutedTextColor,
                           textColor,
+                          style: config?.contactIconStyle ?? PdfContactIconStyle.icon,
                         ),
                       if (resume.personalInfo.phone.isNotEmpty)
                         _buildContactBadge(
@@ -144,6 +148,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                           resume.personalInfo.phone,
                           mutedTextColor,
                           textColor,
+                          style: config?.contactIconStyle ?? PdfContactIconStyle.icon,
                         ),
                       if (resume.personalInfo.location.isNotEmpty)
                         _buildContactBadge(
@@ -151,6 +156,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                           resume.personalInfo.location,
                           mutedTextColor,
                           textColor,
+                          style: config?.contactIconStyle ?? PdfContactIconStyle.icon,
                         ),
                       if (resume.personalInfo.website.isNotEmpty)
                         _buildContactBadge(
@@ -158,6 +164,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                           resume.personalInfo.website,
                           mutedTextColor,
                           secondaryAccent,
+                          style: config?.contactIconStyle ?? PdfContactIconStyle.icon,
                         ),
                       ...resume.socialLinks.map(
                         (link) => _buildContactBadge(
@@ -165,6 +172,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                           link.url,
                           mutedTextColor,
                           secondaryAccent,
+                          style: config?.contactIconStyle ?? PdfContactIconStyle.icon,
                         ),
                       ),
                     ],
@@ -290,7 +298,12 @@ class TechSpecialistTemplate implements ResumeTemplate {
                                   ),
                                 ),
                                 pw.Text(
-                                  '${exp.startDate}${exp.startDate.isNotEmpty && (exp.endDate.isNotEmpty || exp.isCurrent) ? ' - ' : ''}${exp.isCurrent ? 'Present' : exp.endDate}',
+                                  PdfExportConfig.formatDateRange(
+                                    startDate: exp.startDate,
+                                    endDate: exp.endDate,
+                                    isCurrent: exp.isCurrent,
+                                    format: config?.dateFormat ?? PdfDateFormat.monthYear,
+                                  ),
                                   style: pw.TextStyle(
                                     fontSize: 9.5,
                                     fontWeight: pw.FontWeight.bold,
@@ -492,7 +505,11 @@ class TechSpecialistTemplate implements ResumeTemplate {
                               ),
                             ),
                             pw.Text(
-                              '${edu.startDate}${edu.startDate.isNotEmpty && edu.endDate.isNotEmpty ? " - " : ""}${edu.endDate}',
+                              PdfExportConfig.formatDateRange(
+                                startDate: edu.startDate,
+                                endDate: edu.endDate,
+                                format: config?.dateFormat ?? PdfDateFormat.monthYear,
+                              ),
                               style: pw.TextStyle(
                                 fontSize: 9.5,
                                 color: mutedTextColor,
@@ -685,21 +702,34 @@ class TechSpecialistTemplate implements ResumeTemplate {
     String label,
     String value,
     PdfColor labelColor,
-    PdfColor valueColor,
-  ) {
-    return pw.Row(
-      mainAxisSize: pw.MainAxisSize.min,
-      children: [
-        pw.Text(
-          '$label: ',
-          style: pw.TextStyle(
-            fontSize: 9.5,
-            fontWeight: pw.FontWeight.bold,
-            color: labelColor,
+    PdfColor valueColor, {
+    PdfContactIconStyle style = PdfContactIconStyle.icon,
+  }) {
+    if (style == PdfContactIconStyle.text) {
+      return pw.Row(
+        mainAxisSize: pw.MainAxisSize.min,
+        children: [
+          pw.Text(
+            '$label: ',
+            style: pw.TextStyle(
+              fontSize: 9.5,
+              fontWeight: pw.FontWeight.bold,
+              color: labelColor,
+            ),
           ),
-        ),
-        pw.Text(value, style: pw.TextStyle(fontSize: 9.5, color: valueColor)),
-      ],
-    );
+          pw.Text(value, style: pw.TextStyle(fontSize: 9.5, color: valueColor)),
+        ],
+      );
+    } else {
+      return pw.Row(
+        mainAxisSize: pw.MainAxisSize.min,
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          PdfContactIcons.getIcon(label, color: labelColor, size: 8.5),
+          pw.SizedBox(width: 4),
+          pw.Text(value, style: pw.TextStyle(fontSize: 9.5, color: valueColor)),
+        ],
+      );
+    }
   }
 }

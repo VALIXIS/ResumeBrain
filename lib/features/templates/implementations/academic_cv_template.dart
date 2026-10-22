@@ -91,15 +91,20 @@ class AcademicCvTemplate implements ResumeTemplate {
                   candidateName,
                   style: pw.TextStyle(fontSize: 9.5, color: mutedTextColor),
                 ),
-                pw.Text(
-                  'Page ${context.pageNumber} of ${context.pagesCount}',
-                  style: pw.TextStyle(fontSize: 9.5, color: mutedTextColor),
-                ),
+                if (config?.showPageNumbers ?? true)
+                  pw.Text(
+                    'Page ${context.pageNumber} of ${context.pagesCount}',
+                    style: pw.TextStyle(fontSize: 9.5, color: mutedTextColor),
+                  )
+                else
+                  pw.SizedBox.shrink(),
               ],
             ),
           );
         },
         build: (pw.Context context) {
+          final isTextContact = config?.contactIconStyle == PdfContactIconStyle.text;
+
           return [
             // Candidate Header (Page 1 Top)
             pw.Container(
@@ -134,22 +139,22 @@ class AcademicCvTemplate implements ResumeTemplate {
                     children: [
                       if (resume.personalInfo.email.isNotEmpty)
                         pw.Text(
-                          resume.personalInfo.email,
+                          isTextContact ? 'Email: ${resume.personalInfo.email}' : resume.personalInfo.email,
                           style: pw.TextStyle(fontSize: 9.5, color: textColor),
                         ),
                       if (resume.personalInfo.phone.isNotEmpty)
                         pw.Text(
-                          resume.personalInfo.phone,
+                          isTextContact ? 'Phone: ${resume.personalInfo.phone}' : resume.personalInfo.phone,
                           style: pw.TextStyle(fontSize: 9.5, color: textColor),
                         ),
                       if (resume.personalInfo.location.isNotEmpty)
                         pw.Text(
-                          resume.personalInfo.location,
+                          isTextContact ? 'Location: ${resume.personalInfo.location}' : resume.personalInfo.location,
                           style: pw.TextStyle(fontSize: 9.5, color: textColor),
                         ),
                       if (resume.personalInfo.website.isNotEmpty)
                         pw.Text(
-                          resume.personalInfo.website,
+                          isTextContact ? 'Website: ${resume.personalInfo.website}' : resume.personalInfo.website,
                           style: pw.TextStyle(fontSize: 9.5, color: textColor),
                         ),
                       ...resume.socialLinks.map(
@@ -228,7 +233,11 @@ class AcademicCvTemplate implements ResumeTemplate {
                             ),
                             pw.SizedBox(width: 12),
                             pw.Text(
-                              '${edu.startDate}${edu.endDate.isNotEmpty ? " - ${edu.endDate}" : ""}',
+                              PdfExportConfig.formatDateRange(
+                                startDate: edu.startDate,
+                                endDate: edu.endDate,
+                                format: config?.dateFormat ?? PdfDateFormat.monthYear,
+                              ),
                               style: pw.TextStyle(
                                 fontSize: 9.5,
                                 color: mutedTextColor,
@@ -290,7 +299,12 @@ class AcademicCvTemplate implements ResumeTemplate {
                                 ),
                                 pw.SizedBox(width: 12),
                                 pw.Text(
-                                  '${exp.startDate} - ${exp.isCurrent ? 'Present' : exp.endDate}',
+                                  PdfExportConfig.formatDateRange(
+                                    startDate: exp.startDate,
+                                    endDate: exp.endDate,
+                                    isCurrent: exp.isCurrent,
+                                    format: config?.dateFormat ?? PdfDateFormat.monthYear,
+                                  ),
                                   style: pw.TextStyle(
                                     fontSize: 9.5,
                                     fontWeight: pw.FontWeight.bold,
