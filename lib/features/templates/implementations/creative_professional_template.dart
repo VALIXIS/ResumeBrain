@@ -46,6 +46,9 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
         margin: config?.marginOption.insets ??
             const pw.EdgeInsets.symmetric(horizontal: 36, vertical: 32),
         footer: (pw.Context context) {
+          if (!(config?.showPageNumbers ?? true)) {
+            return pw.SizedBox.shrink();
+          }
           return pw.Container(
             alignment: pw.Alignment.centerRight,
             margin: const pw.EdgeInsets.only(top: 10),
@@ -56,6 +59,8 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
           );
         },
         build: (pw.Context context) {
+          final contactStyle = config?.contactIconStyle ?? PdfContactIconStyle.icon;
+
           return [
             pw.Partitions(
               children: [
@@ -84,19 +89,20 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                         _buildSidebarSectionHeader('CONTACT', accentColor),
                         pw.SizedBox(height: 6),
                         if (resume.personalInfo.email.isNotEmpty)
-                          _buildSidebarContactItem('Email', resume.personalInfo.email, bodyTextColor, mutedTextColor),
+                          _buildSidebarContactItem('Email', resume.personalInfo.email, bodyTextColor, mutedTextColor, style: contactStyle),
                         if (resume.personalInfo.phone.isNotEmpty)
-                          _buildSidebarContactItem('Phone', resume.personalInfo.phone, bodyTextColor, mutedTextColor),
+                          _buildSidebarContactItem('Phone', resume.personalInfo.phone, bodyTextColor, mutedTextColor, style: contactStyle),
                         if (resume.personalInfo.location.isNotEmpty)
-                          _buildSidebarContactItem('Location', resume.personalInfo.location, bodyTextColor, mutedTextColor),
+                          _buildSidebarContactItem('Location', resume.personalInfo.location, bodyTextColor, mutedTextColor, style: contactStyle),
                         if (resume.personalInfo.website.isNotEmpty)
-                          _buildSidebarContactItem('Website', resume.personalInfo.website, bodyTextColor, mutedTextColor),
+                          _buildSidebarContactItem('Website', resume.personalInfo.website, bodyTextColor, mutedTextColor, style: contactStyle),
                         ...resume.socialLinks.map(
                           (link) => _buildSidebarContactItem(
                             link.platform,
                             link.url,
                             bodyTextColor,
                             mutedTextColor,
+                            style: contactStyle,
                           ),
                         ),
                         pw.SizedBox(height: 14),
@@ -288,7 +294,12 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                               ),
                                             ),
                                             pw.Text(
-                                              '${exp.startDate} - ${exp.isCurrent ? 'Present' : exp.endDate}',
+                                              PdfExportConfig.formatDateRange(
+                                                startDate: exp.startDate,
+                                                endDate: exp.endDate,
+                                                isCurrent: exp.isCurrent,
+                                                format: config?.dateFormat ?? PdfDateFormat.monthYear,
+                                              ),
                                               style: pw.TextStyle(
                                                 fontSize: 9.5,
                                                 fontWeight: pw.FontWeight.bold,
@@ -355,7 +366,11 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
                                               ),
                                             ),
                                             pw.Text(
-                                              '${edu.startDate} - ${edu.endDate}',
+                                              PdfExportConfig.formatDateRange(
+                                                startDate: edu.startDate,
+                                                endDate: edu.endDate,
+                                                format: config?.dateFormat ?? PdfDateFormat.monthYear,
+                                              ),
                                               style: pw.TextStyle(
                                                 fontSize: 9.5,
                                                 color: mutedTextColor,
@@ -481,31 +496,56 @@ class CreativeProfessionalTemplate implements ResumeTemplate {
     String label,
     String value,
     PdfColor textColor,
-    PdfColor mutedColor,
-  ) {
-    return pw.Container(
-      margin: const pw.EdgeInsets.only(bottom: 5),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(
-            label.toUpperCase(),
-            style: pw.TextStyle(
-              fontSize: 9.5,
-              fontWeight: pw.FontWeight.bold,
-              color: mutedColor,
+    PdfColor mutedColor, {
+    PdfContactIconStyle style = PdfContactIconStyle.icon,
+  }) {
+    if (style == PdfContactIconStyle.text) {
+      return pw.Container(
+        margin: const pw.EdgeInsets.only(bottom: 5),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              label.toUpperCase(),
+              style: pw.TextStyle(
+                fontSize: 9.5,
+                fontWeight: pw.FontWeight.bold,
+                color: mutedColor,
+              ),
             ),
-          ),
-          pw.Text(
-            value,
-            style: pw.TextStyle(
-              fontSize: 9.5,
-              color: textColor,
+            pw.Text(
+              value,
+              style: pw.TextStyle(
+                fontSize: 9.5,
+                color: textColor,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    } else {
+      return pw.Container(
+        margin: const pw.EdgeInsets.only(bottom: 6),
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Padding(
+              padding: const pw.EdgeInsets.only(top: 1.5, right: 6),
+              child: PdfContactIcons.getIcon(label, color: mutedColor, size: 9),
+            ),
+            pw.Expanded(
+              child: pw.Text(
+                value,
+                style: pw.TextStyle(
+                  fontSize: 9.5,
+                  color: textColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   pw.Widget _buildMainSectionHeader(String title, PdfColor accentColor, PdfColor textColor) {

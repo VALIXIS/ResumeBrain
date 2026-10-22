@@ -21,6 +21,9 @@ class _PdfExportCustomizationDialogState
   late PdfMarginOption _marginOption;
   late PdfColorPalette _colorPalette;
   late PdfFontFamily _fontFamily;
+  late bool _showPageNumbers;
+  late PdfContactIconStyle _contactIconStyle;
+  late PdfDateFormat _dateFormat;
 
   @override
   void initState() {
@@ -28,6 +31,9 @@ class _PdfExportCustomizationDialogState
     _marginOption = widget.initialConfig.marginOption;
     _colorPalette = widget.initialConfig.colorPalette;
     _fontFamily = widget.initialConfig.fontFamily;
+    _showPageNumbers = widget.initialConfig.showPageNumbers;
+    _contactIconStyle = widget.initialConfig.contactIconStyle;
+    _dateFormat = widget.initialConfig.dateFormat;
   }
 
   void _resetToDefaults() {
@@ -35,6 +41,9 @@ class _PdfExportCustomizationDialogState
       _marginOption = PdfMarginOption.normal;
       _colorPalette = PdfColorPalette.templateDefault;
       _fontFamily = PdfFontFamily.helvetica;
+      _showPageNumbers = true;
+      _contactIconStyle = PdfContactIconStyle.icon;
+      _dateFormat = PdfDateFormat.monthYear;
     });
   }
 
@@ -187,6 +196,181 @@ class _PdfExportCustomizationDialogState
                   }
                 },
               ),
+              const SizedBox(height: 20),
+
+              // Page Numbering Section
+              _buildSectionTitle('Page Numbering', Icons.format_list_numbered_rounded),
+              const SizedBox(height: 8),
+              Material(
+                color: AppColors.surfaceLight,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: const BorderSide(color: AppColors.surfaceBorder),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: SwitchListTile.adaptive(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                  title: Text(
+                    'Page Numbers (e.g. Page 1 of 2)',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Text(
+                    _showPageNumbers
+                        ? 'Display "Page 1 of 2" in document footer'
+                        : 'Page numbering disabled in document footer',
+                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  ),
+                  value: _showPageNumbers,
+                  activeTrackColor: AppColors.primary,
+                  onChanged: (val) => setState(() => _showPageNumbers = val),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Contact Icon Style Section
+              _buildSectionTitle('Contact Icon Style', Icons.contact_mail_outlined),
+              const SizedBox(height: 8),
+              Material(
+                color: AppColors.surfaceLight,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: const BorderSide(color: AppColors.surfaceBorder),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          'Contact Display Style',
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: Text(
+                          _contactIconStyle == PdfContactIconStyle.icon
+                              ? 'Icons (compact symbol glyphs)'
+                              : 'Text labels (e.g. Email:, Phone:)',
+                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        ),
+                        value: _contactIconStyle == PdfContactIconStyle.icon,
+                        activeTrackColor: AppColors.primary,
+                        onChanged: (isIcon) {
+                          setState(() {
+                            _contactIconStyle =
+                                isIcon ? PdfContactIconStyle.icon : PdfContactIconStyle.text;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        children: PdfContactIconStyle.values.map((style) {
+                          final isSelected = _contactIconStyle == style;
+                          return ChoiceChip(
+                            label: Text(style.displayName),
+                            selected: isSelected,
+                            selectedColor: AppColors.primary.withValues(alpha: 0.2),
+                            backgroundColor: AppColors.surface,
+                            side: BorderSide(
+                              color: isSelected ? AppColors.primary : AppColors.surfaceBorder,
+                            ),
+                            labelStyle: TextStyle(
+                              fontSize: 12,
+                              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                            onSelected: (selected) {
+                              if (selected) {
+                                setState(() => _contactIconStyle = style);
+                              }
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Date Format Section
+              _buildSectionTitle('Date Format', Icons.calendar_month_outlined),
+              const SizedBox(height: 8),
+              Material(
+                color: AppColors.surfaceLight,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: const BorderSide(color: AppColors.surfaceBorder),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          'Numeric Date Format (MM/YYYY)',
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: Text(
+                          _dateFormat == PdfDateFormat.numericMonthYear
+                              ? 'MM/YYYY (e.g. 05/2023 - Present)'
+                              : 'Month YYYY (e.g. May 2023 - Present)',
+                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        ),
+                        value: _dateFormat == PdfDateFormat.numericMonthYear,
+                        activeTrackColor: AppColors.primary,
+                        onChanged: (isNumeric) {
+                          setState(() {
+                            _dateFormat = isNumeric
+                                ? PdfDateFormat.numericMonthYear
+                                : PdfDateFormat.monthYear;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        children: PdfDateFormat.values.map((format) {
+                          final isSelected = _dateFormat == format;
+                          return ChoiceChip(
+                            label: Text(format.displayName),
+                            selected: isSelected,
+                            selectedColor: AppColors.primary.withValues(alpha: 0.2),
+                            backgroundColor: AppColors.surface,
+                            side: BorderSide(
+                              color: isSelected ? AppColors.primary : AppColors.surfaceBorder,
+                            ),
+                            labelStyle: TextStyle(
+                              fontSize: 12,
+                              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                            onSelected: (selected) {
+                              if (selected) {
+                                setState(() => _dateFormat = format);
+                              }
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -211,6 +395,9 @@ class _PdfExportCustomizationDialogState
               marginOption: _marginOption,
               colorPalette: _colorPalette,
               fontFamily: _fontFamily,
+              showPageNumbers: _showPageNumbers,
+              contactIconStyle: _contactIconStyle,
+              dateFormat: _dateFormat,
             );
             Navigator.pop(context, config);
           },

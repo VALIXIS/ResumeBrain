@@ -41,6 +41,9 @@ class ModernClassicTemplate implements ResumeTemplate {
         pageFormat: pageFormat,
         margin: config?.marginOption.insets ?? const pw.EdgeInsets.symmetric(horizontal: 36, vertical: 32),
         footer: (pw.Context context) {
+          if (!(config?.showPageNumbers ?? true)) {
+            return pw.SizedBox.shrink();
+          }
           return pw.Container(
             alignment: pw.Alignment.centerRight,
             margin: const pw.EdgeInsets.only(top: 10),
@@ -51,11 +54,16 @@ class ModernClassicTemplate implements ResumeTemplate {
           );
         },
         build: (pw.Context context) {
+          final isTextContact = config?.contactIconStyle == PdfContactIconStyle.text;
           final contactItems = [
-            if (resume.personalInfo.email.isNotEmpty) resume.personalInfo.email,
-            if (resume.personalInfo.phone.isNotEmpty) resume.personalInfo.phone,
-            if (resume.personalInfo.location.isNotEmpty) resume.personalInfo.location,
-            if (resume.personalInfo.website.isNotEmpty) resume.personalInfo.website,
+            if (resume.personalInfo.email.isNotEmpty)
+              isTextContact ? 'Email: ${resume.personalInfo.email}' : resume.personalInfo.email,
+            if (resume.personalInfo.phone.isNotEmpty)
+              isTextContact ? 'Phone: ${resume.personalInfo.phone}' : resume.personalInfo.phone,
+            if (resume.personalInfo.location.isNotEmpty)
+              isTextContact ? 'Location: ${resume.personalInfo.location}' : resume.personalInfo.location,
+            if (resume.personalInfo.website.isNotEmpty)
+              isTextContact ? 'Website: ${resume.personalInfo.website}' : resume.personalInfo.website,
             ...resume.socialLinks.map((link) => '${link.platform}: ${link.url}'),
           ];
 
@@ -160,10 +168,12 @@ class ModernClassicTemplate implements ResumeTemplate {
               _buildSectionHeader('WORK EXPERIENCE', primaryColor),
               pw.SizedBox(height: 6),
               ...resume.experiences.map((exp) {
-                final dateRange = [
-                  if (exp.startDate.isNotEmpty) exp.startDate,
-                  if (exp.isCurrent) 'Present' else if (exp.endDate.isNotEmpty) exp.endDate,
-                ].join(' - ');
+                final dateRange = PdfExportConfig.formatDateRange(
+                  startDate: exp.startDate,
+                  endDate: exp.endDate,
+                  isCurrent: exp.isCurrent,
+                  format: config?.dateFormat ?? PdfDateFormat.monthYear,
+                );
 
                 final companyRow = [
                   exp.company,
@@ -217,10 +227,11 @@ class ModernClassicTemplate implements ResumeTemplate {
               _buildSectionHeader('EDUCATION', primaryColor),
               pw.SizedBox(height: 6),
               ...resume.educationList.map((edu) {
-                final dateRange = [
-                  if (edu.startDate.isNotEmpty) edu.startDate,
-                  if (edu.endDate.isNotEmpty) edu.endDate,
-                ].join(' - ');
+                final dateRange = PdfExportConfig.formatDateRange(
+                  startDate: edu.startDate,
+                  endDate: edu.endDate,
+                  format: config?.dateFormat ?? PdfDateFormat.monthYear,
+                );
 
                 final degreeTitle = edu.degree.isNotEmpty
                     ? (edu.fieldOfStudy.isNotEmpty ? '${edu.degree} in ${edu.fieldOfStudy}' : edu.degree)
