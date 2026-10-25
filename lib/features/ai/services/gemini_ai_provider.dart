@@ -51,7 +51,7 @@ class GeminiAIProvider implements AIProvider {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final rawText = data['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
-        final parsedJson = jsonDecode(rawText);
+        final parsedJson = ResumeAIPromptEngine.parseAndSanitizeJson(rawText);
 
         final subScoresRaw = parsedJson['subScores'] as Map<String, dynamic>?;
         final subScores = <String, double>{};
@@ -75,6 +75,7 @@ class GeminiAIProvider implements AIProvider {
         return AIResponse(
           isSuccess: false,
           outputText: '',
+          statusCode: response.statusCode,
           errorMessage: 'Gemini API call failed with status ${response.statusCode}: ${response.body}',
         );
       }
