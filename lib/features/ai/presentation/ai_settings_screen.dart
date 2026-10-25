@@ -13,6 +13,7 @@ import '../services/gemini_ai_provider.dart';
 import '../services/groq_ai_provider.dart';
 import '../services/openai_ai_provider.dart';
 import '../services/ai_service.dart';
+import '../services/hybrid_ai_provider.dart';
 
 class AISettingsScreen extends ConsumerStatefulWidget {
   const AISettingsScreen({super.key});
@@ -54,7 +55,12 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
   }
 
   Future<void> _saveSettings() async {
-    await _keyStorage.saveGeminiKey(_geminiController.text);
+    var gKey = _geminiController.text.trim();
+    if (gKey.length == 33 && !gKey.startsWith('AIzaSy')) {
+      gKey = 'AIzaSy$gKey';
+      _geminiController.text = gKey;
+    }
+    await _keyStorage.saveGeminiKey(gKey);
     await _keyStorage.saveGroqKey(_groqController.text);
     await _keyStorage.saveOpenAIKey(_openaiController.text);
     await _keyStorage.saveActiveProvider(_activeProvider);
@@ -88,7 +94,11 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
       response = await OpenAIProvider(apiKey: key).processRequest(req);
     } else {
       final geminiKey = _geminiController.text.trim();
-      response = await GeminiAIProvider(apiKey: geminiKey).processRequest(req);
+      final groqKey = _groqController.text.trim();
+      response = await HybridAIProvider(
+        geminiApiKey: geminiKey,
+        groqApiKey: groqKey,
+      ).processRequest(req);
     }
 
     if (mounted) {
