@@ -23,11 +23,11 @@ void main() async {
   // Safe Supabase Initialization if credentials provided
   const supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://qbvlzhjnqrwsoyvpomyt.supabase.co',
+    defaultValue: '',
   );
   const supabaseAnonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
-    defaultValue: 'sb_publishable_jc3oUrm_oQxntJSjbYncJg_0isWnl2m',
+    defaultValue: '',
   );
 
   if (supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty) {

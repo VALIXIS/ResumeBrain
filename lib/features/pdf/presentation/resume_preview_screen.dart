@@ -65,6 +65,7 @@ class _ResumePreviewScreenState extends ConsumerState<ResumePreviewScreen> {
   ) async {
     final key = '${resume.id}_${resume.templateId}_${_activeConfig.fontFamily}_'
         '${_activeConfig.marginOption}_${_activeConfig.colorPalette}_'
+        '${_activeConfig.showPageNumbers}_${_activeConfig.contactIconStyle}_${_activeConfig.dateFormat}_'
         '${format.width}x${format.height}';
 
     if (_cachedPdfBytes != null && _cacheKey == key) {

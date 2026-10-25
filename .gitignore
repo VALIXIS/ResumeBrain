@@ -49,3 +49,17 @@ test_hive_tmp/
 .kotlin/
 **/android/.kotlin/
 .gemini/
+
+# Security & Local Dev Artifacts
+api_keys.json
+.env*
+!.env.example
+*.pem
+*.key
+test_hive_tmp/
+*.logcat.txt
+__pycache__/
+*.pyc
+coverage/
+lcov.info
+

@@ -39,29 +39,33 @@ class TechSpecialistTemplate implements ResumeTemplate {
   }) async {
     final pdf = pw.Document(theme: config?.themeData);
 
-    final primaryColor = PdfColor.fromHex('#0F172A'); // Slate 900
+    final palette = config?.colorPalette.executivePalette;
+    final primaryColor = palette?.primary ?? PdfColor.fromHex('#0F172A'); // Slate 900
     final accentColor =
-        config?.resolvedPdfColor ?? customAccentColor ?? PdfColor.fromHex('#0284C7'); // Tech Sky 600
-    final secondaryAccent = PdfColor.fromHex('#2563EB'); // Royal Blue 600
-    final textColor = PdfColor.fromHex('#1E293B'); // Slate 800
-    final mutedTextColor = PdfColor.fromHex('#64748B'); // Slate 500
-    final dividerColor = PdfColor.fromHex('#E2E8F0'); // Slate 200
+        palette?.accent ?? customAccentColor ?? PdfColor.fromHex('#0369A1'); // Deep Sky 700
+    final secondaryAccent = palette?.secondaryAccent ?? PdfColor.fromHex('#1E40AF'); // Corporate Blue 800
+    final textColor = palette?.text ?? PdfColor.fromHex('#1E293B'); // Slate 800
+    final mutedTextColor = palette?.mutedText ?? PdfColor.fromHex('#475569'); // Slate 600
+    final dividerColor = palette?.divider ?? PdfColor.fromHex('#CBD5E1'); // Slate 300
 
     // Skill badge colors
-    final badgeBgColor = PdfColor.fromHex('#F1F5F9'); // Slate 100
-    final badgeBorderColor = PdfColor.fromHex('#CBD5E1'); // Slate 300
-    final badgeTextColor = PdfColor.fromHex('#0F172A'); // Slate 900
+    final badgeBgColor = palette?.badgeBackground ?? PdfColor.fromHex('#F1F5F9'); // Slate 100
+    final badgeBorderColor = palette?.badgeBorder ?? PdfColor.fromHex('#CBD5E1'); // Slate 300
+    final badgeTextColor = palette?.badgeText ?? PdfColor.fromHex('#0F172A'); // Slate 900
 
     // Tech stack tag colors
-    final techStackBgColor = PdfColor.fromHex('#E0F2FE'); // Sky 100
-    final techStackBorderColor = PdfColor.fromHex('#BAE6FD'); // Sky 300
-    final techStackTextColor = PdfColor.fromHex('#0369A1'); // Sky 700
+    final techStackBgColor = palette?.badgeBackground ?? PdfColor.fromHex('#EFF6FF'); // Blue 50
+    final techStackBorderColor = palette?.badgeBorder ?? PdfColor.fromHex('#BFDBFE'); // Blue 200
+    final techStackTextColor = palette?.secondaryAccent ?? PdfColor.fromHex('#0369A1'); // Sky 700
 
     pdf.addPage(
       pw.MultiPage(
         pageFormat: pageFormat,
-        margin: config?.insets ?? const pw.EdgeInsets.all(36),
+        margin: config?.marginOption.insets ?? const pw.EdgeInsets.symmetric(horizontal: 36, vertical: 32),
         footer: (pw.Context context) {
+          if (!(config?.showPageNumbers ?? true)) {
+            return pw.SizedBox.shrink();
+          }
           return pw.Container(
             alignment: pw.Alignment.centerRight,
             margin: const pw.EdgeInsets.only(top: 10),
@@ -99,7 +103,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                                   ? resume.personalInfo.fullName
                                   : 'Your Full Name',
                               style: pw.TextStyle(
-                                fontSize: 24,
+                                fontSize: 20,
                                 fontWeight: pw.FontWeight.bold,
                                 color: primaryColor,
                                 letterSpacing: 0.5,
@@ -136,6 +140,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                           resume.personalInfo.email,
                           mutedTextColor,
                           textColor,
+                          style: config?.contactIconStyle ?? PdfContactIconStyle.icon,
                         ),
                       if (resume.personalInfo.phone.isNotEmpty)
                         _buildContactBadge(
@@ -143,6 +148,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                           resume.personalInfo.phone,
                           mutedTextColor,
                           textColor,
+                          style: config?.contactIconStyle ?? PdfContactIconStyle.icon,
                         ),
                       if (resume.personalInfo.location.isNotEmpty)
                         _buildContactBadge(
@@ -150,6 +156,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                           resume.personalInfo.location,
                           mutedTextColor,
                           textColor,
+                          style: config?.contactIconStyle ?? PdfContactIconStyle.icon,
                         ),
                       if (resume.personalInfo.website.isNotEmpty)
                         _buildContactBadge(
@@ -157,6 +164,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                           resume.personalInfo.website,
                           mutedTextColor,
                           secondaryAccent,
+                          style: config?.contactIconStyle ?? PdfContactIconStyle.icon,
                         ),
                       ...resume.socialLinks.map(
                         (link) => _buildContactBadge(
@@ -164,6 +172,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                           link.url,
                           mutedTextColor,
                           secondaryAccent,
+                          style: config?.contactIconStyle ?? PdfContactIconStyle.icon,
                         ),
                       ),
                     ],
@@ -229,7 +238,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                         pw.Text(
                           skill.name,
                           style: pw.TextStyle(
-                            fontSize: 8.5,
+                            fontSize: 9.5,
                             fontWeight: pw.FontWeight.bold,
                             color: badgeTextColor,
                           ),
@@ -241,7 +250,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                           pw.Text(
                             '(${skill.level})',
                             style: pw.TextStyle(
-                              fontSize: 7.5,
+                              fontSize: 9.5,
                               color: mutedTextColor,
                             ),
                           ),
@@ -289,9 +298,14 @@ class TechSpecialistTemplate implements ResumeTemplate {
                                   ),
                                 ),
                                 pw.Text(
-                                  '${exp.startDate}${exp.startDate.isNotEmpty && (exp.endDate.isNotEmpty || exp.isCurrent) ? ' - ' : ''}${exp.isCurrent ? 'Present' : exp.endDate}',
+                                  PdfExportConfig.formatDateRange(
+                                    startDate: exp.startDate,
+                                    endDate: exp.endDate,
+                                    isCurrent: exp.isCurrent,
+                                    format: config?.dateFormat ?? PdfDateFormat.monthYear,
+                                  ),
                                   style: pw.TextStyle(
-                                    fontSize: 8.5,
+                                    fontSize: 9.5,
                                     fontWeight: pw.FontWeight.bold,
                                     color: mutedTextColor,
                                   ),
@@ -302,7 +316,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                             pw.Text(
                               '${exp.company}${exp.location.isNotEmpty ? " - ${exp.location}" : ""}',
                               style: pw.TextStyle(
-                                fontSize: 9,
+                                fontSize: 9.5,
                                 fontWeight: pw.FontWeight.bold,
                                 color: accentColor,
                               ),
@@ -312,9 +326,9 @@ class TechSpecialistTemplate implements ResumeTemplate {
                               pw.Text(
                                 exp.description,
                                 style: pw.TextStyle(
-                                  fontSize: 9,
+                                  fontSize: 9.5,
                                   color: textColor,
-                                  lineSpacing: 1.5,
+                                  lineSpacing: 1.35,
                                 ),
                               ),
                             ],
@@ -381,7 +395,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                                     pw.TextSpan(
                                       text: '  -  ${proj.role}',
                                       style: pw.TextStyle(
-                                        fontSize: 9,
+                                        fontSize: 9.5,
                                         fontWeight: pw.FontWeight.normal,
                                         color: mutedTextColor,
                                       ),
@@ -394,7 +408,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                             pw.Text(
                               proj.link,
                               style: pw.TextStyle(
-                                fontSize: 8,
+                                fontSize: 9.5,
                                 color: secondaryAccent,
                               ),
                             ),
@@ -405,9 +419,9 @@ class TechSpecialistTemplate implements ResumeTemplate {
                         pw.Text(
                           proj.description,
                           style: pw.TextStyle(
-                            fontSize: 8.5,
+                            fontSize: 9.5,
                             color: textColor,
-                            lineSpacing: 1.4,
+                            lineSpacing: 1.35,
                           ),
                         ),
                       ],
@@ -435,7 +449,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                               child: pw.Text(
                                 tech,
                                 style: pw.TextStyle(
-                                  fontSize: 7.5,
+                                  fontSize: 9.5,
                                   fontWeight: pw.FontWeight.bold,
                                   color: techStackTextColor,
                                 ),
@@ -475,7 +489,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                                   pw.Text(
                                     '${edu.degree}${edu.fieldOfStudy.isNotEmpty ? " in ${edu.fieldOfStudy}" : ""}',
                                     style: pw.TextStyle(
-                                      fontSize: 9.5,
+                                      fontSize: 10.5,
                                       fontWeight: pw.FontWeight.bold,
                                       color: primaryColor,
                                     ),
@@ -483,7 +497,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                                   pw.Text(
                                     '${edu.institution}${edu.location.isNotEmpty ? " - ${edu.location}" : ""}${edu.gpa.isNotEmpty ? " - GPA: ${edu.gpa}" : ""}',
                                     style: pw.TextStyle(
-                                      fontSize: 8.5,
+                                      fontSize: 9.5,
                                       color: mutedTextColor,
                                     ),
                                   ),
@@ -491,9 +505,13 @@ class TechSpecialistTemplate implements ResumeTemplate {
                               ),
                             ),
                             pw.Text(
-                              '${edu.startDate}${edu.startDate.isNotEmpty && edu.endDate.isNotEmpty ? " - " : ""}${edu.endDate}',
+                              PdfExportConfig.formatDateRange(
+                                startDate: edu.startDate,
+                                endDate: edu.endDate,
+                                format: config?.dateFormat ?? PdfDateFormat.monthYear,
+                              ),
                               style: pw.TextStyle(
-                                fontSize: 8.5,
+                                fontSize: 9.5,
                                 color: mutedTextColor,
                               ),
                             ),
@@ -535,7 +553,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                                   pw.Text(
                                     c.name,
                                     style: pw.TextStyle(
-                                      fontSize: 8.5,
+                                      fontSize: 10,
                                       fontWeight: pw.FontWeight.bold,
                                       color: primaryColor,
                                     ),
@@ -545,7 +563,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                                     pw.Text(
                                       '${c.issuingOrganization}${c.issueDate.isNotEmpty ? " (${c.issueDate})" : ""}',
                                       style: pw.TextStyle(
-                                        fontSize: 8,
+                                        fontSize: 9.5,
                                         color: mutedTextColor,
                                       ),
                                     ),
@@ -580,7 +598,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                                   pw.Text(
                                     l.name,
                                     style: pw.TextStyle(
-                                      fontSize: 8.5,
+                                      fontSize: 9.5,
                                       fontWeight: pw.FontWeight.bold,
                                       color: textColor,
                                     ),
@@ -588,7 +606,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                                   pw.Text(
                                     l.proficiency,
                                     style: pw.TextStyle(
-                                      fontSize: 8,
+                                      fontSize: 9.5,
                                       color: mutedTextColor,
                                     ),
                                   ),
@@ -627,7 +645,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
                         margin: const pw.EdgeInsets.only(bottom: 2),
                         child: pw.Text(
                           '- $item',
-                          style: pw.TextStyle(fontSize: 8.5, color: textColor),
+                          style: pw.TextStyle(fontSize: 9.5, color: textColor),
                         ),
                       ),
                     ),
@@ -666,7 +684,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
             pw.Text(
               title,
               style: pw.TextStyle(
-                fontSize: 10.5,
+                fontSize: 13,
                 fontWeight: pw.FontWeight.bold,
                 color: textColor,
                 letterSpacing: 1.1,
@@ -675,7 +693,7 @@ class TechSpecialistTemplate implements ResumeTemplate {
           ],
         ),
         pw.SizedBox(height: 3),
-        pw.Container(height: 1, color: PdfColor.fromHex('#E2E8F0')),
+        pw.Container(height: 0.75, color: PdfColor.fromHex('#CBD5E1')),
       ],
     );
   }
@@ -684,21 +702,34 @@ class TechSpecialistTemplate implements ResumeTemplate {
     String label,
     String value,
     PdfColor labelColor,
-    PdfColor valueColor,
-  ) {
-    return pw.Row(
-      mainAxisSize: pw.MainAxisSize.min,
-      children: [
-        pw.Text(
-          '$label: ',
-          style: pw.TextStyle(
-            fontSize: 8.5,
-            fontWeight: pw.FontWeight.bold,
-            color: labelColor,
+    PdfColor valueColor, {
+    PdfContactIconStyle style = PdfContactIconStyle.icon,
+  }) {
+    if (style == PdfContactIconStyle.text) {
+      return pw.Row(
+        mainAxisSize: pw.MainAxisSize.min,
+        children: [
+          pw.Text(
+            '$label: ',
+            style: pw.TextStyle(
+              fontSize: 9.5,
+              fontWeight: pw.FontWeight.bold,
+              color: labelColor,
+            ),
           ),
-        ),
-        pw.Text(value, style: pw.TextStyle(fontSize: 8.5, color: valueColor)),
-      ],
-    );
+          pw.Text(value, style: pw.TextStyle(fontSize: 9.5, color: valueColor)),
+        ],
+      );
+    } else {
+      return pw.Row(
+        mainAxisSize: pw.MainAxisSize.min,
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          PdfContactIcons.getIcon(label, color: labelColor, size: 8.5),
+          pw.SizedBox(width: 4),
+          pw.Text(value, style: pw.TextStyle(fontSize: 9.5, color: valueColor)),
+        ],
+      );
+    }
   }
 }
