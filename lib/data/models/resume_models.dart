@@ -381,22 +381,27 @@ class CustomSection {
   final String id;
   final String title;
   final List<String> items;
+  final int order;
 
   CustomSection({
     String? id,
     this.title = '',
     List<String>? items,
+    int? order,
   })  : id = id ?? const Uuid().v4(),
-        items = items ?? [];
+        items = items ?? [],
+        order = order ?? 0;
 
   CustomSection copyWith({
     String? title,
     List<String>? items,
+    int? order,
   }) {
     return CustomSection(
       id: id,
       title: title ?? this.title,
       items: items ?? this.items,
+      order: order ?? this.order,
     );
   }
 
@@ -404,12 +409,16 @@ class CustomSection {
         'id': id,
         'title': title,
         'items': items,
+        'order': order,
       };
 
   factory CustomSection.fromMap(Map<String, dynamic> map) => CustomSection(
         id: map['id'],
         title: map['title'] ?? '',
         items: map['items'] != null ? List<String>.from(map['items']) : [],
+        order: map['order'] is int
+            ? map['order'] as int
+            : (int.tryParse(map['order']?.toString() ?? '0') ?? 0),
       );
 }
 
@@ -588,9 +597,16 @@ class Resume {
       languages: map['languages'] != null && map['languages'] is List
           ? (map['languages'] as List).map((e) => Language.fromMap(Map<String, dynamic>.from(e))).toList()
           : [],
-      customSections: map['customSections'] != null && map['customSections'] is List
-          ? (map['customSections'] as List).map((e) => CustomSection.fromMap(Map<String, dynamic>.from(e))).toList()
-          : [],
+      customSections: () {
+        if (map['customSections'] != null && map['customSections'] is List) {
+          final sections = (map['customSections'] as List)
+              .map((e) => CustomSection.fromMap(Map<String, dynamic>.from(e)))
+              .toList();
+          sections.sort((a, b) => a.order.compareTo(b.order));
+          return sections;
+        }
+        return <CustomSection>[];
+      }(),
       socialLinks: map['socialLinks'] != null && map['socialLinks'] is List
           ? (map['socialLinks'] as List).map((e) => SocialLink.fromMap(Map<String, dynamic>.from(e))).toList()
           : [],

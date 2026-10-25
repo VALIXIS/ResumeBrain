@@ -89,11 +89,14 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
     }
   }
 
-  void _updateResumeWithHistory(Resume Function(Resume current) updateFn) {
+  void _updateResumeWithHistory(
+    Resume Function(Resume current) updateFn, {
+    bool immediate = false,
+  }) {
     try {
       final current = ref.read(currentResumeProvider);
       if (current != null) {
-        ref.read(currentResumeProvider.notifier).updateResume(updateFn);
+        ref.read(currentResumeProvider.notifier).updateResume(updateFn, immediate: immediate);
         final updated = ref.read(currentResumeProvider);
         if (updated != null) {
           ref.read(resumeHistoryProvider.notifier).recordSnapshot(updated);
@@ -759,16 +762,17 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
               itemCount: resume.experiences.length,
-              // ignore: deprecated_member_use
               onReorder: (oldIndex, newIndex) {
-                // Adjust index when moving downward
-                if (oldIndex < newIndex) {
-                  newIndex -= 1;
-                }
-                final list = List<Experience>.from(resume.experiences);
-                final item = list.removeAt(oldIndex);
-                list.insert(newIndex, item);
-                _updateResumeWithHistory((r) => r.copyWith(experiences: list));
+                _updateResumeWithHistory(
+                  (r) => r.copyWith(
+                    experiences: ReorderableSectionCard.reorderList(
+                      list: r.experiences,
+                      oldIndex: oldIndex,
+                      newIndex: newIndex,
+                    ),
+                  ),
+                  immediate: true,
+                );
               },
               itemBuilder: (context, index) {
                 final exp = resume.experiences[index];
@@ -911,15 +915,17 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
               itemCount: resume.educationList.length,
-              // ignore: deprecated_member_use
               onReorder: (oldIndex, newIndex) {
-                if (oldIndex < newIndex) {
-                  newIndex -= 1;
-                }
-                final list = List<Education>.from(resume.educationList);
-                final item = list.removeAt(oldIndex);
-                list.insert(newIndex, item);
-                _updateResumeWithHistory((r) => r.copyWith(educationList: list));
+                _updateResumeWithHistory(
+                  (r) => r.copyWith(
+                    educationList: ReorderableSectionCard.reorderList(
+                      list: r.educationList,
+                      oldIndex: oldIndex,
+                      newIndex: newIndex,
+                    ),
+                  ),
+                  immediate: true,
+                );
               },
               itemBuilder: (context, index) {
                 final edu = resume.educationList[index];
@@ -1080,15 +1086,17 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
               itemCount: resume.skills.length,
-              // ignore: deprecated_member_use
               onReorder: (oldIndex, newIndex) {
-                if (oldIndex < newIndex) {
-                  newIndex -= 1;
-                }
-                final list = List<Skill>.from(resume.skills);
-                final item = list.removeAt(oldIndex);
-                list.insert(newIndex, item);
-                _updateResumeWithHistory((r) => r.copyWith(skills: list));
+                _updateResumeWithHistory(
+                  (r) => r.copyWith(
+                    skills: ReorderableSectionCard.reorderList(
+                      list: r.skills,
+                      oldIndex: oldIndex,
+                      newIndex: newIndex,
+                    ),
+                  ),
+                  immediate: true,
+                );
               },
               itemBuilder: (context, index) {
                 final skill = resume.skills[index];
@@ -1236,15 +1244,17 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
               itemCount: resume.projects.length,
-              // ignore: deprecated_member_use
               onReorder: (oldIndex, newIndex) {
-                if (oldIndex < newIndex) {
-                  newIndex -= 1;
-                }
-                final list = List<Project>.from(resume.projects);
-                final item = list.removeAt(oldIndex);
-                list.insert(newIndex, item);
-                _updateResumeWithHistory((r) => r.copyWith(projects: list));
+                _updateResumeWithHistory(
+                  (r) => r.copyWith(
+                    projects: ReorderableSectionCard.reorderList(
+                      list: r.projects,
+                      oldIndex: oldIndex,
+                      newIndex: newIndex,
+                    ),
+                  ),
+                  immediate: true,
+                );
               },
               itemBuilder: (context, index) {
                 final proj = resume.projects[index];

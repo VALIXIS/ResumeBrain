@@ -306,6 +306,7 @@ class ResumeImportSanitizer {
     final list = rawList.take(kMaxListLength);
     final result = <Map<String, dynamic>>[];
 
+    int defaultIndex = 0;
     for (final item in list) {
       if (item is Map) {
         final m = Map<String, dynamic>.from(item);
@@ -317,11 +318,17 @@ class ResumeImportSanitizer {
           }
         }
 
+        final order = m['order'] is int
+            ? m['order'] as int
+            : (int.tryParse(m['order']?.toString() ?? '') ?? defaultIndex);
+
         result.add({
           'id': _sanitizeId(m['id']),
           'title': _sanitizeString(m['title'], maxLength: kMaxShortStringLength),
           'items': sanitizedItems,
+          'order': order,
         });
+        defaultIndex++;
       }
     }
     return result;
