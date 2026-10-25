@@ -16,6 +16,7 @@ import '../widgets/education_editor_dialog.dart';
 import '../widgets/experience_editor_dialog.dart';
 import '../widgets/project_editor_dialog.dart';
 import '../widgets/reorderable_section_card.dart';
+import '../../../core/utils/app_haptics.dart';
 import '../widgets/resume_error_boundary.dart';
 import '../widgets/resume_validators.dart';
 import '../widgets/validated_form_field.dart';
@@ -761,7 +762,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
-              onReorderStart: (_) => HapticFeedback.heavyImpact(),
+              onReorderStart: (_) => AppHaptics.dragGrab(),
               itemCount: resume.experiences.length,
               onReorder: (oldIndex, newIndex) {
                 _updateResumeWithHistory(
@@ -915,7 +916,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
-              onReorderStart: (_) => HapticFeedback.heavyImpact(),
+              onReorderStart: (_) => AppHaptics.dragGrab(),
               itemCount: resume.educationList.length,
               onReorder: (oldIndex, newIndex) {
                 _updateResumeWithHistory(
@@ -1087,7 +1088,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
-              onReorderStart: (_) => HapticFeedback.heavyImpact(),
+              onReorderStart: (_) => AppHaptics.dragGrab(),
               itemCount: resume.skills.length,
               onReorder: (oldIndex, newIndex) {
                 _updateResumeWithHistory(
@@ -1246,7 +1247,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
-              onReorderStart: (_) => HapticFeedback.heavyImpact(),
+              onReorderStart: (_) => AppHaptics.dragGrab(),
               itemCount: resume.projects.length,
               onReorder: (oldIndex, newIndex) {
                 _updateResumeWithHistory(

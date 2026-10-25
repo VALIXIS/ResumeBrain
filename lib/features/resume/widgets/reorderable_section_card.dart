@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/app_haptics.dart';
 
 /// ReorderableSectionCard provides a polished section card UI with touch elevation,
 /// subtle active shadow glow, fluid accordion expand/collapse transitions, and a prominent drag handle.
@@ -50,7 +50,7 @@ class ReorderableSectionCard extends StatefulWidget {
       return list;
     }
     if (enableHaptics) {
-      HapticFeedback.vibrate();
+      AppHaptics.dragDrop();
     }
     int targetIndex = newIndex;
     if (oldIndex < targetIndex) {
@@ -132,7 +132,7 @@ class _ReorderableSectionCardState extends State<ReorderableSectionCard> {
                     ReorderableDragStartListener(
                       index: widget.index,
                       child: Listener(
-                        onPointerDown: (_) => HapticFeedback.heavyImpact(),
+                        onPointerDown: (_) => AppHaptics.dragGrab(),
                         child: Container(
                           padding: const EdgeInsets.only(top: 2, right: 10, bottom: 2),
                           child: const MouseRegion(

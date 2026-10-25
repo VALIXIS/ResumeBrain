@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/providers.dart';
 import '../../../core/theme/app_colors.dart';
@@ -13,6 +12,7 @@ import '../widgets/certification_editor_dialog.dart';
 import '../widgets/custom_section_editor_dialog.dart';
 import '../widgets/language_editor_dialog.dart';
 import '../widgets/reorderable_section_card.dart';
+import '../../../core/utils/app_haptics.dart';
 import '../widgets/resume_error_boundary.dart';
 
 /// SectionEditorTab provides the editor UI for supplementary resume sections
@@ -236,7 +236,7 @@ class SectionEditorTab extends ConsumerWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             buildDefaultDragHandles: false,
-              onReorderStart: (_) => HapticFeedback.heavyImpact(),
+              onReorderStart: (_) => AppHaptics.dragGrab(),
             itemCount: resume.certifications.length,
             onReorder: (oldIndex, newIndex) {
               _updateResumeWithHistory(
@@ -507,7 +507,7 @@ class SectionEditorTab extends ConsumerWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             buildDefaultDragHandles: false,
-              onReorderStart: (_) => HapticFeedback.heavyImpact(),
+              onReorderStart: (_) => AppHaptics.dragGrab(),
             itemCount: resume.languages.length,
             onReorder: (oldIndex, newIndex) {
               _updateResumeWithHistory(
@@ -814,7 +814,7 @@ class SectionEditorTab extends ConsumerWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             buildDefaultDragHandles: false,
-              onReorderStart: (_) => HapticFeedback.heavyImpact(),
+              onReorderStart: (_) => AppHaptics.dragGrab(),
             itemCount: resume.customSections.length,
             onReorder: (oldIndex, newIndex) {
               _updateResumeWithHistory(
