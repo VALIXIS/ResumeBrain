@@ -4,8 +4,9 @@ import 'ai_service.dart';
 import 'resume_ai_prompt_engine.dart';
 
 /// Production-ready Google Gemini AI Provider implementation for Resume Brain.
-/// Supports live Gemini Flash API calls with automatic model cascade fallback
-/// across gemini-2.0-flash, gemini-1.5-flash, gemini-2.5-flash, and v1beta/v1 endpoints.
+/// Dynamically queries Google's ModelService to resolve valid generateContent models
+/// for the user's specific API key, with cascade fallback across Gemini 2.0 Flash,
+/// Gemini 1.5 Flash, and Gemini 1.5 Pro.
 class GeminiAIProvider implements AIProvider {
   final String apiKey;
   final http.Client client;
@@ -32,13 +33,22 @@ class GeminiAIProvider implements AIProvider {
 
   @override
   Future<AIResponse> processRequest(AIRequest request) async {
-    var cleanKey = apiKey.trim();
+    var cleanKey = apiKey.trim().replaceAll('"', '').replaceAll("'", '');
     if (cleanKey.isEmpty || cleanKey == 'MOCK_KEY') {
       return MockAIProvider().processRequest(request);
     }
 
-    if (cleanKey.length == 33 && !cleanKey.startsWith('AIzaSy')) {
+    // Auto-fix if key was clipped without AIzaSy prefix
+    if (!cleanKey.startsWith('AIzaSy') && cleanKey.length >= 30 && cleanKey.length <= 36) {
       cleanKey = 'AIzaSy$cleanKey';
+    }
+
+    // 1. First, try dynamic model discovery via Google ModelService.ListModels
+    if (_discoveredWorkingModel == null) {
+      final discovered = await _discoverWorkingModel(cleanKey);
+      if (discovered != null) {
+        _discoveredWorkingModel = discovered;
+      }
     }
 
     final prompt = _buildPrompt(request);
@@ -114,7 +124,10 @@ class GeminiAIProvider implements AIProvider {
             );
           }
 
-          if (response.statusCode == 404) {
+          if (response.statusCode == 404 ||
+              (response.statusCode == 400 &&
+                  (response.body.toLowerCase().contains('not found') ||
+                      response.body.toLowerCase().contains('not supported')))) {
             continue;
           }
 
@@ -136,14 +149,51 @@ class GeminiAIProvider implements AIProvider {
       }
     }
 
+    final detail = lastResponse?.body ?? 'No compatible Gemini model found.';
     return AIResponse(
       isSuccess: false,
       outputText: '',
       statusCode: lastResponse?.statusCode ?? 404,
-      errorMessage: lastResponse != null
-          ? 'Gemini API call failed with status ${lastResponse.statusCode}: ${lastResponse.body}'
-          : 'Gemini AI Provider failed: Model not found.',
+      errorMessage: 'Gemini API call failed with status ${lastResponse?.statusCode ?? 404}: $detail\n'
+          'Tip: Ensure your key was created at https://aistudio.google.com/app/apikey and starts with AIzaSy.',
     );
+  }
+
+  /// Queries Google's ModelService to find models that support generateContent for this key
+  Future<String?> _discoverWorkingModel(String cleanKey) async {
+    for (final apiVersion in ['v1beta', 'v1']) {
+      try {
+        final endpoint = Uri.parse(
+          'https://generativelanguage.googleapis.com/$apiVersion/models?key=$cleanKey',
+        );
+        final response = await client.get(endpoint);
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final models = data['models'] as List<dynamic>?;
+          if (models != null) {
+            // First look for flash models
+            for (final m in models) {
+              final name = (m['name'] as String?)?.replaceFirst('models/', '');
+              final methods = (m['supportedGenerationMethods'] as List<dynamic>?)?.cast<String>() ?? [];
+              if (methods.contains('generateContent') && name != null) {
+                if (name.contains('flash')) {
+                  return name;
+                }
+              }
+            }
+            // Otherwise any generateContent model
+            for (final m in models) {
+              final name = (m['name'] as String?)?.replaceFirst('models/', '');
+              final methods = (m['supportedGenerationMethods'] as List<dynamic>?)?.cast<String>() ?? [];
+              if (methods.contains('generateContent') && name != null) {
+                return name;
+              }
+            }
+          }
+        }
+      } catch (_) {}
+    }
+    return null;
   }
 
   String _buildPrompt(AIRequest request) {
