@@ -50,7 +50,7 @@ class ReorderableSectionCard extends StatefulWidget {
       return list;
     }
     if (enableHaptics) {
-      HapticFeedback.mediumImpact();
+      HapticFeedback.vibrate();
     }
     int targetIndex = newIndex;
     if (oldIndex < targetIndex) {
@@ -132,7 +132,7 @@ class _ReorderableSectionCardState extends State<ReorderableSectionCard> {
                     ReorderableDragStartListener(
                       index: widget.index,
                       child: Listener(
-                        onPointerDown: (_) => HapticFeedback.selectionClick(),
+                        onPointerDown: (_) => HapticFeedback.heavyImpact(),
                         child: Container(
                           padding: const EdgeInsets.only(top: 2, right: 10, bottom: 2),
                           child: const MouseRegion(

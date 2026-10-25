@@ -761,6 +761,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
+              onReorderStart: (_) => HapticFeedback.heavyImpact(),
               itemCount: resume.experiences.length,
               onReorder: (oldIndex, newIndex) {
                 _updateResumeWithHistory(
@@ -914,6 +915,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
+              onReorderStart: (_) => HapticFeedback.heavyImpact(),
               itemCount: resume.educationList.length,
               onReorder: (oldIndex, newIndex) {
                 _updateResumeWithHistory(
@@ -1085,6 +1087,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
+              onReorderStart: (_) => HapticFeedback.heavyImpact(),
               itemCount: resume.skills.length,
               onReorder: (oldIndex, newIndex) {
                 _updateResumeWithHistory(
@@ -1243,6 +1246,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
+              onReorderStart: (_) => HapticFeedback.heavyImpact(),
               itemCount: resume.projects.length,
               onReorder: (oldIndex, newIndex) {
                 _updateResumeWithHistory(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/providers.dart';
 import '../../../core/theme/app_colors.dart';
@@ -235,6 +236,7 @@ class SectionEditorTab extends ConsumerWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             buildDefaultDragHandles: false,
+              onReorderStart: (_) => HapticFeedback.heavyImpact(),
             itemCount: resume.certifications.length,
             onReorder: (oldIndex, newIndex) {
               _updateResumeWithHistory(
@@ -505,6 +507,7 @@ class SectionEditorTab extends ConsumerWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             buildDefaultDragHandles: false,
+              onReorderStart: (_) => HapticFeedback.heavyImpact(),
             itemCount: resume.languages.length,
             onReorder: (oldIndex, newIndex) {
               _updateResumeWithHistory(
@@ -811,6 +814,7 @@ class SectionEditorTab extends ConsumerWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             buildDefaultDragHandles: false,
+              onReorderStart: (_) => HapticFeedback.heavyImpact(),
             itemCount: resume.customSections.length,
             onReorder: (oldIndex, newIndex) {
               _updateResumeWithHistory(
