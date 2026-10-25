@@ -6,7 +6,6 @@ import 'package:resume_brain/data/models/resume_models.dart';
 import 'package:resume_brain/data/repositories/cloud_sync_adapter.dart';
 import 'package:resume_brain/data/repositories/resume_repository.dart';
 import 'package:resume_brain/features/pdf/models/pdf_export_config.dart';
-import 'package:resume_brain/features/resume/presentation/resume_editor_screen.dart';
 import 'package:resume_brain/features/resume/screens/live_resume_editor_screen.dart';
 import 'package:resume_brain/features/resume/widgets/validated_form_field.dart';
 
