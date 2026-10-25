@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/app_haptics.dart';
 
 /// ReorderableSectionCard provides a polished section card UI with touch elevation,
 /// subtle active shadow glow, fluid accordion expand/collapse transitions, and a prominent drag handle.
@@ -35,6 +36,41 @@ class ReorderableSectionCard extends StatefulWidget {
     this.isExpanded = false,
     this.onToggleExpand,
   });
+
+  /// Safely recalculates newIndex for [ReorderableListView] and reorders the list.
+  /// Handles the downward shift (when oldIndex < newIndex, newIndex -= 1),
+  /// clamps bounds to prevent RangeError, and triggers haptic feedback.
+  static List<T> reorderList<T>({
+    required List<T> list,
+    required int oldIndex,
+    required int newIndex,
+    bool enableHaptics = true,
+  }) {
+    if (list.isEmpty || oldIndex < 0 || oldIndex >= list.length) {
+      return list;
+    }
+    if (enableHaptics) {
+      AppHaptics.dragDrop();
+    }
+    int targetIndex = newIndex;
+    if (oldIndex < targetIndex) {
+      targetIndex -= 1;
+    }
+    if (targetIndex < 0) {
+      targetIndex = 0;
+    }
+    if (targetIndex > list.length - 1) {
+      targetIndex = list.length - 1;
+    }
+    if (oldIndex == targetIndex) {
+      return list;
+    }
+
+    final updated = List<T>.from(list);
+    final item = updated.removeAt(oldIndex);
+    updated.insert(targetIndex, item);
+    return updated;
+  }
 
   @override
   State<ReorderableSectionCard> createState() => _ReorderableSectionCardState();
@@ -95,14 +131,17 @@ class _ReorderableSectionCardState extends State<ReorderableSectionCard> {
                     // Reorder Drag Handle
                     ReorderableDragStartListener(
                       index: widget.index,
-                      child: Container(
-                        padding: const EdgeInsets.only(top: 2, right: 10, bottom: 2),
-                        child: const MouseRegion(
-                          cursor: SystemMouseCursors.grab,
-                          child: Icon(
-                            Icons.drag_indicator,
-                            color: AppColors.textMuted,
-                            size: 22,
+                      child: Listener(
+                        onPointerDown: (_) => AppHaptics.dragGrab(),
+                        child: Container(
+                          padding: const EdgeInsets.only(top: 2, right: 10, bottom: 2),
+                          child: const MouseRegion(
+                            cursor: SystemMouseCursors.grab,
+                            child: Icon(
+                              Icons.drag_indicator,
+                              color: AppColors.textMuted,
+                              size: 22,
+                            ),
                           ),
                         ),
                       ),
