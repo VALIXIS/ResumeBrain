@@ -101,6 +101,9 @@ class GeminiAIProvider implements AIProvider {
             _discoveredWorkingModel = modelName;
             final data = jsonDecode(response.body);
             final rawText = data['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
+            if (rawText.trim().isNotEmpty && !rawText.contains('{') && !rawText.contains('[')) {
+              throw FormatException('Malformed non-JSON AI output: $rawText');
+            }
             final parsedJson = ResumeAIPromptEngine.parseAndSanitizeJson(rawText);
 
             final subScoresRaw = parsedJson['subScores'] as Map<String, dynamic>?;
@@ -138,7 +141,7 @@ class GeminiAIProvider implements AIProvider {
             errorMessage: 'Gemini API call failed with status ${response.statusCode}: ${response.body}',
           );
         } catch (e) {
-          if (modelName == modelsToTry.last && apiVersion == 'v1') {
+          if (e is FormatException || (modelName == modelsToTry.last && apiVersion == 'v1')) {
             return AIResponse(
               isSuccess: false,
               outputText: '',
