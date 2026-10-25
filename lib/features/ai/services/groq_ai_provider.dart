@@ -42,7 +42,7 @@ class GroqAIProvider implements AIProvider {
           'temperature': 0.15,
           'response_format': {'type': 'json_object'},
         }),
-      );
+      ).timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

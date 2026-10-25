@@ -21,6 +21,9 @@ import '../widgets/resume_validators.dart';
 import '../widgets/validated_form_field.dart';
 import 'section_editor_tab.dart';
 import '../screens/translate_resume_screen.dart';
+import '../../ai/presentation/ai_settings_screen.dart';
+import '../../ai/services/ai_service.dart';
+import '../../ai/services/smart_summary_enhancer.dart';
 
 class ResumeEditorScreen extends ConsumerStatefulWidget {
   const ResumeEditorScreen({super.key});
@@ -116,6 +119,22 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
     super.dispose();
   }
 
+  void _syncControllerIfChanged(TextEditingController controller, String newText) {
+    if (controller.text != newText && controller.text.trim() != newText.trim()) {
+      final oldSelection = controller.selection;
+      final int newOffset;
+      if (oldSelection.isValid && oldSelection.end <= newText.length) {
+        newOffset = oldSelection.end;
+      } else {
+        newOffset = newText.length;
+      }
+      controller.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: newOffset),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final resume = ref.watch(currentResumeProvider);
@@ -123,37 +142,14 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
     // Sync text controllers when undo/redo or external mutations update the resume
     ref.listen<Resume?>(currentResumeProvider, (previous, next) {
       if (next != null) {
-        if (_titleCtrl.text != next.title && _titleCtrl.text.trim() != next.title.trim()) {
-          _titleCtrl.text = next.title;
-        }
-        if (_fullNameCtrl.text != next.personalInfo.fullName &&
-            _fullNameCtrl.text.trim() != next.personalInfo.fullName.trim()) {
-          _fullNameCtrl.text = next.personalInfo.fullName;
-        }
-        if (_jobTitleCtrl.text != next.personalInfo.jobTitle &&
-            _jobTitleCtrl.text.trim() != next.personalInfo.jobTitle.trim()) {
-          _jobTitleCtrl.text = next.personalInfo.jobTitle;
-        }
-        if (_emailCtrl.text != next.personalInfo.email &&
-            _emailCtrl.text.trim() != next.personalInfo.email.trim()) {
-          _emailCtrl.text = next.personalInfo.email;
-        }
-        if (_phoneCtrl.text != next.personalInfo.phone &&
-            _phoneCtrl.text.trim() != next.personalInfo.phone.trim()) {
-          _phoneCtrl.text = next.personalInfo.phone;
-        }
-        if (_locationCtrl.text != next.personalInfo.location &&
-            _locationCtrl.text.trim() != next.personalInfo.location.trim()) {
-          _locationCtrl.text = next.personalInfo.location;
-        }
-        if (_websiteCtrl.text != next.personalInfo.website &&
-            _websiteCtrl.text.trim() != next.personalInfo.website.trim()) {
-          _websiteCtrl.text = next.personalInfo.website;
-        }
-        if (_summaryCtrl.text != next.summary.summaryText &&
-            _summaryCtrl.text.trim() != next.summary.summaryText.trim()) {
-          _summaryCtrl.text = next.summary.summaryText;
-        }
+        _syncControllerIfChanged(_titleCtrl, next.title);
+        _syncControllerIfChanged(_fullNameCtrl, next.personalInfo.fullName);
+        _syncControllerIfChanged(_jobTitleCtrl, next.personalInfo.jobTitle);
+        _syncControllerIfChanged(_emailCtrl, next.personalInfo.email);
+        _syncControllerIfChanged(_phoneCtrl, next.personalInfo.phone);
+        _syncControllerIfChanged(_locationCtrl, next.personalInfo.location);
+        _syncControllerIfChanged(_websiteCtrl, next.personalInfo.website);
+        _syncControllerIfChanged(_summaryCtrl, next.summary.summaryText);
       }
     });
 
@@ -188,6 +184,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
       child: Scaffold(
         appBar: AppBar(
           title: TextField(
+            key: ObjectKey(_titleCtrl),
             controller: _titleCtrl,
             style: AppTypography.titleLarge,
             inputFormatters: [ResumeInputScrubber.titleFormatter()],
@@ -270,33 +267,54 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  ResumeErrorBoundary(
-                    sectionName: 'Personal Information',
-                    child: RepaintBoundary(child: _buildPersonalInfoTab(resume)),
+                  _KeepAliveWrapper(
+                    key: const PageStorageKey('tab_personal'),
+                    child: ResumeErrorBoundary(
+                      sectionName: 'Personal Information',
+                      child: RepaintBoundary(child: _buildPersonalInfoTab(resume)),
+                    ),
                   ),
-                  ResumeErrorBoundary(
-                    sectionName: 'Professional Summary',
-                    child: RepaintBoundary(child: _buildSummaryTab(resume)),
+                  _KeepAliveWrapper(
+                    key: const PageStorageKey('tab_summary'),
+                    child: ResumeErrorBoundary(
+                      sectionName: 'Professional Summary',
+                      child: RepaintBoundary(child: _buildSummaryTab(resume)),
+                    ),
                   ),
-                  ResumeErrorBoundary(
-                    sectionName: 'Work Experience',
-                    child: RepaintBoundary(child: _buildExperienceTab(resume)),
+                  _KeepAliveWrapper(
+                    key: const PageStorageKey('tab_experience'),
+                    child: ResumeErrorBoundary(
+                      sectionName: 'Work Experience',
+                      child: RepaintBoundary(child: _buildExperienceTab(resume)),
+                    ),
                   ),
-                  ResumeErrorBoundary(
-                    sectionName: 'Education',
-                    child: RepaintBoundary(child: _buildEducationTab(resume)),
+                  _KeepAliveWrapper(
+                    key: const PageStorageKey('tab_education'),
+                    child: ResumeErrorBoundary(
+                      sectionName: 'Education',
+                      child: RepaintBoundary(child: _buildEducationTab(resume)),
+                    ),
                   ),
-                  ResumeErrorBoundary(
-                    sectionName: 'Skills Inventory',
-                    child: RepaintBoundary(child: _buildSkillsTab(resume)),
+                  _KeepAliveWrapper(
+                    key: const PageStorageKey('tab_skills'),
+                    child: ResumeErrorBoundary(
+                      sectionName: 'Skills Inventory',
+                      child: RepaintBoundary(child: _buildSkillsTab(resume)),
+                    ),
                   ),
-                  ResumeErrorBoundary(
-                    sectionName: 'Showcase Projects',
-                    child: RepaintBoundary(child: _buildProjectsTab(resume)),
+                  _KeepAliveWrapper(
+                    key: const PageStorageKey('tab_projects'),
+                    child: ResumeErrorBoundary(
+                      sectionName: 'Showcase Projects',
+                      child: RepaintBoundary(child: _buildProjectsTab(resume)),
+                    ),
                   ),
-                  const ResumeErrorBoundary(
-                    sectionName: 'Supplementary Sections',
-                    child: RepaintBoundary(child: SectionEditorTab()),
+                  const _KeepAliveWrapper(
+                    key: PageStorageKey('tab_sections'),
+                    child: ResumeErrorBoundary(
+                      sectionName: 'Supplementary Sections',
+                      child: RepaintBoundary(child: SectionEditorTab()),
+                    ),
                   ),
                 ],
               ),
@@ -379,6 +397,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ValidatedFormField(
+                key: ObjectKey(_fullNameCtrl),
                 label: 'Full Name',
                 hint: 'e.g. Alex Morgan',
                 controller: _fullNameCtrl,
@@ -396,6 +415,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               ),
               const SizedBox(height: AppSpacing.md),
               ValidatedFormField(
+                key: ObjectKey(_jobTitleCtrl),
                 label: 'Job Title / Target Role',
                 hint: 'e.g. Senior Software Engineer',
                 controller: _jobTitleCtrl,
@@ -411,6 +431,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               ),
               const SizedBox(height: AppSpacing.md),
               ValidatedFormField(
+                key: ObjectKey(_emailCtrl),
                 label: 'Email Address',
                 hint: 'e.g. alex.morgan@example.com',
                 keyboardType: TextInputType.emailAddress,
@@ -424,6 +445,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               ),
               const SizedBox(height: AppSpacing.md),
               ValidatedFormField(
+                key: ObjectKey(_phoneCtrl),
                 label: 'Phone Number',
                 hint: 'e.g. +1 (555) 234-5678',
                 keyboardType: TextInputType.phone,
@@ -436,6 +458,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               ),
               const SizedBox(height: AppSpacing.md),
               ValidatedFormField(
+                key: ObjectKey(_locationCtrl),
                 label: 'Location (City, Country)',
                 hint: 'e.g. San Francisco, CA',
                 controller: _locationCtrl,
@@ -451,6 +474,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
               ),
               const SizedBox(height: AppSpacing.md),
               ValidatedFormField(
+                key: ObjectKey(_websiteCtrl),
                 label: 'Website / Portfolio Link',
                 hint: 'e.g. https://alexmorgan.dev',
                 keyboardType: TextInputType.url,
@@ -500,30 +524,46 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                   'Professional Summary',
                   style: AppTypography.titleLarge,
                 ),
-                TextButton.icon(
-                  onPressed: _isAiEnhancing ? null : _enhanceSummary,
-                  icon: _isAiEnhancing
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.accentPurple,
-                          ),
-                        )
-                      : const Icon(Icons.auto_awesome, size: 14, color: AppColors.accentPurple),
-                  label: Text(
-                    'AI Enhance',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.accentPurple,
-                      fontWeight: FontWeight.w600,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      tooltip: 'AI Model Settings',
+                      icon: const Icon(Icons.tune, size: 18, color: AppColors.textMuted),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const AISettingsScreen()),
+                        );
+                      },
                     ),
-                  ),
+                    TextButton.icon(
+                      onPressed: _isAiEnhancing ? null : _enhanceSummary,
+                      icon: _isAiEnhancing
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.accentPurple,
+                              ),
+                            )
+                          : const Icon(Icons.auto_awesome, size: 14, color: AppColors.accentPurple),
+                      label: Text(
+                        'AI Enhance',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.accentPurple,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
             ValidatedFormField(
+              key: ObjectKey(_summaryCtrl),
               label: '',
               hint: 'Write a brief, impactful overview of your career accomplishments and strengths...',
               maxLines: 7,
@@ -552,7 +592,8 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
   }
 
   Future<void> _enhanceSummary() async {
-    if (_summaryCtrl.text.trim().isEmpty) {
+    final rawText = _summaryCtrl.text.trim();
+    if (rawText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter some summary text first to enhance.'),
@@ -565,28 +606,71 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
     setState(() => _isAiEnhancing = true);
     try {
       final aiService = ref.read(aiServiceProvider);
-      final res = await aiService.improveText(_summaryCtrl.text, 'summary');
-      if (mounted) {
-        setState(() {
-          _isAiEnhancing = false;
-          if (res.isSuccess && res.outputText.isNotEmpty) {
-            _summaryCtrl.text = res.outputText;
-            _updateResumeWithHistory((r) => r.copyWith(
-                  summary: ProfessionalSummary(summaryText: res.outputText),
-                ));
-          }
-        });
-        if (res.suggestions.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('AI Enhanced: ${res.suggestions.first}'),
-              backgroundColor: AppColors.accentPurple,
+      // Attempt live AI improvement with a strict 5-second timeout
+      AIResponse? res;
+      try {
+        res = await aiService.improveText(rawText, 'summary').timeout(const Duration(seconds: 5));
+      } catch (_) {
+        res = null;
+      }
+
+      String enhancedText = '';
+      String statusMessage = '';
+
+      if (res != null && res.isSuccess && res.outputText.trim().isNotEmpty) {
+        enhancedText = res.outputText.trim();
+        statusMessage = res.suggestions.isNotEmpty
+            ? res.suggestions.first
+            : 'Enhanced with AI executive formatting';
+      } else {
+        // Fallback to intelligent local ATS enhancement engine
+        final fallback = SmartSummaryEnhancer.enhance(
+          rawText,
+          targetRole: _jobTitleCtrl.text.trim().isNotEmpty ? _jobTitleCtrl.text.trim() : null,
+        );
+        enhancedText = fallback.text;
+        statusMessage = fallback.suggestions.isNotEmpty
+            ? fallback.suggestions.first
+            : 'Enhanced with local ATS executive phrasing';
+      }
+
+      if (mounted && enhancedText.isNotEmpty) {
+        _summaryCtrl.text = enhancedText;
+        _updateResumeWithHistory((r) => r.copyWith(
+              summary: ProfessionalSummary(summaryText: enhancedText),
+            ));
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    statusMessage,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
             ),
-          );
-        }
+            backgroundColor: AppColors.accentPurple,
+            duration: const Duration(seconds: 4),
+          ),
+        );
       }
     } catch (_) {
-      if (mounted) setState(() => _isAiEnhancing = false);
+      if (mounted) {
+        final fallback = SmartSummaryEnhancer.enhance(rawText);
+        _summaryCtrl.text = fallback.text;
+        _updateResumeWithHistory((r) => r.copyWith(
+              summary: ProfessionalSummary(summaryText: fallback.text),
+            ));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isAiEnhancing = false);
+      }
     }
   }
 
@@ -933,6 +1017,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ValidatedFormField(
+                      key: ObjectKey(_skillInputCtrl),
                       label: 'Add Skill',
                       hint: 'e.g. Flutter, Dart, TypeScript, Docker',
                       controller: _skillInputCtrl,
@@ -1256,5 +1341,25 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen>
     _updateResumeWithHistory((r) => r.copyWith(
           projects: r.projects.where((p) => p.id != id).toList(),
         ));
+  }
+}
+
+class _KeepAliveWrapper extends StatefulWidget {
+  final Widget child;
+  const _KeepAliveWrapper({super.key, required this.child});
+
+  @override
+  State<_KeepAliveWrapper> createState() => _KeepAliveWrapperState();
+}
+
+class _KeepAliveWrapperState extends State<_KeepAliveWrapper>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }
