@@ -115,7 +115,7 @@ class CurrentResumeNotifier extends StateNotifier<Resume?> {
   int _lastSavedRevision = 0;
   bool _isSaving = false;
 
-  CurrentResumeNotifier(this._ref, {this.debounceDuration = const Duration(milliseconds: 500)})
+  CurrentResumeNotifier(this._ref, {this.debounceDuration = const Duration(milliseconds: 800)})
       : super(null);
 
   /// Accessor for current revision token (useful for unit testing race conditions).

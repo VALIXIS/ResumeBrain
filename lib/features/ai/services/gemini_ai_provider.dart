@@ -46,7 +46,7 @@ class GeminiAIProvider implements AIProvider {
             'responseMimeType': 'application/json',
           }
         }),
-      );
+      ).timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

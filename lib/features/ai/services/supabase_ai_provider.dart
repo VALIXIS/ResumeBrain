@@ -40,7 +40,7 @@ class SupabaseAIProvider implements AIProvider {
       final res = await client.functions.invoke(
         'resume-ai-proxy',
         body: {'prompt': prompt},
-      );
+      ).timeout(const Duration(seconds: 4));
 
       if (res.status == 200) {
         final data = res.data as Map<String, dynamic>?;
