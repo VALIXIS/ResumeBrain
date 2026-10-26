@@ -77,7 +77,7 @@ void main() {
       );
 
       final hybrid = HybridAIProvider(
-        geminiApiKey: 'valid-gemini-key',
+        geminiApiKey: 'test-gemini',
         groqApiKey: 'valid-groq-key',
         primaryProvider: groqMock,
         secondaryProvider: geminiMock,
@@ -122,7 +122,7 @@ void main() {
       );
 
       final hybrid = HybridAIProvider(
-        geminiApiKey: 'valid-gemini-key',
+        geminiApiKey: 'test-gemini',
         groqApiKey: 'valid-groq-key',
         primaryProvider: groqMock,
         secondaryProvider: geminiMock,
@@ -159,7 +159,7 @@ void main() {
       );
 
       final hybrid = HybridAIProvider(
-        geminiApiKey: 'valid-gemini-key',
+        geminiApiKey: 'test-gemini',
         groqApiKey: 'valid-groq-key',
         primaryProvider: groqMock,
         secondaryProvider: geminiMock,
@@ -197,7 +197,7 @@ void main() {
       );
 
       final hybrid = HybridAIProvider(
-        geminiApiKey: 'valid-gemini-key',
+        geminiApiKey: 'test-gemini',
         groqApiKey: 'valid-groq-key',
         primaryProvider: groqMock,
         secondaryProvider: geminiMock,
