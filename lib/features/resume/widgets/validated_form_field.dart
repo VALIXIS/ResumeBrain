@@ -209,6 +209,7 @@ class _ValidatedFormFieldState extends State<ValidatedFormField> {
           const SizedBox(height: AppSpacing.xs),
         ],
         TextFormField(
+          key: ObjectKey(widget.controller),
           controller: widget.controller,
           focusNode: _effectiveFocusNode,
           inputFormatters: widget.inputFormatters,

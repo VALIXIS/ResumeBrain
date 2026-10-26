@@ -12,6 +12,7 @@ import '../widgets/certification_editor_dialog.dart';
 import '../widgets/custom_section_editor_dialog.dart';
 import '../widgets/language_editor_dialog.dart';
 import '../widgets/reorderable_section_card.dart';
+import '../../../core/utils/app_haptics.dart';
 import '../widgets/resume_error_boundary.dart';
 
 /// SectionEditorTab provides the editor UI for supplementary resume sections
@@ -22,11 +23,15 @@ import '../widgets/resume_error_boundary.dart';
 class SectionEditorTab extends ConsumerWidget {
   const SectionEditorTab({super.key});
 
-  void _updateResumeWithHistory(WidgetRef ref, Resume Function(Resume current) updateFn) {
+  void _updateResumeWithHistory(
+    WidgetRef ref,
+    Resume Function(Resume current) updateFn, {
+    bool immediate = false,
+  }) {
     try {
       final current = ref.read(currentResumeProvider);
       if (current != null) {
-        ref.read(currentResumeProvider.notifier).updateResume(updateFn);
+        ref.read(currentResumeProvider.notifier).updateResume(updateFn, immediate: immediate);
         final updated = ref.read(currentResumeProvider);
         if (updated != null) {
           ref.read(resumeHistoryProvider.notifier).recordSnapshot(updated);
@@ -231,19 +236,19 @@ class SectionEditorTab extends ConsumerWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             buildDefaultDragHandles: false,
+              onReorderStart: (_) => AppHaptics.dragGrab(),
             itemCount: resume.certifications.length,
-            // ignore: deprecated_member_use
             onReorder: (oldIndex, newIndex) {
-              // Flutter ReorderableListView downward index adjustment
-              if (oldIndex < newIndex) {
-                newIndex -= 1;
-              }
-              final list = List<Certification>.from(resume.certifications);
-              final item = list.removeAt(oldIndex);
-              list.insert(newIndex, item);
               _updateResumeWithHistory(
                 ref,
-                (r) => r.copyWith(certifications: list),
+                (r) => r.copyWith(
+                  certifications: ReorderableSectionCard.reorderList(
+                    list: r.certifications,
+                    oldIndex: oldIndex,
+                    newIndex: newIndex,
+                  ),
+                ),
+                immediate: true,
               );
             },
             itemBuilder: (context, index) {
@@ -502,18 +507,19 @@ class SectionEditorTab extends ConsumerWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             buildDefaultDragHandles: false,
+              onReorderStart: (_) => AppHaptics.dragGrab(),
             itemCount: resume.languages.length,
-            // ignore: deprecated_member_use
             onReorder: (oldIndex, newIndex) {
-              if (oldIndex < newIndex) {
-                newIndex -= 1;
-              }
-              final list = List<Language>.from(resume.languages);
-              final item = list.removeAt(oldIndex);
-              list.insert(newIndex, item);
               _updateResumeWithHistory(
                 ref,
-                (r) => r.copyWith(languages: list),
+                (r) => r.copyWith(
+                  languages: ReorderableSectionCard.reorderList(
+                    list: r.languages,
+                    oldIndex: oldIndex,
+                    newIndex: newIndex,
+                  ),
+                ),
+                immediate: true,
               );
             },
             itemBuilder: (context, index) {
@@ -808,18 +814,25 @@ class SectionEditorTab extends ConsumerWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             buildDefaultDragHandles: false,
+              onReorderStart: (_) => AppHaptics.dragGrab(),
             itemCount: resume.customSections.length,
-            // ignore: deprecated_member_use
             onReorder: (oldIndex, newIndex) {
-              if (oldIndex < newIndex) {
-                newIndex -= 1;
-              }
-              final list = List<CustomSection>.from(resume.customSections);
-              final item = list.removeAt(oldIndex);
-              list.insert(newIndex, item);
               _updateResumeWithHistory(
                 ref,
-                (r) => r.copyWith(customSections: list),
+                (r) {
+                  final reordered = ReorderableSectionCard.reorderList(
+                    list: r.customSections,
+                    oldIndex: oldIndex,
+                    newIndex: newIndex,
+                  );
+                  final indexedSections = reordered
+                      .asMap()
+                      .entries
+                      .map((e) => e.value.copyWith(order: e.key))
+                      .toList();
+                  return r.copyWith(customSections: indexedSections);
+                },
+                immediate: true,
               );
             },
             itemBuilder: (context, index) {
@@ -911,16 +924,20 @@ class SectionEditorTab extends ConsumerWidget {
   }
 
   void _saveCustomSection(WidgetRef ref, CustomSection section) {
-    _updateResumeWithHistory(ref, (resume) {
-      final list = List<CustomSection>.from(resume.customSections);
-      final index = list.indexWhere((s) => s.id == section.id);
-      if (index != -1) {
-        list[index] = section;
-      } else {
-        list.add(section);
-      }
-      return resume.copyWith(customSections: list);
-    });
+    _updateResumeWithHistory(
+      ref,
+      (resume) {
+        final list = List<CustomSection>.from(resume.customSections);
+        final index = list.indexWhere((s) => s.id == section.id);
+        if (index != -1) {
+          list[index] = section.copyWith(order: index);
+        } else {
+          list.add(section.copyWith(order: list.length));
+        }
+        return resume.copyWith(customSections: list);
+      },
+      immediate: true,
+    );
   }
 
   void _confirmDeleteCustomSection(
@@ -956,10 +973,18 @@ class SectionEditorTab extends ConsumerWidget {
   }
 
   void _deleteCustomSection(WidgetRef ref, String id) {
-    _updateResumeWithHistory(ref, (resume) {
-      return resume.copyWith(
-        customSections: resume.customSections.where((s) => s.id != id).toList(),
-      );
-    });
+    _updateResumeWithHistory(
+      ref,
+      (resume) {
+        final remaining = resume.customSections.where((s) => s.id != id).toList();
+        final reindexed = remaining
+            .asMap()
+            .entries
+            .map((e) => e.value.copyWith(order: e.key))
+            .toList();
+        return resume.copyWith(customSections: reindexed);
+      },
+      immediate: true,
+    );
   }
 }
