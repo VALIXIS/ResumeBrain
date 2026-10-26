@@ -155,7 +155,7 @@ class MockInterviewService {
       try {
         final prompt = _buildQuestionsPrompt(resume, track, seniority);
         final endpoint = Uri.parse(
-          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey',
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey',
         );
 
         final response = await _client.post(
@@ -210,7 +210,7 @@ class MockInterviewService {
       try {
         final prompt = _buildEvaluationPrompt(question, candidateAnswer, seniority);
         final endpoint = Uri.parse(
-          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey',
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey',
         );
 
         final response = await _client.post(

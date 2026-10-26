@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:math';
 import '../../../data/models/resume_models.dart';
 
 /// Elite AI Prompt Engine for Resume Brain (VALIXIS Intelligence Core).
@@ -175,5 +177,252 @@ In "missingKeywords", list high-demand industry skills missing from this profile
 ''');
 
     return buffer.toString();
+  }
+
+  /// Sanitizes raw AI text output, stripping markdown code fences, leading commentary,
+  /// and repairing truncated responses with unclosed braces, brackets, or dangling keys.
+  static String sanitizeJsonResponse(String rawResponse) {
+    if (rawResponse.trim().isEmpty) {
+      return '{}';
+    }
+
+    String cleaned = rawResponse.trim();
+
+    // 1. Strip markdown fences if present
+    if (cleaned.contains('```')) {
+      final codeBlockRegex = RegExp(r'```(?:json)?\s*([\s\S]*?)(?:```|$)');
+      final match = codeBlockRegex.firstMatch(cleaned);
+      if (match != null && match.group(1) != null) {
+        cleaned = match.group(1)!.trim();
+      } else {
+        cleaned = cleaned.replaceAll('```json', '').replaceAll('```', '').trim();
+      }
+    }
+
+    // 2. Locate the first JSON starting delimiter: '{' or '['
+    final firstBrace = cleaned.indexOf('{');
+    final firstBracket = cleaned.indexOf('[');
+    int startIndex = -1;
+    if (firstBrace != -1 && firstBracket != -1) {
+      startIndex = min(firstBrace, firstBracket);
+    } else if (firstBrace != -1) {
+      startIndex = firstBrace;
+    } else if (firstBracket != -1) {
+      startIndex = firstBracket;
+    }
+
+    if (startIndex == -1) {
+      return jsonEncode({'outputText': cleaned});
+    }
+
+    cleaned = cleaned.substring(startIndex).trim();
+
+    // 3. Quick test: if it decodes as-is, return it
+    try {
+      jsonDecode(cleaned);
+      return cleaned;
+    } catch (_) {}
+
+    // 4. Token-level scanner to balance strings, escapes, brackets, and braces
+    return _repairUnclosedJson(cleaned);
+  }
+
+  /// Parses raw AI text output into a guaranteed valid JSON map,
+  /// safely repairing unclosed braces, brackets, and string literals.
+  static Map<String, dynamic> parseAndSanitizeJson(String rawResponse) {
+    if (rawResponse.trim().isEmpty) {
+      return {
+        'outputText': '',
+        'score': 0.0,
+        'suggestions': <String>[],
+        'metricsApplied': <String>[],
+        'powerVerbs': <String>[],
+        'missingKeywords': <String>[],
+        'subScores': <String, double>{},
+      };
+    }
+    try {
+      final sanitized = sanitizeJsonResponse(rawResponse);
+      final decoded = jsonDecode(sanitized);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      } else if (decoded is List) {
+        return {'items': decoded, 'outputText': jsonEncode(decoded)};
+      }
+      return {'outputText': decoded.toString()};
+    } catch (_) {
+      return {
+        'outputText': rawResponse.trim(),
+        'score': 0.0,
+        'suggestions': <String>[],
+        'metricsApplied': <String>[],
+        'powerVerbs': <String>[],
+        'missingKeywords': <String>[],
+        'subScores': <String, double>{},
+      };
+    }
+  }
+
+  static String _repairUnclosedJson(String text) {
+    final stack = <String>[];
+    bool inString = false;
+    bool isEscaped = false;
+    int lastValidPosition = 0;
+
+    for (int i = 0; i < text.length; i++) {
+      final char = text[i];
+
+      if (isEscaped) {
+        isEscaped = false;
+        continue;
+      }
+
+      if (char == '\\' && inString) {
+        isEscaped = true;
+        continue;
+      }
+
+      if (char == '"') {
+        inString = !inString;
+        continue;
+      }
+
+      if (inString) {
+        continue;
+      }
+
+      if (char == '{' || char == '[') {
+        stack.add(char);
+      } else if (char == '}') {
+        if (stack.isNotEmpty && stack.last == '{') {
+          stack.removeLast();
+          if (stack.isEmpty) {
+            lastValidPosition = i + 1;
+          }
+        }
+      } else if (char == ']') {
+        if (stack.isNotEmpty && stack.last == '[') {
+          stack.removeLast();
+          if (stack.isEmpty) {
+            lastValidPosition = i + 1;
+          }
+        }
+      }
+    }
+
+    if (lastValidPosition > 0 && stack.isEmpty) {
+      final candidate = text.substring(0, lastValidPosition).trim();
+      try {
+        jsonDecode(candidate);
+        return candidate;
+      } catch (_) {}
+    }
+
+    var repaired = text.trim();
+
+    if (inString) {
+      if (repaired.endsWith('\\')) {
+        repaired = repaired.substring(0, repaired.length - 1);
+      }
+      repaired += '"';
+    }
+
+    repaired = _cleanTrailingDanglingTokens(repaired, stack);
+
+    // Close delimiters from stack in reverse
+    final closeBuffer = StringBuffer();
+    for (int i = stack.length - 1; i >= 0; i--) {
+      final open = stack[i];
+      if (open == '{') {
+        closeBuffer.write('}');
+      } else if (open == '[') {
+        closeBuffer.write(']');
+      }
+    }
+
+    final candidate = repaired + closeBuffer.toString();
+    try {
+      jsonDecode(candidate);
+      return candidate;
+    } catch (_) {}
+
+    return _progressiveFallbackRepair(repaired, stack);
+  }
+
+  static String _cleanTrailingDanglingTokens(String input, List<String> stack) {
+    var s = input.trim();
+    while (s.endsWith(',')) {
+      s = s.substring(0, s.length - 1).trim();
+    }
+
+    if (s.endsWith(':')) {
+      s += ' null';
+    }
+
+    // Only in an object context does a trailing "key" without a colon need stripping
+    if (stack.isNotEmpty && stack.last == '{') {
+      final trailingKeyMatch = RegExp(r',\s*"[^"]+"\s*\$');
+      if (trailingKeyMatch.hasMatch(s)) {
+        s = s.replaceFirst(trailingKeyMatch, '').trim();
+      }
+    }
+
+    while (s.endsWith(',')) {
+      s = s.substring(0, s.length - 1).trim();
+    }
+
+    return s;
+  }
+
+  static String _progressiveFallbackRepair(String text, List<String> stack) {
+    var current = text;
+    while (current.isNotEmpty) {
+      final lastComma = current.lastIndexOf(',');
+      if (lastComma == -1) break;
+      current = current.substring(0, lastComma).trim();
+
+      final s = <String>[];
+      bool inStr = false;
+      bool isEsc = false;
+      for (int i = 0; i < current.length; i++) {
+        final c = current[i];
+        if (isEsc) {
+          isEsc = false;
+          continue;
+        }
+        if (c == '\\' && inStr) {
+          isEsc = true;
+          continue;
+        }
+        if (c == '"') {
+          inStr = !inStr;
+          continue;
+        }
+        if (inStr) {
+          continue;
+        }
+        if (c == '{' || c == '[') {
+          s.add(c);
+        } else if (c == '}' && s.isNotEmpty && s.last == '{') {
+          s.removeLast();
+        } else if (c == ']' && s.isNotEmpty && s.last == '[') {
+          s.removeLast();
+        }
+      }
+      if (inStr) {
+        current += '"';
+      }
+      current = _cleanTrailingDanglingTokens(current, s);
+      final closeBuf = StringBuffer();
+      for (int i = s.length - 1; i >= 0; i--) {
+        closeBuf.write(s[i] == '{' ? '}' : ']');
+      }
+      final candidate = current + closeBuf.toString();
+      try {
+        jsonDecode(candidate);
+        return candidate;
+      } catch (_) {}
+    }
+    return '{}';
   }
 }

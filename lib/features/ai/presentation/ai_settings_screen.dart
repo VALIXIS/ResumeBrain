@@ -13,6 +13,7 @@ import '../services/gemini_ai_provider.dart';
 import '../services/groq_ai_provider.dart';
 import '../services/openai_ai_provider.dart';
 import '../services/ai_service.dart';
+import '../services/hybrid_ai_provider.dart';
 
 class AISettingsScreen extends ConsumerStatefulWidget {
   const AISettingsScreen({super.key});
@@ -54,7 +55,12 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
   }
 
   Future<void> _saveSettings() async {
-    await _keyStorage.saveGeminiKey(_geminiController.text);
+    var gKey = _geminiController.text.trim();
+    if (gKey.length == 33 && !gKey.startsWith('AIzaSy')) {
+      gKey = 'AIzaSy$gKey';
+      _geminiController.text = gKey;
+    }
+    await _keyStorage.saveGeminiKey(gKey);
     await _keyStorage.saveGroqKey(_groqController.text);
     await _keyStorage.saveOpenAIKey(_openaiController.text);
     await _keyStorage.saveActiveProvider(_activeProvider);
@@ -88,7 +94,11 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
       response = await OpenAIProvider(apiKey: key).processRequest(req);
     } else {
       final geminiKey = _geminiController.text.trim();
-      response = await GeminiAIProvider(apiKey: geminiKey).processRequest(req);
+      final groqKey = _groqController.text.trim();
+      response = await HybridAIProvider(
+        geminiApiKey: geminiKey,
+        groqApiKey: groqKey,
+      ).processRequest(req);
     }
 
     if (mounted) {
@@ -97,7 +107,11 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
         if (response.isSuccess) {
           _testResult = 'Connection successful! Response: "${response.outputText}"';
         } else {
-          _testResult = 'Connection failed: ${response.errorMessage}';
+          var hint = '';
+          if (_activeProvider == ActiveAIProviderType.gemini && !_geminiController.text.trim().startsWith('AIzaSy')) {
+            hint = '\nTip: Google Gemini keys start with "AIzaSy". Ensure you copied the entire key from Google AI Studio, or switch to Groq Cloud / Hybrid Mode.';
+          }
+          _testResult = 'Connection failed: ${response.errorMessage}$hint';
         }
       });
     }
@@ -131,6 +145,31 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      borderRadius: AppRadius.borderSm,
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.verified, size: 20, color: AppColors.primary),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Engine Build v1.2.5+17 • AI Failover Hardened Active',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
                   Text('Primary AI Provider', style: AppTypography.titleMedium),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
@@ -152,11 +191,31 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
                     label: 'Google Gemini API Key',
                     hint: 'AIzaSy...',
                   ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, left: 4),
+                    child: Text(
+                      'Google AI Studio keys start with "AIzaSy" (39 chars). Free at aistudio.google.com',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.md),
                   AppTextField(
                     controller: _groqController,
                     label: 'Groq Cloud API Key',
                     hint: 'gsk_...',
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, left: 4),
+                    child: Text(
+                      'Groq keys start with "gsk_". Recommended for sub-second failover. Free at console.groq.com',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   AppTextField(

@@ -47,7 +47,7 @@ class GroqAIProvider implements AIProvider {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final rawText = data['choices']?[0]?['message']?['content'] ?? '';
-        final parsedJson = jsonDecode(rawText);
+        final parsedJson = ResumeAIPromptEngine.parseAndSanitizeJson(rawText);
 
         final subScoresRaw = parsedJson['subScores'] as Map<String, dynamic>?;
         final subScores = <String, double>{};
@@ -71,6 +71,7 @@ class GroqAIProvider implements AIProvider {
         return AIResponse(
           isSuccess: false,
           outputText: '',
+          statusCode: response.statusCode,
           errorMessage: 'Groq API call failed with status ${response.statusCode}: ${response.body}',
         );
       }

@@ -26,6 +26,7 @@ class AIResponse {
   final List<String> missingKeywords;
   final Map<String, double> subScores;
   final String? errorMessage;
+  final int? statusCode;
 
   AIResponse({
     required this.isSuccess,
@@ -37,6 +38,7 @@ class AIResponse {
     this.missingKeywords = const [],
     this.subScores = const {},
     this.errorMessage,
+    this.statusCode,
   });
 }
 
