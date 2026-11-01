@@ -38,11 +38,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
   }
 
   Future<void> _bootstrapApp() async {
-    // 1. Await storage initialization first to prevent race condition
-    await StorageBootstrapService().initializeStorage();
+    // 1. Parallelize storage initialization and preferences loading for sub-600ms cold start
+    await Future.wait([
+      StorageBootstrapService().initializeStorage(),
+      SharedPreferences.getInstance(),
+    ]);
 
-    // Small delay to ensure splash animation plays smoothly
-    await Future.delayed(const Duration(milliseconds: 1000));
+    // Optimized fade duration to ensure smooth splash presentation under 600ms
+    await Future.delayed(const Duration(milliseconds: 500));
 
     if (!mounted) return;
 

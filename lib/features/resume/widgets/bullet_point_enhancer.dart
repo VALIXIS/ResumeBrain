@@ -381,9 +381,12 @@ class _BulletPointEnhancerDialogState extends ConsumerState<BulletPointEnhancerD
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Active Bullet Text',
-              style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w600),
+            Expanded(
+              child: Text(
+                'Active Bullet Text',
+                style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w600),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             if (widget.initialBullet.trim() != _editingCtrl.text.trim())
               TextButton.icon(
@@ -447,11 +450,14 @@ class _BulletPointEnhancerDialogState extends ConsumerState<BulletPointEnhancerD
           children: [
             const Icon(Icons.bolt, color: AppColors.accentOrange, size: 16),
             const SizedBox(width: 4),
-            Text(
-              'Action-Verb Power Boosters',
-              style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w600),
+            Expanded(
+              child: Text(
+                'Action-Verb Power Boosters',
+                style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w600),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            const Spacer(),
+            const SizedBox(width: 8),
             Text(
               'Tap to insert',
               style: AppTypography.bodySmall.copyWith(color: AppColors.textMuted, fontSize: 11),
@@ -497,11 +503,14 @@ class _BulletPointEnhancerDialogState extends ConsumerState<BulletPointEnhancerD
           children: [
             const Icon(Icons.trending_up, color: AppColors.accentGreen, size: 16),
             const SizedBox(width: 4),
-            Text(
-              'Metric & Quantifier Scaffolds',
-              style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w600),
+            Expanded(
+              child: Text(
+                'Metric & Quantifier Scaffolds',
+                style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w600),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            const Spacer(),
+            const SizedBox(width: 8),
             Text(
               'Tap to append template',
               style: AppTypography.bodySmall.copyWith(color: AppColors.textMuted, fontSize: 11),
@@ -588,16 +597,22 @@ class _BulletPointEnhancerDialogState extends ConsumerState<BulletPointEnhancerD
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.auto_awesome, color: AppColors.accentPurple, size: 16),
-                const SizedBox(width: 4),
-                Text(
-                  'Categorized AI Recommendations',
-                  style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w600),
-                ),
-              ],
+            Expanded(
+              child: Row(
+                children: [
+                  const Icon(Icons.auto_awesome, color: AppColors.accentPurple, size: 16),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      'Categorized AI Recommendations',
+                      style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
             // Filter dropdown or tabs
             DropdownButton<String>(
               value: _selectedCategory,
@@ -644,16 +659,16 @@ class _BulletPointEnhancerDialogState extends ConsumerState<BulletPointEnhancerD
     final isCurrent = _editingCtrl.text.trim() == sug.text.trim();
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: isCurrent
             ? AppColors.accentPurple.withValues(alpha: 0.08)
             : AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isCurrent ? AppColors.accentPurple : AppColors.surfaceBorder,
-          width: isCurrent ? 1.5 : 1.0,
+          width: isCurrent ? 1.8 : 1.0,
         ),
       ),
       child: Column(
@@ -662,7 +677,7 @@ class _BulletPointEnhancerDialogState extends ConsumerState<BulletPointEnhancerD
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppColors.accentPurple.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
@@ -687,43 +702,131 @@ class _BulletPointEnhancerDialogState extends ConsumerState<BulletPointEnhancerD
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 8),
-              ConstrainedBox(
-                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-                child: Center(
-                  child: Semantics(
-                    button: true,
-                    label: 'Use ${sug.category.displayName} suggestion',
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: isCurrent ? AppColors.accentPurple : AppColors.surfaceBorder,
-                        ),
-                        backgroundColor: isCurrent ? AppColors.accentPurple.withValues(alpha: 0.1) : null,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // --- Visual Diff Comparison (Original vs AI-Enhanced) ---
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceBorder.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                      onPressed: () => _applySuggestion(sug.text),
                       child: Text(
-                        isCurrent ? 'Selected' : 'Use This',
+                        'Original',
                         style: AppTypography.labelSmall.copyWith(
-                          color: isCurrent ? AppColors.accentPurple : AppColors.textPrimary,
-                          fontWeight: FontWeight.w600,
+                          color: Colors.redAccent,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        widget.initialBullet.trim().isNotEmpty
+                            ? widget.initialBullet
+                            : '(Empty bullet)',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textMuted,
+                          decoration: TextDecoration.lineThrough,
+                          decorationColor: Colors.redAccent.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 6.0),
+                  child: Divider(height: 1, thickness: 0.5),
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.accentGreen.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'AI-Enhanced',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.accentGreen,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        sug.text,
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w500,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (isCurrent)
+                TextButton.icon(
+                  onPressed: () => _applySuggestion(widget.initialBullet),
+                  icon: const Icon(Icons.undo, size: 14, color: AppColors.textMuted),
+                  label: const Text('Revert', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () {
+                  _editingCtrl.text = sug.text;
+                  setState(() {
+                    _analysis = _enhancementService.analyzeBullet(sug.text, roleContext: widget.roleContext);
+                  });
+                },
+                icon: const Icon(Icons.edit, size: 14),
+                label: const Text('Edit in Box', style: TextStyle(fontSize: 12)),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isCurrent ? AppColors.accentGreen : AppColors.accentPurple,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () => _applySuggestion(sug.text),
+                icon: Icon(isCurrent ? Icons.check : Icons.auto_awesome, size: 14),
+                label: Text(
+                  isCurrent ? 'Accepted' : 'Accept Diff',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            sug.text,
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textPrimary,
-              height: 1.4,
-            ),
           ),
         ],
       ),

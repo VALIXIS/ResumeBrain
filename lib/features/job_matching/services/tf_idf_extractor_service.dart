@@ -89,20 +89,35 @@ class TfIdfExtractorService {
   };
 
   /// Tokenizes text into normalized candidate term tokens.
-  List<String> tokenize(String text) {
+  /// Tokenizes text into normalized candidate term tokens, including bi-grams and tri-grams.
+  List<String> tokenize(String text, {bool includeNgrams = true}) {
     if (text.trim().isEmpty) return [];
 
-    final cleaned = text.toLowerCase().replaceAll(RegExp(r'[^\w\s+#/-]'), ' ');
+    final cleaned = text.toLowerCase().replaceAll(RegExp(r'[^\w\s+#/.-]'), ' ');
     final rawTokens = cleaned.split(RegExp(r'\s+'));
 
     final validTokens = <String>[];
     for (final token in rawTokens) {
-      final t = token.replaceAll(RegExp(r'^[^\w+#]+|[^\w+#]+$'), '');
+      final t = token.replaceAll(RegExp(r'^[^\w+#.]+|[^\w+#.]+$'), '');
       if (t.length >= 2 && !_stopWords.contains(t) && !_jobNoiseWords.contains(t)) {
         validTokens.add(t);
       }
     }
-    return validTokens;
+
+    if (!includeNgrams || validTokens.length < 2) {
+      return validTokens;
+    }
+
+    final allTokens = <String>[...validTokens];
+    // Bi-grams and tri-grams for compound technologies & stacks
+    for (int i = 0; i < validTokens.length - 1; i++) {
+      allTokens.add('${validTokens[i]} ${validTokens[i + 1]}');
+      if (i < validTokens.length - 2) {
+        allTokens.add('${validTokens[i]} ${validTokens[i + 1]} ${validTokens[i + 2]}');
+      }
+    }
+
+    return allTokens;
   }
 
   /// Calculates deterministic TF-IDF scores for extracted tokens in [text].

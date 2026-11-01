@@ -178,7 +178,7 @@ class SecurityController extends StateNotifier<SecurityState> with WidgetsBindin
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive || state == AppLifecycleState.detached) {
       if (this.state.isLockEnabled) {
         lock();
       }
